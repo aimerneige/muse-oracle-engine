@@ -12,8 +12,10 @@ import (
 
 const (
 	// Model names
-	ModelGemini31Pro = "gemini-3.1-pro-preview"
-	ModelNanoBanana2 = "gemini-3.1-flash-image-preview"
+	ModelGemini31Pro   = "gemini-3.1-pro-preview"
+	ModelNanoBanana    = "gemini-2.5-flash-image"
+	ModelNanoBanana2   = "gemini-3.1-flash-image-preview"
+	ModelNanoBananaPro = "gemini-3-pro-image-preview"
 )
 
 // Message represents a standard chat message.
