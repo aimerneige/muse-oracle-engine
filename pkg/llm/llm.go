@@ -3,10 +3,12 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -34,6 +36,7 @@ type Request struct {
 // Response defines the output of a chat completion.
 type Response struct {
 	Content string
+	Images  [][]byte // Raw bytes of generated images
 }
 
 // Client is the interface for interacting with various LLMs.
@@ -69,17 +72,13 @@ func (c *clientImpl) Chat(ctx context.Context, req Request) (*Response, error) {
 		return nil, fmt.Errorf("messages cannot be empty")
 	}
 
-	switch req.Model {
-	case ModelGemini31Pro:
+	if strings.HasPrefix(req.Model, "gemini") {
 		return c.callGemini(ctx, req)
-	case ModelNanoBanana2:
-		return c.callNanoBanana(ctx, req)
-	default:
-		return nil, fmt.Errorf("unsupported model: %s. Supported: %s, %s", req.Model, ModelGemini31Pro, ModelNanoBanana2)
 	}
+	return c.callNanoBanana(ctx, req)
 }
 
-// callGemini implements the call to Google Gemini 3.1 Pro.
+// callGemini implements the call to Google Gemini.
 func (c *clientImpl) callGemini(ctx context.Context, req Request) (*Response, error) {
 	if c.cfg.GeminiAPIKey == "" {
 		return nil, fmt.Errorf("gemini api key is missing")
@@ -142,11 +141,16 @@ func (c *clientImpl) callGemini(ctx context.Context, req Request) (*Response, er
 	}
 
 	// Parse Gemini Response
+	type InlineData struct {
+		MimeType string `json:"mimeType"`
+		Data     string `json:"data"`
+	}
 	type GeminiResponse struct {
 		Candidates []struct {
 			Content struct {
 				Parts []struct {
-					Text string `json:"text"`
+					Text       string      `json:"text"`
+					InlineData *InlineData `json:"inlineData"`
 				} `json:"parts"`
 			} `json:"content"`
 		} `json:"candidates"`
@@ -161,9 +165,20 @@ func (c *clientImpl) callGemini(ctx context.Context, req Request) (*Response, er
 		return nil, fmt.Errorf("gemini returned an empty response")
 	}
 
-	return &Response{
-		Content: gResp.Candidates[0].Content.Parts[0].Text,
-	}, nil
+	respObj := &Response{}
+	for _, part := range gResp.Candidates[0].Content.Parts {
+		if part.Text != "" {
+			respObj.Content += part.Text
+		}
+		if part.InlineData != nil && part.InlineData.Data != "" {
+			decoded, err := base64.StdEncoding.DecodeString(part.InlineData.Data)
+			if err == nil {
+				respObj.Images = append(respObj.Images, decoded)
+			}
+		}
+	}
+
+	return respObj, nil
 }
 
 // callNanoBanana implements the call to Nano Banana 2.

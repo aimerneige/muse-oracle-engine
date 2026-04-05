@@ -11,6 +11,7 @@ import (
 	"github.com/aimerneige/lovelive-manga-generator/pkg/agent"
 	"github.com/aimerneige/lovelive-manga-generator/pkg/llm"
 	"github.com/joho/godotenv"
+	"path/filepath"
 )
 
 func main() {
@@ -73,4 +74,36 @@ func main() {
 	fmt.Println("\n========== 【生成结果】 ==========")
 	fmt.Println(storyboard)
 	fmt.Println("\n==================================")
+
+	// 6. 提取图片 Prompt 并生成
+	fmt.Println("\n========== 【开始生成图像】 ==========")
+	extractAndGenerateImages(llmClient, storyboard)
+}
+
+func extractAndGenerateImages(llmClient llm.Client, storyboard string) {
+	fmt.Println(">> 正在为您一次性生成整张四格漫画图片...")
+	req := llm.Request{
+		Model: llm.ModelNanoBanana2, 
+		Messages: []llm.Message{
+			{Role: "user", Content: "请根据以下完整的四格漫画分镜描述，一次性生成一张包含四个格子的完整漫画图片（拼图中包含起承转合四个画面），请严格保持角色服饰和各项细节设定的准确性：\n\n" + storyboard},
+		},
+	}
+
+	resp, err := llmClient.Chat(context.Background(), req)
+	if err != nil {
+		log.Printf("图片生成请求失败: %v\n", err)
+		return
+	}
+
+	if len(resp.Images) > 0 {
+		filename := filepath.Join("imgs", "comic.png")
+		err := os.WriteFile(filename, resp.Images[0], 0644)
+		if err != nil {
+			log.Printf("保存图片失败: %v\n", err)
+		} else {
+			fmt.Printf("   成功保存完整四格漫画: %s\n", filename)
+		}
+	} else {
+		log.Printf("未返回图像数据，只返回了文本: %s\n", resp.Content)
+	}
 }
