@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
+	"github.com/aimerneige/lovelive-manga-generator/pkg/llm"
 	"github.com/joho/godotenv"
-	"google.golang.org/genai"
 )
 
 func main() {
@@ -15,27 +14,29 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		log.Fatal("GEMINI_API_KEY is not set in .env file")
-	}
+	geminiApiKey := os.Getenv("GEMINI_API_KEY")
+	deepseekApiKey := os.Getenv("DEEPSEEK_API_KEY")
 
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey: apiKey,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	result, err := client.Models.GenerateContent(
-		ctx,
-		"gemini-3-flash-preview",
-		genai.Text("Explain how AI works in a few words"),
-		nil,
-	)
+	prompt := "Explain how AI works in a few words"
+
+	var llmProvider llm.LLMProvider
+	var err error
+	llmProvider, err = llm.NewGeminiAdapter(geminiApiKey, llm.Gemini2FlashLite)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(result.Text())
+	result, err := llmProvider.GenerateText(ctx, prompt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Gemini Generated Text:", result)
+
+	llmProvider = llm.NewDeepSeekAdapter(deepseekApiKey, llm.DeepSeekChat)
+	result, err = llmProvider.GenerateText(ctx, prompt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Deepseek Generated Text:", result)
 }

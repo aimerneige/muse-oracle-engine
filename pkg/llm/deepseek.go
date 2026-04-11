@@ -51,3 +51,25 @@ func (d *DeepSeekAdapter) GenerateText(ctx context.Context, prompt string) (stri
 	}
 	return completion.Choices[0].Message.Content, nil
 }
+
+func (d *DeepSeekAdapter) GenerateTextWithHistory(ctx context.Context, history []Message) (string, error) {
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(history))
+	for _, msg := range history {
+		switch msg.Role {
+		case RoleUser:
+			messages = append(messages, openai.UserMessage(msg.Content))
+		case RoleAssistant:
+			messages = append(messages, openai.AssistantMessage(msg.Content))
+		case RoleSystem:
+			messages = append(messages, openai.SystemMessage(msg.Content))
+		}
+	}
+	completion, err := d.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model:    d.model.String(),
+		Messages: messages,
+	})
+	if err != nil {
+		return "", err
+	}
+	return completion.Choices[0].Message.Content, nil
+}

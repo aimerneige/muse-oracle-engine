@@ -61,5 +61,39 @@ func (g *GeminiAdapter) GenerateText(ctx context.Context, prompt string) (string
 		genai.Text(prompt),
 		nil,
 	)
-	return result.Text(), err
+	if err != nil {
+		return "", err
+	}
+	return result.Text(), nil
+}
+
+func (g *GeminiAdapter) GenerateTextWithHistory(ctx context.Context, history []Message) (string, error) {
+	contents := make([]*genai.Content, 0, len(history))
+	for _, msg := range history {
+		var role string
+		switch msg.Role {
+		case RoleUser:
+			role = "user"
+		case RoleAssistant:
+			role = "model"
+		case RoleSystem:
+			role = "system"
+		}
+		contents = append(contents, &genai.Content{
+			Role: role,
+			Parts: []*genai.Part{
+				{Text: msg.Content},
+			},
+		})
+	}
+	result, err := g.client.Models.GenerateContent(
+		ctx,
+		g.model.String(),
+		contents,
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+	return result.Text(), nil
 }
