@@ -17,7 +17,9 @@ type Message struct {
 	Content string
 }
 
+type History []Message
+
 type LLMProvider interface {
 	GenerateText(ctx context.Context, prompt string) (string, error)
-	GenerateTextWithHistory(ctx context.Context, history []Message) (string, error)
+	GenerateTextWithHistory(ctx context.Context, history History) (string, error)
 }

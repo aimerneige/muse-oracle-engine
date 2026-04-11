@@ -52,7 +52,7 @@ func (d *DeepSeekAdapter) GenerateText(ctx context.Context, prompt string) (stri
 	return completion.Choices[0].Message.Content, nil
 }
 
-func (d *DeepSeekAdapter) GenerateTextWithHistory(ctx context.Context, history []Message) (string, error) {
+func (d *DeepSeekAdapter) GenerateTextWithHistory(ctx context.Context, history History) (string, error) {
 	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(history))
 	for _, msg := range history {
 		switch msg.Role {

@@ -67,7 +67,7 @@ func (g *GeminiAdapter) GenerateText(ctx context.Context, prompt string) (string
 	return result.Text(), nil
 }
 
-func (g *GeminiAdapter) GenerateTextWithHistory(ctx context.Context, history []Message) (string, error) {
+func (g *GeminiAdapter) GenerateTextWithHistory(ctx context.Context, history History) (string, error) {
 	contents := make([]*genai.Content, 0, len(history))
 	for _, msg := range history {
 		var role string
