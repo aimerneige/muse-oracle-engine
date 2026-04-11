@@ -14,22 +14,29 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		log.Fatal("GEMINI_API_KEY is not set in .env file")
-	}
+	geminiApiKey := os.Getenv("GEMINI_API_KEY")
+	deepseekApiKey := os.Getenv("DEEPSEEK_API_KEY")
 
 	ctx := context.Background()
 
+	prompt := "Why is the sky blue? Answer in a few words."
+
 	var llmProvider llm.LLMProvider
-	llmProvider, err := llm.NewGeminiAdapter(apiKey, llm.Gemini3Pro)
+	var err error
+	llmProvider, err = llm.NewGeminiAdapter(geminiApiKey, llm.Gemini2FlashLite)
 	if err != nil {
 		log.Fatal(err)
 	}
-	prompt := "Why is the sky blue? Answer in 3 sentences."
 	result, err := llmProvider.GenerateText(ctx, prompt)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Generated Text:", result)
+	log.Println("Gemini Generated Text:", result)
+
+	llmProvider = llm.NewDeepSeekAdapter(deepseekApiKey, llm.DeepSeekChat)
+	result, err = llmProvider.GenerateText(ctx, prompt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Deepseek Generated Text:", result)
 }
