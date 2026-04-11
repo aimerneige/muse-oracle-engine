@@ -21,22 +21,38 @@ func main() {
 
 	prompt := "Explain how AI works in a few words"
 
-	var llmProvider llm.LLMProvider
-	var err error
-	llmProvider, err = llm.NewGeminiAdapter(geminiApiKey, llm.Gemini2FlashLite)
+	gemini, err := llm.NewGeminiAdapter(geminiApiKey, llm.Gemini2FlashLite)
 	if err != nil {
 		log.Fatal(err)
 	}
-	result, err := llmProvider.GenerateText(ctx, prompt)
+	result, err := gemini.GenerateText(ctx, prompt)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Gemini Generated Text:", result)
 
-	llmProvider = llm.NewDeepSeekAdapter(deepseekApiKey, llm.DeepSeekChat)
-	result, err = llmProvider.GenerateText(ctx, prompt)
+	deepseek := llm.NewDeepSeekAdapter(deepseekApiKey, llm.DeepSeekChat)
+	result, err = deepseek.GenerateText(ctx, prompt)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Deepseek Generated Text:", result)
+
+	history := []llm.Message{
+		{Role: llm.RoleUser, Content: "Hi"},
+		{Role: llm.RoleAssistant, Content: "Hello!"},
+		{Role: llm.RoleUser, Content: "How are you?"},
+	}
+
+	result, err = gemini.GenerateTextWithHistory(ctx, history)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Gemini With History:", result)
+
+	result, err = deepseek.GenerateTextWithHistory(ctx, history)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Deepseek With History:", result)
 }
