@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/openai/openai-go v1.12.0
+	github.com/yuin/goldmark v1.8.2
 	google.golang.org/genai v1.53.0
 )
 
