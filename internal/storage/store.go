@@ -17,10 +17,17 @@ type Store interface {
 	List() ([]string, error)
 
 	// SaveImage saves raw image data for a specific panel in a project.
-	SaveImage(projectID string, index int, data []byte) (string, error)
+	// The attempt parameter (1-based) is used to avoid overwriting previous
+	// generations: attempt 1 → "001.png", attempt 2 → "001_2.png", etc.
+	SaveImage(projectID string, index int, attempt int, data []byte) (string, error)
 
 	// LoadImage reads image data for a specific panel.
+	// It resolves the correct filename by reading the project's ImageResult.FilePath,
+	// which may include an attempt suffix (e.g. "001_2.png").
 	LoadImage(projectID string, index int) ([]byte, error)
+
+	// LoadImageByPath reads image data from a relative path within a project directory.
+	LoadImageByPath(projectID string, relPath string) ([]byte, error)
 
 	// ProjectDir returns the absolute path to a project's data directory.
 	ProjectDir(projectID string) string

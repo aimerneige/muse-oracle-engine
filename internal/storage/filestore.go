@@ -100,13 +100,18 @@ func (fs *FileStore) List() ([]string, error) {
 	return ids, nil
 }
 
-func (fs *FileStore) SaveImage(projectID string, index int, data []byte) (string, error) {
+func (fs *FileStore) SaveImage(projectID string, index int, attempt int, data []byte) (string, error) {
 	imagesDir := filepath.Join(fs.ProjectDir(projectID), "images")
 	if err := os.MkdirAll(imagesDir, 0o755); err != nil {
 		return "", fmt.Errorf("failed to create images directory: %w", err)
 	}
 
-	filename := fmt.Sprintf("%03d.png", index)
+	var filename string
+	if attempt <= 1 {
+		filename = fmt.Sprintf("%03d.png", index)
+	} else {
+		filename = fmt.Sprintf("%03d_%d.png", index, attempt)
+	}
 	imagePath := filepath.Join(imagesDir, filename)
 
 	if err := os.WriteFile(imagePath, data, 0o644); err != nil {
@@ -118,8 +123,24 @@ func (fs *FileStore) SaveImage(projectID string, index int, data []byte) (string
 }
 
 func (fs *FileStore) LoadImage(projectID string, index int) ([]byte, error) {
-	filename := fmt.Sprintf("%03d.png", index)
-	imagePath := filepath.Join(fs.ProjectDir(projectID), "images", filename)
+	// Try to resolve the filename from the project's ImageResult
+	proj, err := fs.Load(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load project: %w", err)
+	}
+	if index < 1 || index > len(proj.Images) {
+		return nil, fmt.Errorf("image index %d out of range", index)
+	}
+	relPath := proj.Images[index-1].FilePath
+	if relPath == "" {
+		// Fallback for old projects without FilePath stored
+		relPath = fmt.Sprintf("images/%03d.png", index)
+	}
+	return fs.LoadImageByPath(projectID, relPath)
+}
+
+func (fs *FileStore) LoadImageByPath(projectID string, relPath string) ([]byte, error) {
+	imagePath := filepath.Join(fs.ProjectDir(projectID), relPath)
 
 	data, err := os.ReadFile(imagePath)
 	if err != nil {

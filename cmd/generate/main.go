@@ -28,6 +28,7 @@ func main() {
 	plotHint := flag.String("plot", "", "Story direction / plot hint")
 	style := flag.String("style", "chibi_figure", "Comic style: chibi_figure, figma_figure, watercolor")
 	resumeID := flag.String("resume", "", "Resume an existing project by ID")
+	retryImage := flag.Int("retry-image", 0, "Retry generating a specific image by 1-based index (requires --resume)")
 	listChars := flag.Bool("list-characters", false, "List all available characters")
 	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
 	listModels := flag.Bool("list-models", false, "List all available models")
@@ -147,6 +148,38 @@ func main() {
 			log.Fatalf("Failed to create project: %v", err)
 		}
 		log.Printf("✓ Created project: %s", project.ID)
+	}
+
+	// Handle single image retry
+	if *retryImage > 0 {
+		if *resumeID == "" {
+			log.Fatalf("--retry-image requires --resume to specify the project")
+		}
+		if project.Storyboard == nil || len(project.Images) == 0 {
+			log.Fatalf("Project has no images to retry — generate images first")
+		}
+		if *retryImage > len(project.Images) {
+			log.Fatalf("Image index %d out of range [1, %d]", *retryImage, len(project.Images))
+		}
+
+		imgIdx := *retryImage
+		attempt := project.Images[imgIdx-1].Attempt + 1
+		log.Printf("=== 重试生成第 %d 张图片 (attempt %d) ===", imgIdx, attempt)
+
+		project.ResetSingleImage(imgIdx)
+
+		if err := comicSvc.GenerateSingleImage(ctx, project, imgIdx); err != nil {
+			_ = store.Save(project)
+			log.Fatalf("Failed to generate image %d: %v", imgIdx, err)
+		}
+
+		if err := store.Save(project); err != nil {
+			log.Fatalf("Failed to save project: %v", err)
+		}
+
+		img := project.Images[imgIdx-1]
+		log.Printf("✓ 第 %d 张图片已重新生成: %s", imgIdx, img.FilePath)
+		return
 	}
 
 	// Run pipeline

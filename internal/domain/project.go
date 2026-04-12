@@ -82,13 +82,16 @@ func (p *Project) ResetToStep(step string) {
 }
 
 // ResetSingleImage resets a single image so it can be re-generated.
+// It increments the attempt counter to avoid overwriting previous images.
 func (p *Project) ResetSingleImage(index int) {
 	if index < 1 || index > len(p.Images) {
 		return
 	}
-	p.Images[index-1].Status = "pending"
-	p.Images[index-1].Error = ""
-	p.Images[index-1].FilePath = ""
+	img := &p.Images[index-1]
+	img.Status = "pending"
+	img.Error = ""
+	img.FilePath = ""
+	img.Attempt++
 	// If project was marked done, revert to approved for re-generation
 	if p.Status == StatusImagesDone {
 		p.Status = StatusReviewApproved

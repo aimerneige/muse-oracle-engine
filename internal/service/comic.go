@@ -41,8 +41,9 @@ func (s *ComicService) GenerateAllImages(ctx context.Context, project *domain.Pr
 		project.Images = make([]domain.ImageResult, len(project.Storyboard.Panels))
 		for i := range project.Images {
 			project.Images[i] = domain.ImageResult{
-				Index:  i + 1,
-				Status: "pending",
+				Index:   i + 1,
+				Status:  "pending",
+				Attempt: 1,
 			}
 		}
 	}
@@ -90,13 +91,17 @@ func (s *ComicService) GenerateSingleImage(ctx context.Context, project *domain.
 	}
 
 	// Save image
-	relPath, err := s.store.SaveImage(project.ID, panelIndex, imageData)
+	idx := panelIndex - 1
+	attempt := 1
+	if idx < len(project.Images) && project.Images[idx].Attempt > 0 {
+		attempt = project.Images[idx].Attempt
+	}
+	relPath, err := s.store.SaveImage(project.ID, panelIndex, attempt, imageData)
 	if err != nil {
 		return fmt.Errorf("failed to save image for panel %d: %w", panelIndex, err)
 	}
 
 	// Update project state
-	idx := panelIndex - 1
 	if idx < len(project.Images) {
 		project.Images[idx].FilePath = relPath
 		project.Images[idx].Status = "done"
