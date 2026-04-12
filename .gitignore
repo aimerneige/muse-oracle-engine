@@ -1,2 +1,3 @@
 .env
+!imgs/.gitkeep
 imgs/
