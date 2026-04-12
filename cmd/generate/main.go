@@ -2,90 +2,246 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/aimerneige/lovelive-manga-generator/pkg/img"
-	"github.com/aimerneige/lovelive-manga-generator/pkg/llm"
-	"github.com/aimerneige/lovelive-manga-generator/pkg/worker"
+	"github.com/aimerneige/lovelive-manga-generator/internal/chardb"
+	"github.com/aimerneige/lovelive-manga-generator/internal/config"
+	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/lovelive-manga-generator/internal/pipeline"
+	"github.com/aimerneige/lovelive-manga-generator/internal/prompt"
+	"github.com/aimerneige/lovelive-manga-generator/internal/provider/image"
+	"github.com/aimerneige/lovelive-manga-generator/internal/provider/llm"
+	"github.com/aimerneige/lovelive-manga-generator/internal/service"
+	"github.com/aimerneige/lovelive-manga-generator/internal/storage"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	log.Println("=== LoveLive Manga Generator 启动 ===")
+	// Define flags
+	characters := flag.String("characters", "", "Comma-separated character IDs, e.g. 'lovelive/honoka,lovelive/umi'")
+	plotHint := flag.String("plot", "", "Story direction / plot hint")
+	style := flag.String("style", "chibi_figure", "Comic style: chibi_figure, figma_figure, watercolor")
+	resumeID := flag.String("resume", "", "Resume an existing project by ID")
+	listChars := flag.Bool("list-characters", false, "List all available characters")
+	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
+	noReview := flag.Bool("no-review", false, "Skip storyboard review step")
+	flag.Parse()
 
+	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	log.Println("✓ 配置文件加载成功")
-
-	geminiApiKey := os.Getenv("GEMINI_API_KEY")
-	if geminiApiKey == "" {
-		log.Fatal("GEMINI_API_KEY is not set")
+		log.Println("Warning: .env file not found, using environment variables")
 	}
 
-	gemini, err := llm.NewGeminiAdapter(geminiApiKey, llm.Gemini3Pro)
+	cfg := config.LoadFromEnv()
+
+	// Initialize character database
+	charRegistry, err := chardb.NewEmbeddedRegistry()
 	if err != nil {
-		log.Fatal("Error creating Gemini provider: ", err)
+		log.Fatalf("Failed to load character database: %v", err)
 	}
-	log.Println("✓ Gemini 语言模型提供器初始化成功")
 
-	nanobanana, err := img.NewNanobananaAdapter(geminiApiKey, img.NanoBanana2)
-	if err != nil {
-		log.Fatal("Error creating nanobanana adapter: ", err)
+	// Handle list commands
+	if *listChars {
+		printCharacters(charRegistry)
+		return
 	}
-	log.Println("✓ Nanobanana 适配器初始化成功")
+	if *listStyles {
+		printStyles()
+		return
+	}
+
+	// Validate config
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
+	// Initialize prompt engine
+	promptEngine, err := prompt.NewEngine()
+	if err != nil {
+		log.Fatalf("Failed to initialize prompt engine: %v", err)
+	}
+
+	// Initialize LLM provider
+	llmProvider, err := createLLMProvider(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create LLM provider: %v", err)
+	}
+	log.Printf("✓ LLM provider: %s", llmProvider.Name())
+
+	// Initialize image provider
+	imgProvider, err := createImageProvider(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create image provider: %v", err)
+	}
+	log.Printf("✓ Image provider: %s", imgProvider.Name())
+
+	// Initialize storage
+	store, err := storage.NewFileStore(cfg.DataDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize storage: %v", err)
+	}
+
+	// Initialize services
+	storySvc := service.NewStoryService(llmProvider, promptEngine)
+	comicSvc := service.NewComicService(imgProvider, promptEngine, store)
+
+	// Build pipeline steps
+	steps := []pipeline.Step{
+		pipeline.NewStoryStep(storySvc),
+		pipeline.NewStoryboardStep(storySvc),
+	}
+	if !*noReview {
+		steps = append(steps, pipeline.NewCLIReviewStep())
+	}
+	steps = append(steps, pipeline.NewImageStep(comicSvc))
+
+	p := pipeline.NewPipeline(store, steps...)
 
 	ctx := context.Background()
 
-	hint := `LoveLive 中的穗乃果和海未为主角。二人在学校里的温馨日常。发糖向，轻百合向。角色台词和行为要符合官方设定，绝对禁止OOC。长度控制在 24 格，剧情要连贯，不要拆分成多个小剧场。`
-	log.Printf("提示词: %s", hint)
-
-	log.Println(">>> 开始生成故事脚本 (步骤 1/2)...")
-	history, step1Resp, err := worker.GenerateStorybookStep1(ctx, hint, gemini)
-	if err != nil {
-		log.Fatalf("Error generating storybook step 1: %v", err)
-	}
-	log.Println("✓ 故事脚本生成完成 (步骤 1/2)")
-
-	log.Println(">>> 开始生成漫画分镜 (步骤 2/2)...")
-	_, storybook, err := worker.GenerateStorybookStep2(ctx, history, step1Resp, gemini)
-	if err != nil {
-		log.Fatal("Error generating storybook step 2: ", err)
-	}
-	log.Printf("✓ 漫画分镜生成完成 (步骤 2/2), 共 %d 幅", len(storybook))
-
-	// 创建输出目录
-	outputUUID := uuid.New().String()
-	outputDir := filepath.Join("imgs", time.Now().Format("20060102"), outputUUID)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		log.Fatal("Error creating output directory: ", err)
-	}
-	log.Printf("✓ 输出目录创建成功: %s", outputDir)
-
-	// 生成图片
-	log.Printf(">>> 开始生成漫画图片, 共 %d 幅...", len(storybook))
-	comicGenerator := worker.NewComicImageGenerator(nanobanana)
-	for i, page := range storybook {
-		log.Printf("[%d/%d] 正在生成第 %d 幅漫画...", i+1, len(storybook), i+1)
-		timestamp := time.Now().Unix()
-		imageData, err := comicGenerator.Generate(ctx, worker.StyleChibiFigure, step1Resp.Character, page)
+	// Create or resume project
+	var project *domain.Project
+	if *resumeID != "" {
+		project, err = store.Load(*resumeID)
 		if err != nil {
-			log.Printf("[%d/%d] ✗ 生成失败: %v", i+1, len(storybook), err)
-			continue
+			log.Fatalf("Failed to load project %s: %v", *resumeID, err)
+		}
+		log.Printf("✓ Resumed project: %s (status: %s)", project.ID, project.Status)
+	} else {
+		// Validate required inputs
+		if *characters == "" || *plotHint == "" {
+			fmt.Println("Usage: generate --characters <ids> --plot <hint> [--style <style>]")
+			fmt.Println()
+			fmt.Println("Example:")
+			fmt.Println("  generate --characters 'lovelive/honoka,lovelive/umi' \\")
+			fmt.Println("           --plot '二人在学校里的温馨日常，发糖向，轻百合向' \\")
+			fmt.Println("           --style chibi_figure")
+			fmt.Println()
+			fmt.Println("Run with --list-characters or --list-styles to see available options.")
+			os.Exit(1)
 		}
 
-		imagePath := filepath.Join(outputDir, fmt.Sprintf("%03d_%d.png", i+1, timestamp))
-		if err := os.WriteFile(imagePath, imageData, 0644); err != nil {
-			log.Printf("[%d/%d] ✗ 保存失败: %v", i+1, len(storybook), err)
-			continue
+		project, err = createProject(charRegistry, *characters, *plotHint, *style)
+		if err != nil {
+			log.Fatalf("Failed to create project: %v", err)
 		}
-		log.Printf("[%d/%d] ✓ 图片保存成功: %s", i+1, len(storybook), imagePath)
+		log.Printf("✓ Created project: %s", project.ID)
+	}
+
+	// Run pipeline
+	log.Println("=== 开始生成漫画 ===")
+	if err := p.Run(ctx, project); err != nil {
+		log.Printf("Pipeline error: %v", err)
+		log.Printf("Project saved. Resume with: generate --resume %s", project.ID)
+		os.Exit(1)
 	}
 
 	log.Println("=== 全部任务完成 ===")
+	log.Printf("输出目录: %s", store.ProjectDir(project.ID))
+}
+
+func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName string) (*domain.Project, error) {
+	// Parse character IDs
+	ids := strings.Split(characterIDs, ",")
+	var chars []domain.Character
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		c, ok := reg.GetCharacter(id)
+		if !ok {
+			return nil, fmt.Errorf("character not found: %s", id)
+		}
+		chars = append(chars, c)
+	}
+
+	// Validate style
+	comicStyle := domain.ComicStyle(styleName)
+	if !comicStyle.IsValid() {
+		return nil, fmt.Errorf("unknown comic style: %s", styleName)
+	}
+
+	return &domain.Project{
+		ID:         uuid.New().String(),
+		Status:     domain.StatusCreated,
+		Characters: chars,
+		PlotHint:   plotHint,
+		Style:      comicStyle,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}, nil
+}
+
+func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
+	switch cfg.LLMProvider {
+	case "gemini":
+		model := llm.Gemini3Pro // default
+		// Map common model strings to enum
+		switch cfg.LLMModel {
+		case "gemini-3.1-pro-preview":
+			model = llm.Gemini3Pro
+		case "gemini-3-flash-preview":
+			model = llm.Gemini3Flash
+		case "gemini-3.1-flash-lite-preview":
+			model = llm.Gemini3FlashLite
+		case "gemini-2.5-pro":
+			model = llm.Gemini2Pro
+		case "gemini-2.5-flash":
+			model = llm.Gemini2Flash
+		case "gemini-2.5-flash-lite":
+			model = llm.Gemini2FlashLite
+		}
+		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
+	case "deepseek":
+		model := llm.DeepSeekChat
+		if cfg.LLMModel == "deepseek-reasoner" {
+			model = llm.DeepSeekReasoner
+		}
+		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
+	case "openrouter":
+		return llm.NewOpenRouterAdapter(cfg.OpenRouterKey, cfg.LLMModel), nil
+	case "302ai":
+		return llm.NewThreeOTwoAdapter(cfg.ThreeOTwoKey, cfg.LLMModel), nil
+	default:
+		return nil, fmt.Errorf("unknown LLM provider: %s", cfg.LLMProvider)
+	}
+}
+
+func createImageProvider(cfg *config.Config) (image.Provider, error) {
+	switch cfg.ImageProvider {
+	case "gemini":
+		model := image.GeminiImage31Flash // default
+		switch cfg.ImageModel {
+		case "gemini-3.1-flash-image-preview":
+			model = image.GeminiImage31Flash
+		case "gemini-3-pro-image-preview":
+			model = image.GeminiImage3Pro
+		case "gemini-2.5-flash-image":
+			model = image.GeminiImage25Flash
+		}
+		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+	default:
+		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
+	}
+}
+
+func printCharacters(reg *chardb.Registry) {
+	for _, series := range reg.ListSeries() {
+		fmt.Printf("\n📺 %s (%s)\n", series.Name, series.ID)
+		chars := reg.ListCharacters(series.ID)
+		for _, c := range chars {
+			fmt.Printf("   ├─ %s/%s — %s (%s)\n", c.Series, c.ID, c.Name, c.NameEN)
+		}
+	}
+}
+
+func printStyles() {
+	fmt.Println("\n🎨 可用画风:")
+	for _, meta := range domain.StyleRegistry {
+		fmt.Printf("   ├─ %-15s — %s\n", meta.ID, meta.Description)
+	}
 }

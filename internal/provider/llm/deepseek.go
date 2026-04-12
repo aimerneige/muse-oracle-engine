@@ -7,6 +7,7 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
+// DeepSeekModel enumerates supported DeepSeek model variants.
 type DeepSeekModel int
 
 const (
@@ -25,11 +26,13 @@ func (m DeepSeekModel) String() string {
 	}
 }
 
+// DeepSeekAdapter implements Provider using the DeepSeek API.
 type DeepSeekAdapter struct {
 	client *openai.Client
 	model  DeepSeekModel
 }
 
+// NewDeepSeekAdapter creates a new DeepSeek LLM provider.
 func NewDeepSeekAdapter(apiKey string, model DeepSeekModel) *DeepSeekAdapter {
 	client := openai.NewClient(
 		option.WithAPIKey(apiKey),
@@ -39,6 +42,10 @@ func NewDeepSeekAdapter(apiKey string, model DeepSeekModel) *DeepSeekAdapter {
 		client: &client,
 		model:  model,
 	}
+}
+
+func (d *DeepSeekAdapter) Name() string {
+	return "deepseek/" + d.model.String()
 }
 
 func (d *DeepSeekAdapter) GenerateText(ctx context.Context, prompt string) (string, error) {

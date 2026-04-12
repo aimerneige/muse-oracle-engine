@@ -6,6 +6,7 @@ import (
 	"google.golang.org/genai"
 )
 
+// GeminiModel enumerates supported Gemini model variants.
 type GeminiModel int
 
 const (
@@ -36,11 +37,13 @@ func (m GeminiModel) String() string {
 	}
 }
 
+// GeminiAdapter implements Provider using the Google Gemini API.
 type GeminiAdapter struct {
 	client *genai.Client
 	model  GeminiModel
 }
 
+// NewGeminiAdapter creates a new Gemini LLM provider.
 func NewGeminiAdapter(apiKey string, model GeminiModel) (*GeminiAdapter, error) {
 	client, err := genai.NewClient(context.Background(), &genai.ClientConfig{
 		APIKey: apiKey,
@@ -52,6 +55,10 @@ func NewGeminiAdapter(apiKey string, model GeminiModel) (*GeminiAdapter, error) 
 		client: client,
 		model:  model,
 	}, nil
+}
+
+func (g *GeminiAdapter) Name() string {
+	return "gemini/" + g.model.String()
 }
 
 func (g *GeminiAdapter) GenerateText(ctx context.Context, prompt string) (string, error) {
