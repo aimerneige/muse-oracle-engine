@@ -1,0 +1,14 @@
+id: yor
+name: "约尔·福杰"
+name_en: "Yor Forger"
+series: spy-family
+appearance:
+  hair_style: "黑色长直发，刘海整齐，头顶戴金色发饰（带刺的头饰）"
+  hair_color: "黑色"
+  eye_shape: "温柔中带有杀意的红色大眼"
+  eye_color: "红色"
+  height: "170cm"
+  body_type: "高挑修长且肌肉紧致的成年女性体型"
+  other: "耳朵上戴有金色耳环"
+personality: "表面温柔天然呆、实际为代号荆棘公主的暗杀者、战斗力惊人、家务和料理全废、深爱阿尼亚"
+tags: ["Forger-family", "assassin", "Thorn-Princess", "mother"]

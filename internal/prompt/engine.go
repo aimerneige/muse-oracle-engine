@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
 )
@@ -66,4 +70,86 @@ func (e *Engine) render(name string, data any) (string, error) {
 		return "", fmt.Errorf("failed to render template %s: %w", name, err)
 	}
 	return buf.String(), nil
+}
+
+type externalStyleDef struct {
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+}
+
+// LoadExternalDir scans a directory for custom comic styles and registers them.
+// Structure:
+//
+//	dir/
+//	  my_style/
+//	    style.yaml
+//	    draw.md.tmpl
+func (e *Engine) LoadExternalDir(dir string) error {
+	if dir == "" {
+		return nil
+	}
+
+	info, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to stat external styles dir: %w", err)
+	}
+	if !info.IsDir() {
+		return nil
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to read styles dir: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		styleID := entry.Name()
+		styleDir := filepath.Join(dir, styleID)
+
+		// 1. Read style.yaml
+		yamlPath := filepath.Join(styleDir, "style.yaml")
+		yamlData, err := os.ReadFile(yamlPath)
+		if err != nil {
+			return fmt.Errorf("failed to read %s: %w", yamlPath, err)
+		}
+		var def externalStyleDef
+		if err := yaml.Unmarshal(yamlData, &def); err != nil {
+			return fmt.Errorf("failed to parse %s: %w", yamlPath, err)
+		}
+		if def.Name == "" || def.Description == "" {
+			return fmt.Errorf("invalid style.yaml for %s: name and description required", styleID)
+		}
+
+		// 2. Read template draw.md.tmpl
+		tmplPath := filepath.Join(styleDir, "draw.md.tmpl")
+		tmplData, err := os.ReadFile(tmplPath)
+		if err != nil {
+			return fmt.Errorf("failed to read %s: %w", tmplPath, err)
+		}
+
+		templateKey := styleID
+		templateName := templateKey + ".md.tmpl"
+		
+		// Add template to engine
+		if _, err := e.templates.New(templateName).Parse(string(tmplData)); err != nil {
+			return fmt.Errorf("failed to parse template %s: %w", tmplPath, err)
+		}
+
+		// 3. Register style metadata
+		comicStyle := domain.ComicStyle(styleID)
+		domain.StyleRegistry[comicStyle] = domain.StyleMeta{
+			ID:          comicStyle,
+			Name:        def.Name,
+			Description: def.Description,
+			TemplateKey: templateKey,
+		}
+	}
+
+	return nil
 }

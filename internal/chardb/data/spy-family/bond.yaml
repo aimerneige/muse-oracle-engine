@@ -1,0 +1,14 @@
+id: bond
+name: "邦德·福杰"
+name_en: "Bond Forger"
+series: spy-family
+appearance:
+  hair_style: "无（大型犬）"
+  hair_color: "白色毛发"
+  eye_shape: "圆润的黑色眼睛"
+  eye_color: "黑色"
+  height: "约100cm（肩高）"
+  body_type: "大型白色长毛犬"
+  other: "全身白色长毛，尾巴蓬松"
+personality: "温顺的大型犬、拥有预知未来的超能力、非常聪明、和阿尼亚关系很好"
+tags: ["Forger-family", "dog", "precognition", "pet"]

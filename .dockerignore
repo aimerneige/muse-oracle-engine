@@ -1,0 +1,7 @@
+.git
+.env
+data/
+data/projects/
+test_styles/
+tmp/
+*.log

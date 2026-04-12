@@ -1,0 +1,14 @@
+id: tsumugi
+name: "琴吹紬"
+name_en: "Kotobuki Tsumugi"
+series: k-on
+appearance:
+  hair_style: "金色长发，微卷波浪形，蓬松优雅"
+  hair_color: "金色"
+  eye_shape: "温柔的下垂眼"
+  eye_color: "蓝色"
+  height: "157cm"
+  body_type: "标准体型，优雅柔和"
+  other: "眉毛较粗（沢庵眉）"
+personality: "大小姐、温柔善良、键盘手、总是带来高级茶点、对百合场面异常兴奋"
+tags: ["HTT", "keyboardist", "ojousama", "tea-lover", "Sakuragaoka"]

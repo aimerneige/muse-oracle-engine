@@ -11,11 +11,11 @@ const (
 
 // AllStyles returns all available comic styles.
 func AllStyles() []ComicStyle {
-	return []ComicStyle{
-		StyleChibiFigure,
-		StyleFigmaFigure,
-		StyleWaterColor,
+	styles := make([]ComicStyle, 0, len(StyleRegistry))
+	for id := range StyleRegistry {
+		styles = append(styles, id)
 	}
+	return styles
 }
 
 // StyleMeta contains display metadata for a comic style.

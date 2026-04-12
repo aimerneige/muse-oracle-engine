@@ -24,7 +24,7 @@
 - [x] 去除所有 prompt 中的 LoveLive 限定，改为通用动漫二创
 - [x] 故事生成 prompt：支持传入角色设定、剧情走向
 - [x] 漫画绘制 prompt：去除 `LoveLive_` 前缀，支持传入画风参数
-- [ ] 支持用户自定义画风模板
+- [x] 支持用户自定义画风模板
 
 ## Phase 4: 多模型 Provider 接入 ✅
 
@@ -80,17 +80,18 @@
 - [x] 实现单图重试 API（`POST /api/v1/projects/{id}/images/{index}/retry`）
 - [x] 实现项目删除 API
 
-## Phase 9: 扩展角色数据库
+## Phase 9: 扩展角色数据库 ✅
 
-- [ ] 录入更多动漫系列角色数据
-  - [ ] LoveLive Sunshine (Aqours)
-  - [ ] LoveLive 虹咲学园 (虹ヶ咲)
-  - [ ] LoveLive Superstar (Liella!)
-  - [ ] 孤独摇滚 (Bocchi the Rock!)
-  - [ ] 轻音少女 (K-ON!)
-  - [ ] 间谍过家家 (SPY×FAMILY)
-  - [ ] 更多系列...
-- [ ] 支持用户自定义角色（通过 YAML 文件或 API 提交）
+- [x] LoveLive! μ's — 9 名角色（穗乃果、海未、小鸟、真姬、妮可、花阳、凛、绘里、希）
+- [x] LoveLive! Sunshine!! Aqours — 9 名角色（千歌、梨子、曜、善子、花丸、露比、黛雅、果南、鞠莉）
+- [x] LoveLive! 虹咲学园 — 6 名角色（步梦、霞、雫、雪菜、爱、果林）
+- [x] LoveLive! Superstar!! Liella! — 5 名角色（香音、可可、千砂都、堇、恋）
+- [x] 孤独摇滚！结束乐队 — 4 名角色（独、虹夏、凉、郁代）
+- [x] 轻音少女 放课后茶话会 — 5 名角色（唯、澪、律、紬、梓）
+- [x] 间谍过家家 福杰家 — 4 名角色（罗伊德、约尔、阿尼亚、邦德）
+- [x] 支持用户自定义角色（通过 CHARDB_DIR 环境变量指定外部 YAML 目录）
+
+**共计 7 个系列，42 个角色**
 
 ## Future / Nice to Have
 
@@ -99,5 +100,11 @@
 - [ ] 图片拼接（多幅合成长图）
 - [ ] 生成结果评分 / 筛选
 - [ ] 多语言 prompt 支持
-- [ ] Docker 容器化部署
+- [x] Docker 容器化部署
 - [ ] Rate Limiting 和 API Key 认证
+
+## Phase 10: 画风模板引擎 ✅
+- [x] 支持用户自定义画风模板（通过 STYLES_DIR 环境变量指定外部 YAML 目录）
+
+## 补充完成 ✅
+- [x] 补充更多虹咲角色（艾玛、璃奈、彼方、栞子、兰珠、米娅）

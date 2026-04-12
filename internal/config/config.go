@@ -22,6 +22,7 @@ type Config struct {
 	// Paths
 	DataDir        string `json:"data_dir"`          // root directory for project data
 	CharDBDir      string `json:"chardb_dir"`        // root directory for character data
+	StylesDir      string `json:"styles_dir"`        // root directory for custom styles
 
 	// Server
 	ServerAddr     string `json:"server_addr"`       // HTTP server listen address
@@ -42,6 +43,7 @@ func LoadFromEnv() *Config {
 
 		DataDir:       getEnvDefault("DATA_DIR", "data/projects"),
 		CharDBDir:     getEnvDefault("CHARDB_DIR", ""),
+		StylesDir:     getEnvDefault("STYLES_DIR", ""),
 
 		ServerAddr:    getEnvDefault("SERVER_ADDR", ":8080"),
 	}

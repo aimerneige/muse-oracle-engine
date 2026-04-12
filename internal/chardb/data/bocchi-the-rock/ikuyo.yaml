@@ -1,0 +1,14 @@
+id: ikuyo
+name: "喜多郁代"
+name_en: "Kita Ikuyo"
+series: bocchi-the-rock
+appearance:
+  hair_style: "红色长发，微卷，发量丰盈，健康亮丽"
+  hair_color: "红色 / 朱红色"
+  eye_shape: "明亮温暖的大眼"
+  eye_color: "绿色"
+  height: "158cm"
+  body_type: "标准女高中生体型，健康有活力"
+  other: "无特殊标记"
+personality: "开朗外向、班级人气王、因崇拜凉而加入乐队担任主唱兼吉他、努力家、天然呆"
+tags: ["Kessoku Band", "vocalist", "guitarist", "popular", "cheerful"]

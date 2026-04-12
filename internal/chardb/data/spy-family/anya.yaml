@@ -1,0 +1,14 @@
+id: anya
+name: "阿尼亚·福杰"
+name_en: "Anya Forger"
+series: spy-family
+appearance:
+  hair_style: "粉色中长发，有两个圆球形发髻，刘海齐整"
+  hair_color: "粉色"
+  eye_shape: "绿色的大圆眼，表情丰富"
+  eye_color: "绿色"
+  height: "99.5cm"
+  body_type: "幼小的孩童体型（约6岁）"
+  other: "无特殊标记"
+personality: "古灵精怪、拥有读心术超能力、喜欢间谍动画、表情包制造机、爱花生、学习很差"
+tags: ["Forger-family", "telepath", "child", "daughter", "Eden-Academy"]

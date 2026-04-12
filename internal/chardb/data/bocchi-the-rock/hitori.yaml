@@ -1,0 +1,14 @@
+id: hitori
+name: "后藤独"
+name_en: "Gotou Hitori"
+series: bocchi-the-rock
+appearance:
+  hair_style: "粉色长直发，及腰，刘海遮住半边脸，发丝略凌乱"
+  hair_color: "粉色 / 浅粉色"
+  eye_shape: "下垂眼，经常露出不安的眼神"
+  eye_color: "蓝色"
+  height: "156cm"
+  body_type: "纤细瘦弱的体型"
+  other: "经常穿着粉色运动服外套"
+personality: "极度社恐、内向阴暗、吉他技术极其出色、一紧张就变成方块人、偶尔爆发出惊人潜力"
+tags: ["Kessoku Band", "guitarist", "social-anxiety", "bocchi"]

@@ -1,0 +1,14 @@
+id: emma
+name: "艾玛·维尔德"
+name_en: "Emma Verde"
+series: nijigasaki
+appearance:
+  hair_style: "棕色长发，麻花辫，常带有发带"
+  hair_color: "深棕色"
+  eye_shape: "温暖包容的大下垂眼"
+  eye_color: "绿色"
+  height: "166cm"
+  body_type: "高挑丰满的体型"
+  other: "瑞士留学生"
+personality: "温柔、包容、充满母性光辉、喜欢吃面包、大胃王、喜欢拥抱大家"
+tags: ["Nijigasaki", "solo-idol", "international", "motherly"]

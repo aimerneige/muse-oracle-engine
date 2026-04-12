@@ -43,10 +43,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load character database: %v", err)
 	}
+	// Load user-defined characters from external directory (if configured)
+	if cfg.CharDBDir != "" {
+		if err := charRegistry.LoadExternalDir(cfg.CharDBDir); err != nil {
+			log.Printf("Warning: failed to load external characters: %v", err)
+		}
+	}
 
 	promptEngine, err := prompt.NewEngine()
 	if err != nil {
 		log.Fatalf("Failed to initialize prompt engine: %v", err)
+	}
+	if cfg.StylesDir != "" {
+		if err := promptEngine.LoadExternalDir(cfg.StylesDir); err != nil {
+			log.Printf("Warning: failed to load external styles: %v", err)
+		}
 	}
 
 	llmProvider, err := createLLMProvider(cfg)

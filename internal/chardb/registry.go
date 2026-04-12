@@ -150,3 +150,57 @@ func (r *Registry) GetCharacter(fullID string) (domain.Character, bool) {
 func (r *Registry) GetCharacterBySeriesAndID(series, id string) (domain.Character, bool) {
 	return r.GetCharacter(series + "/" + id)
 }
+
+// LoadExternalDir merges character data from an external filesystem directory
+// into this registry. This allows users to add custom characters by placing
+// YAML files in a data directory.
+func (r *Registry) LoadExternalDir(dataDir string) error {
+	if dataDir == "" {
+		return nil
+	}
+
+	info, err := os.Stat(dataDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // external dir not present, skip silently
+		}
+		return fmt.Errorf("failed to stat external chardb dir: %w", err)
+	}
+	if !info.IsDir() {
+		return nil
+	}
+
+	entries, err := os.ReadDir(dataDir)
+	if err != nil {
+		return fmt.Errorf("failed to read external chardb dir: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		seriesDir := filepath.Join(dataDir, entry.Name())
+		if err := r.loadSeries(seriesDir, entry.Name()); err != nil {
+			return fmt.Errorf("failed to load external series %s: %w", entry.Name(), err)
+		}
+	}
+
+	return nil
+}
+
+// AddCharacter programmatically adds or updates a character in the registry.
+func (r *Registry) AddCharacter(c domain.Character) {
+	key := c.Series + "/" + c.ID
+	r.characters[key] = c
+}
+
+// AddSeries programmatically adds or updates a series in the registry.
+func (r *Registry) AddSeries(s domain.Series) {
+	r.series[s.ID] = s
+}
+
+// CharacterCount returns the total number of registered characters.
+func (r *Registry) CharacterCount() int {
+	return len(r.characters)
+}
+
