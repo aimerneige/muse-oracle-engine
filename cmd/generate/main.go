@@ -30,6 +30,14 @@ func main() {
 		log.Fatalf("Error generating storybook step 1: %v", err)
 	}
 
-	log.Printf("Step 1 Response: %+v", step1Resp)
-	log.Printf("History: %+v", history)
+	log.Println("Overview: ", step1Resp.Overview)
+
+	_, storybook, err := worker.GenerateStorybookStep2(ctx, history, step1Resp, deepseek)
+	if err != nil {
+		log.Fatal("Error generating storybook step 2: ", err)
+	}
+
+	for i, page := range storybook {
+		log.Printf("Page %d:\n%s\n", i+1, page)
+	}
 }
