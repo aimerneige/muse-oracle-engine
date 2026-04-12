@@ -71,5 +71,9 @@ func (d *DeepSeekAdapter) GenerateTextWithHistory(ctx context.Context, history H
 	if err != nil {
 		return "", err
 	}
+	if len(completion.Choices) == 0 {
+		return "", nil
+	}
+
 	return completion.Choices[0].Message.Content, nil
 }
