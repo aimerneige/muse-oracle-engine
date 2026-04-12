@@ -69,6 +69,11 @@
    - 查看所有画风：`go run cmd/generate/main.go --list-styles`
    - 查看可用模型：`go run cmd/generate/main.go --list-models`
 
+4. 重新生成单张图片（不覆盖旧图片，新图片会以 `{序号}_{次数}.png` 保存，如 `001_2.png`）：
+   ```bash
+   go run cmd/generate/main.go --resume <project-id> --retry-image 3
+   ```
+
 ## 支持的模型列表
 
 **文本大模型 (LLM):**
