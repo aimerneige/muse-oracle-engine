@@ -23,18 +23,18 @@ func main() {
 	}
 	log.Println("✓ 配置文件加载成功")
 
-	deepseekApiKey := os.Getenv("DEEPSEEK_API_KEY")
-	if deepseekApiKey == "" {
-		log.Fatal("DEEPSEEK_API_KEY is not set")
-	}
-	deepseek := llm.NewDeepSeekAdapter(deepseekApiKey, llm.DeepSeekChat)
-	log.Println("✓ DeepSeek 适配器初始化成功")
-
 	geminiApiKey := os.Getenv("GEMINI_API_KEY")
 	if geminiApiKey == "" {
 		log.Fatal("GEMINI_API_KEY is not set")
 	}
-	nanobanana, err := img.NewNanobananaAdapter(geminiApiKey, img.NanoBanana)
+
+	gemini, err := llm.NewGeminiAdapter(geminiApiKey, llm.Gemini3Pro)
+	if err != nil {
+		log.Fatal("Error creating Gemini provider: ", err)
+	}
+	log.Println("✓ Gemini 语言模型提供器初始化成功")
+
+	nanobanana, err := img.NewNanobananaAdapter(geminiApiKey, img.NanoBanana2)
 	if err != nil {
 		log.Fatal("Error creating nanobanana adapter: ", err)
 	}
@@ -46,14 +46,14 @@ func main() {
 	log.Printf("提示词: %s", hint)
 
 	log.Println(">>> 开始生成故事脚本 (步骤 1/2)...")
-	history, step1Resp, err := worker.GenerateStorybookStep1(ctx, hint, deepseek)
+	history, step1Resp, err := worker.GenerateStorybookStep1(ctx, hint, gemini)
 	if err != nil {
 		log.Fatalf("Error generating storybook step 1: %v", err)
 	}
 	log.Println("✓ 故事脚本生成完成 (步骤 1/2)")
 
 	log.Println(">>> 开始生成漫画分镜 (步骤 2/2)...")
-	_, storybook, err := worker.GenerateStorybookStep2(ctx, history, step1Resp, deepseek)
+	_, storybook, err := worker.GenerateStorybookStep2(ctx, history, step1Resp, gemini)
 	if err != nil {
 		log.Fatal("Error generating storybook step 2: ", err)
 	}
