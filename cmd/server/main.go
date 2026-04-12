@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/aimerneige/lovelive-manga-generator/internal/provider/llm"
 	"github.com/aimerneige/lovelive-manga-generator/internal/service"
 	"github.com/aimerneige/lovelive-manga-generator/internal/storage"
+	"github.com/aimerneige/lovelive-manga-generator/ui"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
@@ -108,6 +110,13 @@ func main() {
 
 	// Image retrieval
 	mux.HandleFunc("GET /api/v1/projects/{id}/images/{index}", app.handleGetImage)
+
+	// Serve Static Frontend UI
+	staticFS, err := fs.Sub(ui.Files, "dist")
+	if err != nil {
+		log.Fatalf("Failed to initialize static files: %v", err)
+	}
+	mux.Handle("/", http.FileServer(http.FS(staticFS)))
 
 	log.Printf("Server starting on %s", cfg.ServerAddr)
 	if err := http.ListenAndServe(cfg.ServerAddr, mux); err != nil {

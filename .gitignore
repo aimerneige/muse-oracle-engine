@@ -2,3 +2,5 @@
 !imgs/.gitkeep
 imgs/
 data/projects/
+ui/node_modules/
+ui/dist/

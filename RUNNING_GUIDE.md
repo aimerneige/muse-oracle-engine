@@ -81,6 +81,17 @@ Server API 模式适用于前后端分离应用。你可以启动它作为生成
 
 ### 启动 Server
 
+因为我们内置了一套精美的静态前端网页（在 `ui/` 目录下），在第一次启动 Server 之前或每次修改了前端代码后，你需要进行前端构建：
+
+```bash
+cd ui
+npm install
+npm run build
+cd ..
+```
+
+完成构建后，启动 Go 后端：
+
 ```bash
 go run cmd/server/main.go
 # 默认监听于 ":8080" (可通过 `.env` 修改 SERVER_ADDR 设置)
