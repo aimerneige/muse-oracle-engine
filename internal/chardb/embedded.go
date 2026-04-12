@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed data/*
+//go:embed all:data
 var embeddedData embed.FS
 
 func (r *Registry) loadEmbeddedData() error {

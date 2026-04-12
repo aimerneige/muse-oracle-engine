@@ -14,10 +14,9 @@
 
 - [x] 设计角色 YAML 数据格式规范
 - [x] 实现角色注册表（`internal/chardb/registry.go`）
-- [x] 录入 LoveLive 角色数据（穗乃果、海未、小鸟、真姬、日香）
+- [x] 录入 LoveLive μ's 全部 9 名角色数据
 - [x] 支持按系列 / ID 查询角色
 - [x] 实现角色设定自动注入到 prompt 的逻辑
-- [ ] 补充 LoveLive 剩余角色（花阳、凛、果梨、希）
 
 ## Phase 3: Prompt 模板系统 ✅
 
@@ -45,7 +44,7 @@
 - [x] 每个 pipeline 步骤完成后自动保存 checkpoint
 - [x] 保存 LLM 原始响应到中间结果文件
 - [x] 支持从 project ID 恢复已有项目
-- [ ] 支持重置某个步骤的状态进行重试
+- [x] 支持重置某个步骤的状态进行重试（`ResetToStep` + `ResetSingleImage`）
 
 ## Phase 6: Pipeline 工作流引擎 ✅
 
@@ -55,17 +54,16 @@
 - [x] 实现 Review Gate：分镜审核暂停点
 - [x] 实现步骤 3：漫画图片批量生成
 - [x] 支持从 checkpoint 断点续跑
-- [ ] 支持单张图片重试
+- [x] 支持单张图片重试
 
 ## Phase 7: CLI 交互改进 ✅
 
 - [x] 入口参数化：支持命令行选择角色 / 剧情走向 / 画风
-- [x] 列出可用角色（按系列分组）
-- [x] 列出可用画风
-- [ ] 列出可用模型
+- [x] 列出可用角色（按系列分组 `--list-characters`）
+- [x] 列出可用画风（`--list-styles`）
+- [x] 列出可用模型（`--list-models`）
 - [x] 分镜 review：终端打印分镜 + 交互式确认（通过 / 重新生成）
-- [ ] 显示项目进度和中间结果
-- [x] 支持恢复已有项目继续执行
+- [x] 支持恢复已有项目继续执行（`--resume`）
 
 ## Phase 8: HTTP API 后端 ✅
 
@@ -73,16 +71,21 @@
 - [x] 实现角色查询 API（`GET /api/v1/characters`）
 - [x] 实现画风查询 API（`GET /api/v1/styles`）
 - [x] 实现项目创建 API（`POST /api/v1/projects`）
+- [x] 实现项目列表 API（`GET /api/v1/projects`）
 - [x] 实现项目状态查询 API（`GET /api/v1/projects/{id}`）
 - [x] 实现生成触发 API（story / storyboard / images）
 - [x] 实现审核提交 API（`POST /api/v1/projects/{id}/review`）
 - [x] 实现图片获取 API
-- [ ] 实现单步 / 单图重试 API
-- [ ] 实现项目列表 API
+- [x] 实现单步重试 API（`POST /api/v1/projects/{id}/retry/{step}`）
+- [x] 实现单图重试 API（`POST /api/v1/projects/{id}/images/{index}/retry`）
+- [x] 实现项目删除 API
 
 ## Phase 9: 扩展角色数据库
 
 - [ ] 录入更多动漫系列角色数据
+  - [ ] LoveLive Sunshine (Aqours)
+  - [ ] LoveLive 虹咲学园 (虹ヶ咲)
+  - [ ] LoveLive Superstar (Liella!)
   - [ ] 孤独摇滚 (Bocchi the Rock!)
   - [ ] 轻音少女 (K-ON!)
   - [ ] 间谍过家家 (SPY×FAMILY)

@@ -30,6 +30,7 @@ func main() {
 	resumeID := flag.String("resume", "", "Resume an existing project by ID")
 	listChars := flag.Bool("list-characters", false, "List all available characters")
 	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
+	listModels := flag.Bool("list-models", false, "List all available models")
 	noReview := flag.Bool("no-review", false, "Skip storyboard review step")
 	flag.Parse()
 
@@ -53,6 +54,10 @@ func main() {
 	}
 	if *listStyles {
 		printStyles()
+		return
+	}
+	if *listModels {
+		printModels()
 		return
 	}
 
@@ -244,4 +249,28 @@ func printStyles() {
 	for _, meta := range domain.StyleRegistry {
 		fmt.Printf("   ├─ %-15s — %s\n", meta.ID, meta.Description)
 	}
+}
+
+func printModels() {
+	fmt.Println("\n🤖 LLM 模型:")
+	fmt.Println("  Provider: gemini")
+	fmt.Println("   ├─ gemini-3.1-pro-preview      (Gemini 3.1 Pro)")
+	fmt.Println("   ├─ gemini-3-flash-preview       (Gemini 3 Flash)")
+	fmt.Println("   ├─ gemini-3.1-flash-lite-preview (Gemini 3.1 Flash Lite)")
+	fmt.Println("   ├─ gemini-2.5-pro               (Gemini 2.5 Pro)")
+	fmt.Println("   ├─ gemini-2.5-flash             (Gemini 2.5 Flash)")
+	fmt.Println("   └─ gemini-2.5-flash-lite        (Gemini 2.5 Flash Lite)")
+	fmt.Println("  Provider: deepseek")
+	fmt.Println("   ├─ deepseek-chat                (DeepSeek Chat)")
+	fmt.Println("   └─ deepseek-reasoner            (DeepSeek Reasoner)")
+	fmt.Println("  Provider: openrouter")
+	fmt.Println("   └─ (任意模型名称，如 google/gemini-2.5-pro)")
+	fmt.Println("  Provider: 302ai")
+	fmt.Println("   └─ (任意模型名称)")
+
+	fmt.Println("\n🖼️  图像生成模型:")
+	fmt.Println("  Provider: gemini")
+	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
+	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
+	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
 }

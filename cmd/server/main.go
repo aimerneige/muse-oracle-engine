@@ -80,6 +80,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/styles", app.handleListStyles)
 
 	// Project lifecycle
+	mux.HandleFunc("GET /api/v1/projects", app.handleListProjects)
 	mux.HandleFunc("POST /api/v1/projects", app.handleCreateProject)
 	mux.HandleFunc("GET /api/v1/projects/{id}", app.handleGetProject)
 	mux.HandleFunc("DELETE /api/v1/projects/{id}", app.handleDeleteProject)
@@ -89,6 +90,10 @@ func main() {
 	mux.HandleFunc("POST /api/v1/projects/{id}/generate/storyboard", app.handleGenerateStoryboard)
 	mux.HandleFunc("POST /api/v1/projects/{id}/review", app.handleReview)
 	mux.HandleFunc("POST /api/v1/projects/{id}/generate/images", app.handleGenerateImages)
+
+	// Retry
+	mux.HandleFunc("POST /api/v1/projects/{id}/retry/{step}", app.handleRetryStep)
+	mux.HandleFunc("POST /api/v1/projects/{id}/images/{index}/retry", app.handleRetryImage)
 
 	// Image retrieval
 	mux.HandleFunc("GET /api/v1/projects/{id}/images/{index}", app.handleGetImage)
@@ -302,6 +307,107 @@ func (app *App) handleGetImage(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(data)
+}
+
+func (app *App) handleListProjects(w http.ResponseWriter, _ *http.Request) {
+	ids, err := app.store.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Load summary info for each project
+	type projectSummary struct {
+		ID     string               `json:"id"`
+		Status domain.ProjectStatus `json:"status"`
+		Style  domain.ComicStyle    `json:"style"`
+		Plot   string               `json:"plot_hint"`
+	}
+
+	var summaries []projectSummary
+	for _, id := range ids {
+		p, err := app.store.Load(id)
+		if err != nil {
+			continue
+		}
+		summaries = append(summaries, projectSummary{
+			ID:     p.ID,
+			Status: p.Status,
+			Style:  p.Style,
+			Plot:   p.PlotHint,
+		})
+	}
+	writeJSON(w, http.StatusOK, summaries)
+}
+
+func (app *App) handleRetryStep(w http.ResponseWriter, r *http.Request) {
+	project, err := app.store.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	step := r.PathValue("step")
+	switch step {
+	case "story", "generate_story":
+		project.ResetToStep("generate_story")
+		if err := app.storySvc.GenerateStory(r.Context(), project); err != nil {
+			_ = app.store.Save(project)
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	case "storyboard", "generate_storyboard":
+		project.ResetToStep("generate_storyboard")
+		if err := app.storySvc.GenerateStoryboard(r.Context(), project); err != nil {
+			_ = app.store.Save(project)
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	case "images", "generate_images":
+		project.ResetToStep("generate_images")
+		if err := app.comicSvc.GenerateAllImages(r.Context(), project); err != nil {
+			_ = app.store.Save(project)
+			log.Printf("Image generation had errors: %v", err)
+		}
+	default:
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("unknown step: %s", step))
+		return
+	}
+
+	if err := app.store.Save(project); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, project)
+}
+
+func (app *App) handleRetryImage(w http.ResponseWriter, r *http.Request) {
+	project, err := app.store.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	indexStr := r.PathValue("index")
+	var index int
+	if _, err := fmt.Sscanf(indexStr, "%d", &index); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid image index")
+		return
+	}
+
+	project.ResetSingleImage(index)
+
+	if err := app.comicSvc.GenerateSingleImage(r.Context(), project, index); err != nil {
+		_ = app.store.Save(project)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := app.store.Save(project); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, project)
 }
 
 // --- Helpers ---

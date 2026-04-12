@@ -61,3 +61,46 @@ func (p *Project) IsStepCompleted(step string) bool {
 		return false
 	}
 }
+
+// ResetToStep resets the project state so that all steps from the given step onward
+// can be re-executed. This is used for retry functionality.
+func (p *Project) ResetToStep(step string) {
+	p.UpdatedAt = time.Now()
+	switch step {
+	case "generate_story":
+		p.Status = StatusCreated
+		p.StoryResult = nil
+		p.Storyboard = nil
+		p.Images = nil
+		p.History = nil
+		p.ReviewFeedback = ""
+	case "generate_storyboard":
+		p.Status = StatusStoryDone
+		p.Storyboard = nil
+		p.Images = nil
+		p.ReviewFeedback = ""
+	case "review_storyboard":
+		p.Status = StatusStoryboardDone
+		p.Images = nil
+		p.ReviewFeedback = ""
+	case "generate_images":
+		p.Status = StatusReviewApproved
+		p.Images = nil
+	}
+}
+
+// ResetSingleImage resets a single image so it can be re-generated.
+func (p *Project) ResetSingleImage(index int) {
+	if index < 1 || index > len(p.Images) {
+		return
+	}
+	p.Images[index-1].Status = "pending"
+	p.Images[index-1].Error = ""
+	p.Images[index-1].FilePath = ""
+	// If project was marked done, revert to approved for re-generation
+	if p.Status == StatusImagesDone {
+		p.Status = StatusReviewApproved
+	}
+	p.UpdatedAt = time.Now()
+}
+
