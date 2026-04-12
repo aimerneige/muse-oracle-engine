@@ -111,7 +111,6 @@ func main() {
 
 	// Build pipeline steps
 	steps := []pipeline.Step{
-		pipeline.NewStoryStep(storySvc),
 		pipeline.NewStoryboardStep(storySvc),
 	}
 	if !*noReview {

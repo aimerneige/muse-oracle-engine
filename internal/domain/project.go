@@ -7,7 +7,6 @@ type ProjectStatus string
 
 const (
 	StatusCreated        ProjectStatus = "created"
-	StatusStoryDone      ProjectStatus = "story_done"
 	StatusStoryboardDone ProjectStatus = "storyboard_done"
 	StatusReviewPending  ProjectStatus = "review_pending"
 	StatusReviewApproved ProjectStatus = "review_approved"
@@ -49,10 +48,8 @@ type HistoryMessage struct {
 // IsStepCompleted checks if a pipeline step has already been completed.
 func (p *Project) IsStepCompleted(step string) bool {
 	switch step {
-	case "generate_story":
-		return p.Status != StatusCreated && p.Status != StatusFailed
 	case "generate_storyboard":
-		return p.Status != StatusCreated && p.Status != StatusStoryDone && p.Status != StatusFailed
+		return p.Status != StatusCreated && p.Status != StatusFailed
 	case "review_storyboard":
 		return p.Status != StatusReviewPending
 	case "generate_images":
@@ -67,17 +64,12 @@ func (p *Project) IsStepCompleted(step string) bool {
 func (p *Project) ResetToStep(step string) {
 	p.UpdatedAt = time.Now()
 	switch step {
-	case "generate_story":
+	case "generate_storyboard":
 		p.Status = StatusCreated
 		p.StoryResult = nil
 		p.Storyboard = nil
 		p.Images = nil
 		p.History = nil
-		p.ReviewFeedback = ""
-	case "generate_storyboard":
-		p.Status = StatusStoryDone
-		p.Storyboard = nil
-		p.Images = nil
 		p.ReviewFeedback = ""
 	case "review_storyboard":
 		p.Status = StatusStoryboardDone

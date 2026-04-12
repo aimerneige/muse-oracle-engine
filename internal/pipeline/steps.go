@@ -7,21 +7,6 @@ import (
 	"github.com/aimerneige/lovelive-manga-generator/internal/service"
 )
 
-// StoryStep wraps the story service as a pipeline step.
-type StoryStep struct {
-	svc *service.StoryService
-}
-
-func NewStoryStep(svc *service.StoryService) *StoryStep {
-	return &StoryStep{svc: svc}
-}
-
-func (s *StoryStep) ID() StepID { return StepGenerateStory }
-
-func (s *StoryStep) Execute(ctx context.Context, project *domain.Project) error {
-	return s.svc.GenerateStory(ctx, project)
-}
-
 // StoryboardStep wraps the storyboard generation as a pipeline step.
 type StoryboardStep struct {
 	svc *service.StoryService

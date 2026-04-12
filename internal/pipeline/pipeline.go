@@ -13,7 +13,6 @@ import (
 type StepID string
 
 const (
-	StepGenerateStory      StepID = "generate_story"
 	StepGenerateStoryboard StepID = "generate_storyboard"
 	StepReviewStoryboard   StepID = "review_storyboard"
 	StepGenerateImages     StepID = "generate_images"

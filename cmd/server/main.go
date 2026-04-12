@@ -223,7 +223,9 @@ func (app *App) handleGenerateStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.storySvc.GenerateStory(r.Context(), project); err != nil {
+	// Story generation is now merged into storyboard generation.
+	// This endpoint runs the full storyboard generation in one LLM call.
+	if err := app.storySvc.GenerateStoryboard(r.Context(), project); err != nil {
 		_ = app.store.Save(project) // save progress
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -241,6 +243,15 @@ func (app *App) handleGenerateStoryboard(w http.ResponseWriter, r *http.Request)
 	project, err := app.store.Load(r.PathValue("id"))
 	if err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	// If storyboard is already done, return the project as-is
+	if project.Status == domain.StatusStoryboardDone ||
+		project.Status == domain.StatusReviewPending ||
+		project.Status == domain.StatusReviewApproved ||
+		project.Status == domain.StatusImagesDone {
+		writeJSON(w, http.StatusOK, project)
 		return
 	}
 
@@ -369,14 +380,7 @@ func (app *App) handleRetryStep(w http.ResponseWriter, r *http.Request) {
 
 	step := r.PathValue("step")
 	switch step {
-	case "story", "generate_story":
-		project.ResetToStep("generate_story")
-		if err := app.storySvc.GenerateStory(r.Context(), project); err != nil {
-			_ = app.store.Save(project)
-			writeError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	case "storyboard", "generate_storyboard":
+	case "story", "generate_story", "storyboard", "generate_storyboard":
 		project.ResetToStep("generate_storyboard")
 		if err := app.storySvc.GenerateStoryboard(r.Context(), project); err != nil {
 			_ = app.store.Save(project)
