@@ -135,7 +135,7 @@ func (e *Engine) LoadExternalDir(dir string) error {
 
 		templateKey := styleID
 		templateName := templateKey + ".md.tmpl"
-		
+
 		// Add template to engine
 		if _, err := e.templates.New(templateName).Parse(string(tmplData)); err != nil {
 			return fmt.Errorf("failed to parse template %s: %w", tmplPath, err)

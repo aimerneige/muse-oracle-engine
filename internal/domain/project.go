@@ -18,15 +18,15 @@ const (
 type Project struct {
 	ID         string        `json:"id"`
 	Status     ProjectStatus `json:"status"`
-	Characters []Character   `json:"characters"` // selected characters with full profiles
+	Characters []Character   `json:"characters"`  // selected characters with full profiles
 	PlotHint   string        `json:"plot_hint"`   // user-provided story direction
 	Style      ComicStyle    `json:"style"`       // selected comic style
 	LLMModel   string        `json:"llm_model"`   // model used for text generation
 	ImageModel string        `json:"image_model"` // model used for image generation
 
 	// Pipeline intermediate results
-	StoryResult *StoryResult `json:"story_result,omitempty"`
-	Storyboard  *Storyboard  `json:"storyboard,omitempty"`
+	StoryResult *StoryResult  `json:"story_result,omitempty"`
+	Storyboard  *Storyboard   `json:"storyboard,omitempty"`
 	Images      []ImageResult `json:"images,omitempty"`
 
 	// Review feedback
@@ -41,7 +41,7 @@ type Project struct {
 
 // HistoryMessage represents a single message in the LLM conversation history.
 type HistoryMessage struct {
-	Role    string `json:"role"`    // "user", "assistant", "system"
+	Role    string `json:"role"` // "user", "assistant", "system"
 	Content string `json:"content"`
 }
 
@@ -95,4 +95,3 @@ func (p *Project) ResetSingleImage(index int) {
 	}
 	p.UpdatedAt = time.Now()
 }
-

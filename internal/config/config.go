@@ -8,24 +8,24 @@ import (
 // Config holds the application configuration.
 type Config struct {
 	// API Keys
-	GeminiAPIKey    string `json:"gemini_api_key"`
-	DeepSeekAPIKey  string `json:"deepseek_api_key"`
-	OpenRouterKey   string `json:"openrouter_api_key"`
-	ThreeOTwoKey    string `json:"threeotwo_api_key"`
+	GeminiAPIKey   string `json:"gemini_api_key"`
+	DeepSeekAPIKey string `json:"deepseek_api_key"`
+	OpenRouterKey  string `json:"openrouter_api_key"`
+	ThreeOTwoKey   string `json:"threeotwo_api_key"`
 
 	// Model selection
-	LLMProvider    string `json:"llm_provider"`     // "gemini", "deepseek", "openrouter", "302ai"
-	LLMModel       string `json:"llm_model"`         // model identifier
-	ImageProvider  string `json:"image_provider"`    // "gemini"
-	ImageModel     string `json:"image_model"`       // model identifier
+	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai"
+	LLMModel      string `json:"llm_model"`      // model identifier
+	ImageProvider string `json:"image_provider"` // "gemini"
+	ImageModel    string `json:"image_model"`    // model identifier
 
 	// Paths
-	DataDir        string `json:"data_dir"`          // root directory for project data
-	CharDBDir      string `json:"chardb_dir"`        // root directory for character data
-	StylesDir      string `json:"styles_dir"`        // root directory for custom styles
+	DataDir   string `json:"data_dir"`   // root directory for project data
+	CharDBDir string `json:"chardb_dir"` // root directory for character data
+	StylesDir string `json:"styles_dir"` // root directory for custom styles
 
 	// Server
-	ServerAddr     string `json:"server_addr"`       // HTTP server listen address
+	ServerAddr string `json:"server_addr"` // HTTP server listen address
 }
 
 // LoadFromEnv loads configuration from environment variables.
@@ -41,11 +41,11 @@ func LoadFromEnv() *Config {
 		ImageProvider: getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:    getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
 
-		DataDir:       getEnvDefault("DATA_DIR", "data/projects"),
-		CharDBDir:     getEnvDefault("CHARDB_DIR", ""),
-		StylesDir:     getEnvDefault("STYLES_DIR", ""),
+		DataDir:   getEnvDefault("DATA_DIR", "data/projects"),
+		CharDBDir: getEnvDefault("CHARDB_DIR", ""),
+		StylesDir: getEnvDefault("STYLES_DIR", ""),
 
-		ServerAddr:    getEnvDefault("SERVER_ADDR", ":8080"),
+		ServerAddr: getEnvDefault("SERVER_ADDR", ":8080"),
 	}
 	return cfg
 }

@@ -6,9 +6,9 @@ type CharacterAppearance struct {
 	HairColor string `json:"hair_color" yaml:"hair_color"` // e.g. "姜黄色 / 橙棕色"
 	EyeShape  string `json:"eye_shape" yaml:"eye_shape"`   // e.g. "大圆眼，明亮有神"
 	EyeColor  string `json:"eye_color" yaml:"eye_color"`   // e.g. "蓝色"
-	Height    string `json:"height" yaml:"height"`          // e.g. "157cm"
-	BodyType  string `json:"body_type" yaml:"body_type"`    // e.g. "标准偶像体型，略显活泼"
-	Other     string `json:"other" yaml:"other"`            // e.g. skin tone, scars, animal ears, etc.
+	Height    string `json:"height" yaml:"height"`         // e.g. "157cm"
+	BodyType  string `json:"body_type" yaml:"body_type"`   // e.g. "标准偶像体型，略显活泼"
+	Other     string `json:"other" yaml:"other"`           // e.g. skin tone, scars, animal ears, etc.
 }
 
 // Character represents a known anime character with pre-defined appearance and personality.
@@ -24,7 +24,7 @@ type Character struct {
 
 // Series represents an anime series that characters belong to.
 type Series struct {
-	ID     string `json:"id" yaml:"id"`         // unique identifier, e.g. "lovelive"
-	Name   string `json:"name" yaml:"name"`     // display name, e.g. "LoveLive!"
+	ID     string `json:"id" yaml:"id"`           // unique identifier, e.g. "lovelive"
+	Name   string `json:"name" yaml:"name"`       // display name, e.g. "LoveLive!"
 	NameEN string `json:"name_en" yaml:"name_en"` // English name
 }

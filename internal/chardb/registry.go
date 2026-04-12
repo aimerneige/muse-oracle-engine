@@ -203,4 +203,3 @@ func (r *Registry) AddSeries(s domain.Series) {
 func (r *Registry) CharacterCount() int {
 	return len(r.characters)
 }
-

@@ -83,8 +83,6 @@ func main() {
 		log.Fatalf("Configuration error: %v", err)
 	}
 
-
-
 	// Initialize LLM provider
 	llmProvider, err := createLLMProvider(cfg)
 	if err != nil {

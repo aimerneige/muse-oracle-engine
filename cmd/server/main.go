@@ -158,8 +158,8 @@ func (app *App) handleListStyles(w http.ResponseWriter, _ *http.Request) {
 
 func (app *App) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Characters []string         `json:"characters"` // e.g. ["lovelive/honoka", "lovelive/umi"]
-		PlotHint   string           `json:"plot_hint"`
+		Characters []string          `json:"characters"` // e.g. ["lovelive/honoka", "lovelive/umi"]
+		PlotHint   string            `json:"plot_hint"`
 		Style      domain.ComicStyle `json:"style"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
