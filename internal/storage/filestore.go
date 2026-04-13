@@ -18,6 +18,9 @@ import (
 //	    images/
 //	      001.png        - generated comic images
 //	      002.png
+//	    prompts/
+//	      001.txt        - rendered prompts
+//	      002.txt
 type FileStore struct {
 	rootDir string
 }
@@ -120,6 +123,27 @@ func (fs *FileStore) SaveImage(projectID string, index int, attempt int, data []
 
 	// Return relative path from project dir
 	return filepath.Join("images", filename), nil
+}
+
+func (fs *FileStore) SavePrompt(projectID string, index int, attempt int, prompt string) (string, error) {
+	promptsDir := filepath.Join(fs.ProjectDir(projectID), "prompts")
+	if err := os.MkdirAll(promptsDir, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create prompts directory: %w", err)
+	}
+
+	var filename string
+	if attempt <= 1 {
+		filename = fmt.Sprintf("%03d.txt", index)
+	} else {
+		filename = fmt.Sprintf("%03d_%d.txt", index, attempt)
+	}
+	promptPath := filepath.Join(promptsDir, filename)
+
+	if err := os.WriteFile(promptPath, []byte(prompt), 0o644); err != nil {
+		return "", fmt.Errorf("failed to write prompt: %w", err)
+	}
+
+	return filepath.Join("prompts", filename), nil
 }
 
 func (fs *FileStore) LoadImage(projectID string, index int) ([]byte, error) {

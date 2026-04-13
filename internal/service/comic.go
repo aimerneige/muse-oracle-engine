@@ -85,6 +85,16 @@ func (s *ComicService) GenerateSingleImage(ctx context.Context, project *domain.
 	}
 
 	// Generate image
+	idx := panelIndex - 1
+	attempt := 1
+	if idx < len(project.Images) && project.Images[idx].Attempt > 0 {
+		attempt = project.Images[idx].Attempt
+	}
+
+	if _, err := s.store.SavePrompt(project.ID, panelIndex, attempt, promptText); err != nil {
+		return fmt.Errorf("failed to save prompt for panel %d: %w", panelIndex, err)
+	}
+
 	imageData, err := s.imgProvider.GenerateImage(ctx, promptText)
 	if err != nil {
 		return fmt.Errorf("image generation failed for panel %d: %w", panelIndex, err)
@@ -92,7 +102,6 @@ func (s *ComicService) GenerateSingleImage(ctx context.Context, project *domain.
 
 	// If no image data returned (e.g. dry-run/prompt-only mode), skip saving
 	if len(imageData) == 0 {
-		idx := panelIndex - 1
 		if idx < len(project.Images) {
 			project.Images[idx].Status = "done"
 			project.Images[idx].Error = ""
@@ -101,11 +110,6 @@ func (s *ComicService) GenerateSingleImage(ctx context.Context, project *domain.
 	}
 
 	// Save image
-	idx := panelIndex - 1
-	attempt := 1
-	if idx < len(project.Images) && project.Images[idx].Attempt > 0 {
-		attempt = project.Images[idx].Attempt
-	}
 	relPath, err := s.store.SaveImage(project.ID, panelIndex, attempt, imageData)
 	if err != nil {
 		return fmt.Errorf("failed to save image for panel %d: %w", panelIndex, err)
