@@ -488,6 +488,8 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 
 func createImageProvider(cfg *config.Config) (image.Provider, error) {
 	switch cfg.ImageProvider {
+	case "prompt":
+		return image.NewDryRunProvider(), nil
 	case "gemini":
 		model := image.GeminiImage31Flash
 		switch cfg.ImageModel {

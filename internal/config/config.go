@@ -78,6 +78,8 @@ func (c *Config) Validate() error {
 		if c.GeminiAPIKey == "" {
 			return fmt.Errorf("GEMINI_API_KEY is required when IMAGE_PROVIDER is 'gemini'")
 		}
+	case "prompt":
+		// prompt-only mode: no API key needed for image generation
 	default:
 		return fmt.Errorf("unknown IMAGE_PROVIDER: %s", c.ImageProvider)
 	}

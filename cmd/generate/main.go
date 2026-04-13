@@ -33,6 +33,7 @@ func main() {
 	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
 	listModels := flag.Bool("list-models", false, "List all available models")
 	noReview := flag.Bool("no-review", false, "Skip storyboard review step")
+	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	flag.Parse()
 
 	// Load .env file
@@ -77,6 +78,11 @@ func main() {
 	if *listModels {
 		printModels()
 		return
+	}
+
+	// Override image provider to prompt-only if flag is set
+	if *promptOnly {
+		cfg.ImageProvider = "prompt"
 	}
 
 	// Validate config
@@ -261,6 +267,8 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 
 func createImageProvider(cfg *config.Config) (image.Provider, error) {
 	switch cfg.ImageProvider {
+	case "prompt":
+		return image.NewDryRunProvider(), nil
 	case "gemini":
 		model := image.GeminiImage31Flash // default
 		switch cfg.ImageModel {
@@ -316,4 +324,6 @@ func printModels() {
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
+	fmt.Println("  Provider: prompt")
+	fmt.Println("   └─ (输出 prompt 而不调用 API，可通过 --prompt-only 或 IMAGE_PROVIDER=prompt 启用)")
 }

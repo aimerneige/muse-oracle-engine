@@ -90,6 +90,16 @@ func (s *ComicService) GenerateSingleImage(ctx context.Context, project *domain.
 		return fmt.Errorf("image generation failed for panel %d: %w", panelIndex, err)
 	}
 
+	// If no image data returned (e.g. dry-run/prompt-only mode), skip saving
+	if len(imageData) == 0 {
+		idx := panelIndex - 1
+		if idx < len(project.Images) {
+			project.Images[idx].Status = "done"
+			project.Images[idx].Error = ""
+		}
+		return nil
+	}
+
 	// Save image
 	idx := panelIndex - 1
 	attempt := 1
