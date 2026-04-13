@@ -32,7 +32,6 @@ func main() {
 	listChars := flag.Bool("list-characters", false, "List all available characters")
 	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
 	listModels := flag.Bool("list-models", false, "List all available models")
-	noReview := flag.Bool("no-review", false, "Skip storyboard review step")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	flag.Parse()
 
@@ -117,11 +116,9 @@ func main() {
 	// Build pipeline steps
 	steps := []pipeline.Step{
 		pipeline.NewStoryboardStep(storySvc),
+		pipeline.NewCLIReviewStep(),
+		pipeline.NewImageStep(comicSvc),
 	}
-	if !*noReview {
-		steps = append(steps, pipeline.NewCLIReviewStep())
-	}
-	steps = append(steps, pipeline.NewImageStep(comicSvc))
 
 	p := pipeline.NewPipeline(store, steps...)
 
