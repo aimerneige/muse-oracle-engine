@@ -5,7 +5,7 @@ const API_BASE = '/api/v1';
 const appDiv = document.getElementById('app')!;
 
 // App State
-let characters: any[] = [];
+let seriesData: any[] = [];
 let styles: any[] = [];
 let currentProjectId: string | null = null;
 let currentProject: any = null;
@@ -21,13 +21,8 @@ async function init() {
     const charData = await charRes.json();
     styles = await styleRes.json();
     
-    // Flatten characters from series
-    characters = [];
-    charData.forEach((series: any) => {
-      series.characters.forEach((c: any) => {
-        characters.push(c);
-      });
-    });
+    // Keep series-grouped structure for collapsible UI
+    seriesData = charData;
 
     renderCreateForm();
   } catch (err) {
@@ -54,13 +49,25 @@ function renderCreateForm() {
     <form id="create-form" class="step-container active">
       <div class="input-group">
         <label>Characters</label>
-        <div class="char-grid" id="char-grid">
-          ${characters.map(c => `
-            <label class="char-card" data-id="${c.id}">
-              <img src="/api/v1/projects/placeholder" style="display:none;" />
-              <input type="checkbox" value="${c.id}" />
-              ${c.name_jp || c.name_en}
-            </label>
+        <div class="char-series-container" id="char-series-container">
+          ${seriesData.map((series: any, idx: number) => `
+            <div class="char-series-group" data-series="${series.series.id}">
+              <button type="button" class="char-series-header" onclick="toggleSeries(this)">
+                <span class="header-inner">
+                  <span class="series-arrow">${idx === 0 ? '&#9660;' : '&#9654;'}</span>
+                  <span class="series-name">${series.series.name}</span>
+                  <span class="series-count">${series.characters.length}</span>
+                </span>
+              </button>
+              <div class="char-grid ${idx === 0 ? '' : 'series-collapsed'}">
+                ${series.characters.map((c: any) => `
+                  <label class="char-card" data-id="${c.id}">
+                    <input type="checkbox" value="${c.id}" />
+                    ${c.name_jp || c.name_en}
+                  </label>
+                `).join('')}
+              </div>
+            </div>
           `).join('')}
         </div>
       </div>
@@ -85,15 +92,8 @@ function renderCreateForm() {
 
   // Handle character card selection toggle
   document.querySelectorAll('.char-card').forEach(card => {
-    const cb = card.querySelector('input')!;
-    card.addEventListener('click', (e) => {
-      // prevent double triggering
-      if (e.target !== cb) {
-        cb.checked = !cb.checked;
-        cb.dispatchEvent(new Event('change'));
-      }
-    });
-
+    const cb = card.querySelector('input')! as HTMLInputElement;
+    
     cb.addEventListener('change', () => {
       if (cb.checked) {
         card.classList.add('selected');
@@ -245,3 +245,19 @@ function renderResults() {
 
 // Start app
 init();
+
+// Globally accessible for inline onclick handlers
+(window as any).toggleSeries = function(btn: HTMLElement) {
+  const group = btn.closest('.char-series-group')!;
+  const grid = group.querySelector('.char-grid')!;
+  const arrow = btn.querySelector('.series-arrow')!;
+  const isCollapsed = grid.classList.contains('series-collapsed');
+  
+  if (isCollapsed) {
+    grid.classList.remove('series-collapsed');
+    arrow.innerHTML = '&#9660;';
+  } else {
+    grid.classList.add('series-collapsed');
+    arrow.innerHTML = '&#9654;';
+  }
+};

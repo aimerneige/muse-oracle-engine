@@ -14,10 +14,13 @@ type Config struct {
 	ThreeOTwoKey   string `json:"threeotwo_api_key"`
 
 	// Model selection
-	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai"
+	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai", "mock"
 	LLMModel      string `json:"llm_model"`      // model identifier
-	ImageProvider string `json:"image_provider"` // "gemini"
+	ImageProvider string `json:"image_provider"` // "gemini", "mock"
 	ImageModel    string `json:"image_model"`    // model identifier
+
+	// Mock mode: when true, LLM and image providers return fake data for frontend testing
+	MockMode bool `json:"mock_mode"`
 
 	// Paths
 	DataDir   string `json:"data_dir"`   // root directory for project data
@@ -30,6 +33,11 @@ type Config struct {
 
 // LoadFromEnv loads configuration from environment variables.
 func LoadFromEnv() *Config {
+	mockMode := false
+	if v := os.Getenv("MOCK_MODE"); v != "" {
+		mockMode = true
+	}
+
 	cfg := &Config{
 		GeminiAPIKey:   os.Getenv("GEMINI_API_KEY"),
 		DeepSeekAPIKey: os.Getenv("DEEPSEEK_API_KEY"),
@@ -41,17 +49,30 @@ func LoadFromEnv() *Config {
 		ImageProvider: getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:    getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
 
+		MockMode: mockMode,
+
 		DataDir:   getEnvDefault("DATA_DIR", "data/projects"),
 		CharDBDir: getEnvDefault("CHARDB_DIR", ""),
 		StylesDir: getEnvDefault("STYLES_DIR", ""),
 
 		ServerAddr: getEnvDefault("SERVER_ADDR", ":8080"),
 	}
+
+	// In mock mode, override providers to mock
+	if cfg.MockMode {
+		cfg.LLMProvider = "mock"
+		cfg.ImageProvider = "mock"
+	}
 	return cfg
 }
 
 // Validate checks for required configuration values.
 func (c *Config) Validate() error {
+	// Mock mode skips all API key validation
+	if c.MockMode {
+		return nil
+	}
+
 	switch c.LLMProvider {
 	case "gemini":
 		if c.GeminiAPIKey == "" {
@@ -69,6 +90,8 @@ func (c *Config) Validate() error {
 		if c.ThreeOTwoKey == "" {
 			return fmt.Errorf("THREEOTWO_API_KEY is required when LLM_PROVIDER is '302ai'")
 		}
+	case "mock":
+		// mock mode: no API key needed
 	default:
 		return fmt.Errorf("unknown LLM_PROVIDER: %s", c.LLMProvider)
 	}
@@ -78,8 +101,8 @@ func (c *Config) Validate() error {
 		if c.GeminiAPIKey == "" {
 			return fmt.Errorf("GEMINI_API_KEY is required when IMAGE_PROVIDER is 'gemini'")
 		}
-	case "prompt":
-		// prompt-only mode: no API key needed for image generation
+	case "prompt", "mock":
+		// prompt/mock mode: no API key needed for image generation
 	default:
 		return fmt.Errorf("unknown IMAGE_PROVIDER: %s", c.ImageProvider)
 	}

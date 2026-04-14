@@ -172,27 +172,122 @@ button:disabled {
   box-shadow: none;
 }
 
-/* Character Selection (Checkbox pills) */
-.char-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  max-height: 200px;
+/* Character Selection - Collapsible Series Groups */
+.char-series-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
   overflow-y: auto;
-  padding-right: 8px; /* for scrollbar */
+  padding-right: 6px;
 }
 
 /* custom scrollbar for dark mode */
+.char-series-container::-webkit-scrollbar,
 .char-grid::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
+.char-series-container::-webkit-scrollbar-track,
 .char-grid::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05); 
+  background: transparent; 
+}
+.char-series-container::-webkit-scrollbar-thumb,
+.char-grid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15); 
   border-radius: 10px;
 }
-.char-grid::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2); 
+
+.char-series-group {
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.char-series-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.4);
+  border: none;
+  border-bottom: none;
+  color: var(--text-main);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  transform: none;
+  opacity: 1;
+}
+
+.char-series-header:hover:not(:disabled) {
+  background: rgba(40, 50, 70, 0.5);
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.char-series-header:active:not(:disabled) {
+  transform: none !important;
+}
+
+.series-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+  font-size: 0.65rem;
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.series-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.series-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: rgba(255,255,255,0.07);
+  padding: 2px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+/* Inner clickable area within the reset-style button */
+.char-series-header .header-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+}
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.char-grid.series-collapsed {
+  display: none;
 }
 
 .char-card {

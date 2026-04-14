@@ -229,6 +229,8 @@ func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName strin
 
 func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 	switch cfg.LLMProvider {
+	case "mock":
+		return llm.NewMockProvider(), nil
 	case "gemini":
 		model := llm.Gemini3Pro // default
 		// Map common model strings to enum
@@ -264,6 +266,8 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 
 func createImageProvider(cfg *config.Config) (image.Provider, error) {
 	switch cfg.ImageProvider {
+	case "mock":
+		return image.NewMockProvider(), nil
 	case "prompt":
 		return image.NewDryRunProvider(), nil
 	case "gemini":
