@@ -1,0 +1,14 @@
+id: xiao
+name: "魈"
+name_en: "Xiao"
+series: genshin-impact
+appearance:
+  hair_style: "墨绿色短发带两根长翘起的呆毛（类似鬼角），碎刘海"
+  hair_color: "墨绿色 / 深青色"
+  eye_shape: "锐利的丹凤眼，瞳孔为竖瞳（妖族特征）"
+  eye_color: "金色 / 明黄色（妖族竖瞳）"
+  height: "153cm"
+  body_type: "纤细精悍，少年体型"
+  other: "身后有深青色的半透明鬼面具，穿着深色系中国风战衣，脚踩虚空"
+personality: "孤僻冷漠、沉默寡言、责任感强、自我牺牲倾向、内心深处珍视人类、厌恶亏欠他人"
+tags: ["anemo", "polearm", "liyue", "illuminated-beast", "yaksha", "conqueror-of-demons"]

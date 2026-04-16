@@ -1,0 +1,14 @@
+id: xingqiu
+name: "行秋"
+name_en: "Xingqiu"
+series: genshin-impact
+appearance:
+  hair_style: "棕色中长发微卷，斜刘海，书生造型"
+  hair_color: "棕褐色 / 浅栗色"
+  eye_shape: "细长的丹凤眼，带着书卷气的狡黠"
+  eye_color: "琥珀色 / 金褐色"
+  height: "160cm"
+  body_type: "纤细修长，文弱书生外表下隐藏武艺"
+  other: "身穿浅色系古风书生服，常手持一本古籍或折扇，腰间佩剑"
+personality: "腹黑毒舌、热爱武侠小说、看似文质彬彬实则武功了得、喜欢捉弄人但心地善良、富家少爷"
+tags: ["hydro", "sword", "liyue", "feiyun-commerce-guild", "bookworm", "wuxia-fan", "mischievous"]

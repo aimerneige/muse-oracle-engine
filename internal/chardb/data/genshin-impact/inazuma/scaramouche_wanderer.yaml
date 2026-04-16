@@ -1,0 +1,14 @@
+id: wanderer
+name: "流浪者"
+name_en: "Wanderer / Scaramouche"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝黑色中长发（散兵形态）/ 藏青色及肩短发（流浪者形态）"
+  hair_color: "深靛蓝 / 藏青色"
+  eye_shape: "狭长冷淡的眼形，带着不屑与疏离"
+  eye_color: "紫罗兰色 / 暗紫色"
+  height: "163cm"
+  body_type: "纤细修长，中性美少年"
+  other: "身后悬浮着巨大的空之帽（流浪者形态），身穿深色系宽袖服装配短斗篷，脚踩虚空飞行"
+personality: "傲慢尖刻、自我厌恶又自命不凡、经历背叛后封闭内心、在纳西妲帮助下重新开始、嘴硬心软"
+tags: ["anemo", "catalyst", "inazuma", "puppet", "wanderer", "kunikuzushi", "scaramouche"]

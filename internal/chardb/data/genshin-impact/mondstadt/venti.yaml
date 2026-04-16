@@ -1,0 +1,14 @@
+id: venti
+name: "温迪"
+name_en: "Venti"
+series: genshin-impact
+appearance:
+  hair_style: "黑色带青色挑染的短发，两侧扎有小辫子系白色丝带"
+  hair_color: "黑青渐变 / 孔雀蓝"
+  eye_shape: "灵动的大眼，眼神顽皮如风"
+  eye_color: "翠绿色 / 青绿色"
+  height: "162cm"
+  body_type: "纤细柔美，中性气质"
+  other: "头戴塞西莉亚花（风车菊），身穿白色短上衣配绿色披风和短裤，手持竖琴"
+personality: "自由洒脱、调皮爱恶作剧、看似不正经实则洞察一切、珍视自由与友谊、作为巴巴托斯有深沉的一面"
+tags: ["anemo", "bow", "mondstadt", "archon", "freedom", "bard", "barbatos"]

@@ -1,0 +1,14 @@
+id: shenhe
+name: "申鹤"
+name_en: "Shenhe"
+series: genshin-impact
+appearance:
+  hair_style: "白色极长直发（及踝），头顶扎有小辫子系红绳"
+  hair_color: "银白色 / 月白色"
+  eye_shape: "狭长的丹凤眼，眼神清冷淡然"
+  eye_color: "绯红色 / 朱砂红"
+  height: "166cm"
+  body_type: "高挑纤瘦，身材修长"
+  other: "颈腕处绑有红色丝带（封印），穿着暴露的白色与红色相间服装，赤足"
+personality: "淡漠疏离、不通世俗人情、单纯直率、战斗时冷酷果断、对仙人和自然亲近"
+tags: ["cryo", "polearm", "liyue", "adeptus-descendant", "exorcism"]

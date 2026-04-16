@@ -1,0 +1,14 @@
+id: kamisato_ayaka
+name: "神里绫华"
+name_en: "Kamisato Ayaka"
+series: genshin-impact
+appearance:
+  hair_style: "冰蓝色长直发及腰，带有白色樱花发饰"
+  hair_color: "冰蓝色 / 霜白蓝"
+  eye_shape: "温柔的凤眼，眼神优雅而坚定"
+  eye_color: "紫罗兰色 / 淡紫色"
+  height: "164cm"
+  body_type: "纤细优美，大小姐气质"
+  other: "身穿和服式霜华礼服——白色为主配淡蓝花纹，配有精致的和式腰带与飘带，整体如雪中仙子般美丽"
+personality: "优雅端庄、待人有礼但内心渴望平等交往、认真努力、有些在意他人的看法、对旅行者格外亲切"
+tags: ["cryo", "sword", "inazuma", "kamisato-clan", "elegant", "hardworking", "fan-favorite"]

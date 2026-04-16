@@ -1,0 +1,14 @@
+id: yelan
+name: "夜兰"
+name_en: "Yelan"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝黑色长马尾，高束起，带有蓝色丝带装饰"
+  hair_color: "深蓝黑 / 午夜蓝"
+  eye_shape: "狭长的丹凤眼，目光锐利神秘"
+  eye_color: "靛蓝色 / 深紫色"
+  height: "167cm"
+  body_type: "高挑修长，身材曼妙"
+  other: "佩戴面纱遮住口鼻，身穿紧身暗色系服装，腰间挂有骰子等道具"
+personality: "神秘莫测、冷静理智、行事果断、喜欢赌博和冒险、不按常理出牌、有正义感但不外露"
+tags: ["hydro", "bow", "liyue", "mysterious", "intelligence"]

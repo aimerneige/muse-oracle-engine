@@ -1,0 +1,14 @@
+id: mei
+name: "名花雪妃"
+name_en: "Mei"
+series: lovelive-superstar
+appearance:
+  hair_style: "银白色长发，大波浪卷，优雅垂落"
+  hair_color: "银白 / 月白色"
+  eye_shape: "略细长的凤眼，气质高贵冷艳"
+  eye_color: "冰蓝色 / 淡蓝色"
+  height: "164cm"
+  body_type: "高挑纤细，模特般身材"
+  other: "穿着精致华丽的服装，整体气质如公主般高贵"
+personality: "高傲自信、完美主义者、外表冷漠内心细腻、对艺术有极高追求、不擅长表达真实情感"
+tags: ["Liella!", "third-year", "elegant", "perfectionist"]

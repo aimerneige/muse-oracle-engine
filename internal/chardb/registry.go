@@ -71,7 +71,7 @@ func NewEmbeddedRegistry() (*Registry, error) {
 }
 
 func (r *Registry) loadSeries(dirPath, seriesID string) error {
-	// Load series metadata
+	// Load series metadata (check current dir and parent dirs for _series.yaml)
 	seriesFile := filepath.Join(dirPath, "_series.yaml")
 	if data, err := os.ReadFile(seriesFile); err == nil {
 		var s domain.Series
@@ -84,26 +84,43 @@ func (r *Registry) loadSeries(dirPath, seriesID string) error {
 		r.series[s.ID] = s
 	}
 
-	// Load character files
+	return r.loadCharactersRecursive(dirPath, seriesID)
+}
+
+// loadCharactersRecursive recursively scans a directory tree for character YAML files.
+func (r *Registry) loadCharactersRecursive(dirPath, seriesID string) error {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() || entry.Name() == "_series.yaml" || !strings.HasSuffix(entry.Name(), ".yaml") {
+		if entry.Name() == "_series.yaml" {
 			continue
 		}
 
-		charFile := filepath.Join(dirPath, entry.Name())
-		data, err := os.ReadFile(charFile)
+		fullPath := filepath.Join(dirPath, entry.Name())
+
+		if entry.IsDir() {
+			// Recurse into subdirectories (e.g., region subdirs like liyue/, mondstadt/)
+			if err := r.loadCharactersRecursive(fullPath, seriesID); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+
+		data, err := os.ReadFile(fullPath)
 		if err != nil {
-			return fmt.Errorf("failed to read %s: %w", charFile, err)
+			return fmt.Errorf("failed to read %s: %w", fullPath, err)
 		}
 
 		var c domain.Character
 		if err := yaml.Unmarshal(data, &c); err != nil {
-			return fmt.Errorf("failed to parse %s: %w", charFile, err)
+			return fmt.Errorf("failed to parse %s: %w", fullPath, err)
 		}
 
 		if c.Series == "" {

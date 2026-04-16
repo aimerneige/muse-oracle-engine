@@ -1,0 +1,14 @@
+id: kujou_sara
+name: "九条裟罗"
+name_en: "Kujou Sara"
+series: genshin-impact
+appearance:
+  hair_style: "红紫色短发，整齐利落的军旅造型"
+  hair_color: "红紫色 / 绯紫"
+  eye_shape: "锐利的眼形，军人般的坚毅目光"
+  eye_color: "紫红色 / 洋红色"
+  height: "171cm"
+  body_type: "健美结实，充满力量感的女性身材"
+  other: "头顶有红色天狗羽翼（天狗混血特征），身穿幕府军装风格的服饰，手持长弓"
+personality: "忠诚刚正、恪尽职守、对雷电将军绝对效忠、军事化管理作风、外表严厉但内心有柔软之处"
+tags: ["electro", "bow", "inazuma", "tenryou-commission", "tengu-hybrid", "loyal", "military"]

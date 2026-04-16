@@ -1,0 +1,14 @@
+id: toga
+name: "山田凉"
+name_en: "Seki Toga"
+series: bocchi-the-rock
+appearance:
+  hair_style: "黑色短发，整齐的蘑菇头/波波头，刘海平齐"
+  hair_color: "纯黑色"
+  eye_shape: "圆眼，眼神温和友善"
+  eye_color: "棕色 / 暖褐色"
+  height: "155cm"
+  body_type: "标准少女体型，可爱圆润"
+  other: "常穿休闲服装，给人亲切感"
+personality: "温柔体贴、善于照顾他人、有些天然呆、团队中的粘合剂、总是为他人着想"
+tags: ["drums", "supportive", "kind-hearted"]

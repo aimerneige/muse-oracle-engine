@@ -1,0 +1,14 @@
+id: jean
+name: "琴"
+name_en: "Jean Gunnhildr"
+series: genshin-impact
+appearance:
+  hair_style: "金棕色长单马尾，高束起，整齐的刘海"
+  hair_color: "金棕色 / 蜜色"
+  eye_shape: "坚定的杏眼，目光可靠而温柔"
+  eye_color: "靛蓝色"
+  height: "165cm"
+  body_type: "匀称健美，骑士身材"
+  other: "身穿西风骑士团代理团长制服——深蓝色外套配白色衬衣和红色领结，背后披着骑士团披风"
+personality: "认真负责、工作狂、自我牺牲精神强、关爱下属、有些不懂得照顾自己、完美主义者"
+tags: ["anemo", "sword", "mondstadt", "knight", "acting-grand-master", "responsible"]

@@ -1,0 +1,14 @@
+id: cyno
+name: "赛诺"
+name_en: "Cyno"
+series: genshin-impact
+appearance:
+  hair_style: "深紫黑色短发，两侧剃短，中间留长并束成小辫"
+  hair_color: "暗紫黑 / 深灰"
+  eye_shape: "锐利的眼形，审判者般威严的目光"
+  eye_color: "暗红色 / 血红色"
+  height: "181cm"
+  body_type: "高大健壮，肌肉线条分明"
+  other: "头部有金色埃及风格的神祗面具（阿努比斯样式）可翻下遮面，身穿大祭司风格的战斗服，手持长柄武器"
+personality: "严肃认真、极度热爱讲冷笑话（尤其烂梗）、执行规则一丝不苟、重情义、作为大法官威严公正"
+tags: ["electro", "polearm", "sumeru", "general-mahamatra", "judge", "dad-jokes", "serious-but-goofy"]

@@ -1,0 +1,14 @@
+id: tighnari
+name: "提纳里"
+name_en: "Tighnari"
+series: genshin-impact
+appearance:
+  hair_style: "白色短发，蓬松凌乱感，大刘海"
+  hair_color: "银白 / 月白"
+  eye_shape: "锐利的狐眼（耳廓特征），目光专注机警"
+  eye_color: "青绿色 / 翡翠绿"
+  height: "163cm"
+  body_type: "纤细修长，敏捷矫健"
+  other: "头顶有大型白色兽耳（巡林官种族特征），身后有深青色的毛茸茸大尾巴，身穿巡林官制服配披风"
+personality: "博学严谨、直言不讳、对植物学极其精通、护犊子（尤其是柯莱）、讲课啰嗦但知识渊博、有些洁癖"
+tags: ["dendro", "bow", "sumeru", "forest-ranger", "botanist", "teacher", "direct"]

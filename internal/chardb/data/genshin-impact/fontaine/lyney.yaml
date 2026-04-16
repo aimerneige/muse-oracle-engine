@@ -1,0 +1,14 @@
+id: lyney
+name: "林尼"
+name_en: "Lyney"
+series: genshin-impact
+appearance:
+  hair_style: "灰黑渐变的中长发，侧分，略微蓬松"
+  hair_color: "灰黑 / 深灰褐"
+  eye_shape: "魅惑的眼形，带着魔术师的自信微笑"
+  eye_color: "紫罗兰色 / 淡紫色（有时呈现异色瞳效果）"
+  height: "179cm"
+  body_type: "高挑修长，魔术师般优雅的身姿"
+  other: "头戴高礼帽，身穿华丽魔术师演出服——紫色外套配紧身裤和高筒靴，手套和帽子都是标志性装扮，随时可变出鸽子和扑克牌"
+personality: "优雅迷人、表演欲强、说话带有法式风情和谜语色彩、对妹妹琳妮特极尽保护、隐藏着某种使命和秘密"
+tags: ["pyro", "bow", "fontaine", "magician", "charming", "mysterious", "protective-sibling"]

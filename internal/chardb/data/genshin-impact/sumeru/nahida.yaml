@@ -1,0 +1,14 @@
+id: nahida
+name: "纳西妲"
+name_en: "Nahida"
+series: genshin-impact
+appearance:
+  hair_style: "浅绿色双马尾，发梢卷曲，带有白色花朵装饰"
+  hair_color: "浅绿色 / 薄荷绿"
+  eye_shape: "大圆眼，清澈如绿宝石"
+  eye_color: "翠绿色 / 星绿色"
+  height: "143cm"
+  body_type: "幼女体型，娇小可爱"
+  other: "头戴白色花瓣装饰，穿着带有须弥风格的服饰，整体如同精灵"
+personality: "聪明睿智、好奇心强、纯真善良、因被囚禁而缺乏常识但学习能力强、温柔包容"
+tags: ["dendro", "catalyst", "sumeru", "archon", "wisdom"]

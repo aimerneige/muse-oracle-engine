@@ -1,0 +1,14 @@
+id: zhongli
+name: "钟离"
+name_en: "Zhongli"
+series: genshin-impact
+appearance:
+  hair_style: "深褐色整整齐齐的大背头，向后梳理"
+  hair_color: "深褐黑 / 墨色"
+  eye_shape: "沉稳的眼形，眼神深邃如琥珀"
+  eye_color: "金色 / 琥珀金（常发出微光）"
+  height: "186cm"
+  body_type: "高大健硕，身材完美比例"
+  other: "脖子上戴着红色宝石项链（神之心），身穿褐色中国风长衫，手持长枪或岩枪，气场沉稳厚重"
+personality: "沉稳从容、博学多才、讲究契约与秩序、有些老派固执、对人类文化充满兴趣、偶尔健忘（付账时）"
+tags: ["geo", "polearm", "liyue", "archon", "contracts", "wangsheng-funeral-parlor"]

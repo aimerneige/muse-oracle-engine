@@ -1,0 +1,14 @@
+id: alhaitham
+name: "艾尔海森"
+name_en: "Alhaitham"
+series: genshin-impact
+appearance:
+  hair_style: "灰黑色短发微卷，略蓬松，侧分刘海"
+  hair_color: "灰黑 / 深银灰"
+  eye_shape: "略狭长的眼形，目光冷静理性"
+  eye_color: "青柠绿 / 浅绿色"
+  height: "185cm"
+  body_type: "高大健硕，肌肉线条流畅但不夸张"
+  other: "耳朵上有特殊的金色头戴式装饰（听觉增强装置），身穿简洁的深色系便装配长裤，手持大剑"
+personality: "理智冷静到近乎冷酷、追求效率与真理、不喜欢无意义社交、口才了得且逻辑严密、工作生活分得很清楚、毒舌"
+tags: ["dendro", "claymore", "sumeru", "sage-formerly", "rationalist", "introvert", "sharp-tongued"]

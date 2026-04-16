@@ -1,0 +1,14 @@
+id: dottore
+name: "多托雷"
+name_en: "Dottore / The Doctor"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝色偏分中长发，略显凌乱"
+  hair_color: "深蓝 / 暗靛"
+  eye_shape: "狂热而疯狂的眼形，透着危险的研究欲"
+  eye_color: "红色 / 血红色（戴单片眼镜）"
+  height: "183cm"
+  body_type: "高挑瘦长，给人阴鸷感"
+  other: "戴单片眼镜（左眼），嘴角常有诡异笑容，身穿愚人众执行官制服配白色实验袍，身上可能有各种机械改造痕迹"
+personality: "疯狂科学家、以研究和实验为乐、缺乏道德底线、聪明绝顶但精神不稳定、对知识和力量的追求近乎痴迷、危险人物"
+tags: ["fatui-harbingers", "the-doctor", "scientist", "mad-scholar", "dangerous", "cunning"]

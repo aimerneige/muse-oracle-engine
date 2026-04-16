@@ -45,27 +45,43 @@ func (r *Registry) loadEmbeddedSeries(seriesID string) error {
 		r.series[s.ID] = s
 	}
 
-	// Load character files
-	dirPath := fmt.Sprintf("data/%s", seriesID)
+	return r.loadEmbeddedCharactersRecursive(fmt.Sprintf("data/%s", seriesID), seriesID)
+}
+
+// loadEmbeddedCharactersRecursive recursively scans an embedded directory tree for character YAML files.
+func (r *Registry) loadEmbeddedCharactersRecursive(dirPath, seriesID string) error {
 	entries, err := embeddedData.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() || entry.Name() == "_series.yaml" || !strings.HasSuffix(entry.Name(), ".yaml") {
+		if entry.Name() == "_series.yaml" {
 			continue
 		}
 
-		charPath := fmt.Sprintf("%s/%s", dirPath, entry.Name())
-		data, err := embeddedData.ReadFile(charPath)
+		fullPath := fmt.Sprintf("%s/%s", dirPath, entry.Name())
+
+		if entry.IsDir() {
+			// Recurse into subdirectories (e.g., region subdirs like liyue/, mondstadt/)
+			if err := r.loadEmbeddedCharactersRecursive(fullPath, seriesID); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+
+		data, err := embeddedData.ReadFile(fullPath)
 		if err != nil {
-			return fmt.Errorf("failed to read %s: %w", charPath, err)
+			return fmt.Errorf("failed to read %s: %w", fullPath, err)
 		}
 
 		var c domain.Character
 		if err := yaml.Unmarshal(data, &c); err != nil {
-			return fmt.Errorf("failed to parse %s: %w", charPath, err)
+			return fmt.Errorf("failed to parse %s: %w", fullPath, err)
 		}
 
 		if c.Series == "" {

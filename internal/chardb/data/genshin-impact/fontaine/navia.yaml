@@ -1,0 +1,14 @@
+id: navia
+name: "娜维娅"
+name_en: "Navia"
+series: genshin-impact
+appearance:
+  hair_style: "金色大波浪长发及背，蓬松华丽"
+  hair_color: "金色 / 明黄色"
+  eye_shape: "明媚的眼形，眼神温暖而坚强"
+  eye_color: "紫罗兰色 / 淡紫色"
+  height: "164cm"
+  body_type: "丰满匀称，曲线优美"
+  other: "头戴白色大檐帽（可取下当盾牌使用），身穿华丽的欧式礼服——以金白为主色调，配有大量蕾丝和蝴蝶结装饰"
+personality: "乐观开朗、坚强独立、承担家族责任后迅速成长、善于交际、为父报仇的决心强烈、待人真诚热情"
+tags: ["geo", "claymore", "fontaine", "spina-di-rosula-leader", "resilient", "outgoing"]
