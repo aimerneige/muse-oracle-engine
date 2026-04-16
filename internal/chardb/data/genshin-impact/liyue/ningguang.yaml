@@ -3,12 +3,12 @@ name: "凝光"
 name_en: "Ningguang"
 series: genshin-impact
 appearance:
-  hair_style: "金色大波浪长发及腰，优雅垂落"
-  hair_color: "金黄色 / 白金色"
-  eye形状: "狭长的凤眼，气场强大的女王般目光"
-  eye_color: "金黄色 / 黄褐色"
-  height: "168cm"
-  body_type: "丰满成熟，曲线优美"
-  other: "身穿华丽的中国风旗袍式礼服——金色为主色调，装饰大量玉石珠宝，手指上戴多枚玉戒，尽显富贵奢华"
-personality: "精明强干、掌控全局、野心与智慧并存、对璃月怀有深厚感情、务实而有远见的天权星"
-tags: ["geo", "catalyst", "liyue", "tianquan", "qixing", "jade-chamber", "wealthy", "strategic"]
+  hair_style: "白色的极长发，部分挽成精致的发髻，其余部分如瀑布般垂下"
+  hair_color: "白色"
+  eye_shape: "高贵且深邃的凤眼"
+  eye_color: "红色"
+  height: "Adult/Large (约170cm)"
+  body_type: "成熟丰腴的成女性体型"
+  other: "身穿极其华丽的金色旗袍，装饰着精美的玉石，指尖戴着金色护甲"
+personality: "精明强干、掌控欲强、富有远见、对手中财富和权力运用自如、守护璃月的底牌深厚"
+tags: ["geo", "catalyst", "liyue", "lue-qixing-tianquan"]

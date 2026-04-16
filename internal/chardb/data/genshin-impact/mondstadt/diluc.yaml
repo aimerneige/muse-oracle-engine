@@ -1,14 +1,14 @@
 id: diluc
 name: "迪卢克"
-name_en: "Diluc Ragnvindr"
+name_en: "Diluc"
 series: genshin-impact
 appearance:
-  hair_style: "酒红色中长发，向后梳理，略带凌乱感"
-  hair_color: "深红色 / 酒红黑"
-  eye_shape: "锐利的丹凤眼，眼神冷峻深沉"
-  eye_color: "暗红色 / 红色"
-  height: "188cm"
-  body_type: "高大强壮，宽肩窄腰"
-  other: "身穿深色系西装式外套配皮手套，佩戴兜帽，身后隐约可见暗红色羽毛状元素印记"
-personality: "冷傲孤僻、行事果断、正义感极强但方式偏激、表面冷漠内心炽热、守护蒙德的暗面英雄"
-tags: ["pyro", "claymore", "mondstadt", "darknight-hero", "wine-industry", "aristocrat-turned-vigilante"]
+  hair_style: "火红色的浓密长发，通常扎成低马尾"
+  hair_color: "红色"
+  eye_shape: "锐利冷峻的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约185cm)"
+  body_type: "高大健硕的成年男性体型"
+  other: "身穿深色的贵族服饰，佩戴黑色手套，常备一件厚重的黑色大衣"
+personality: "沉着冷静、行事果断、正义感极强、外冷内热、对蒙德有着深沉的责任感"
+tags: ["pyro", "claymore", "mondstadt", "dawn-winery", "darknight-hero"]

@@ -3,12 +3,12 @@ name: "那维莱特"
 name_en: "Neuvillette"
 series: genshin-impact
 appearance:
-  hair_style: "银白色长直发，整齐地向后梳理"
-  hair_color: "银白 / 浅灰"
-  eye_shape: "修长的眼形，目光公正严肃"
-  eye_color: "淡蓝色 / 冰蓝色"
-  height: "188cm"
-  body_type: "高大修长，气质庄重"
-  other: "身后有一条巨大的半透明白色龙尾（龙族特征），身穿正式法官袍服，佩戴审判庭徽章"
-personality: "公正严明、理性客观、情感内敛、对人类的复杂性感到困惑、珍视真相与正义、有柔软的一面"
-tags: ["hydro", "catalyst", "fontaine", "chief-justice", "dragon-hybrid", "fontainian-culture"]
+  hair_style: "银白色的极长发，脑后束成两条长发辫，并带有两条蓝色的发带"
+  hair_color: "白色，带有蓝色挑染"
+  eye_shape: "深邃且带着一丝沧桑感的眼形"
+  eye_color: "蓝色"
+  height: "Adult/Large (约188cm)"
+  body_type: "高大修长的成年男性体型"
+  other: "身穿庄严且考究的最高审判官礼服，细节处带有水流纹饰，气质高贵且不可侵犯"
+personality: "公正严明、不苟言笑、内心深沉而温柔、对人类的情感充满好奇、非常喜欢品鉴不同地区的水"
+tags: ["hydro", "catalyst", "fontaine", "chief-justice", "dragon"]

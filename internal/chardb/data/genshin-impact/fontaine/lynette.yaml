@@ -3,12 +3,12 @@ name: "琳妮特"
 name_en: "Lynette"
 series: genshin-impact
 appearance:
-  hair_style: "灰棕色短发，齐耳波波头造型，猫耳状发型"
-  hair_color: "灰棕 / 烟灰色"
-  eye_shape: "沉静的眼形，眼神淡然安静"
-  eye_color: "灰紫色 / 淡紫色"
-  height: "158cm"
-  body_type: "纤细苗条，少女体型"
-  other: "头顶有类似猫耳的毛发造型，身穿魔术师助手风格的服装——短裙配长手套和靴子，整体色调为灰紫"
-personality: "沉默寡言、冷静沉着、作为魔术师助手配合默契、话少但行动力强、表面冷淡内心温柔"
-tags: ["anemo", "sword", "fontaine", "magician-assistant", "quiet", "composed"]
+  hair_style: "灰紫色的短发，两侧有类似猫耳的翘起，脑后有一根长长的猫尾巴"
+  hair_color: "灰紫色"
+  eye_shape: "沉静且波澜不惊的眼形，左脸颊有一个十字星形的标记"
+  eye_color: "紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "纤细敏捷的少女体型"
+  other: "身穿魔术师助手的利落裙装，带有尾巴孔位的设计，性格安静得像一只真正的猫"
+personality: "沉默寡言、情绪内敛、观察力极强、行事低调且高效、非常依赖哥哥林尼"
+tags: ["anemo", "sword", "fontaine", "magician-assistant"]

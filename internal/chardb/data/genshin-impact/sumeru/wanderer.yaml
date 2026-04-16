@@ -1,0 +1,14 @@
+id: wanderer
+name: "流浪者"
+name_en: "Wanderer"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝色的齐耳短发，修剪整齐，戴着一顶极其巨大的斗笠（空之帽）"
+  hair_color: "深蓝色"
+  eye_shape: "清冷且带着一丝傲慢的眼形"
+  eye_color: "靛蓝色"
+  height: "Teen/Medium (约163cm)"
+  body_type: "纤细却充满爆发力的少年体型"
+  other: "身穿蓝白配色的改良须弥服饰，背后悬浮着发光的圆环部件，气质孤傲且神秘"
+personality: "言辞犀利（毒舌）、自命不凡、内心复杂且矛盾、重获新生后寻找着自己的意义、嘴硬心软"
+tags: ["anemo", "catalyst", "sumeru", "wanderer"]

@@ -3,12 +3,12 @@ name: "香菱"
 name_en: "Xiangling"
 series: genshin-impact
 appearance:
-  hair_style: "棕色侧马尾（右侧），带熊猫发饰，碎刘海"
-  hair_color: "棕褐色 / 巧克力色"
-  eye_shape: "圆溜溜的大眼，眼神充满活力和食欲"
-  eye_color: "红褐色 / 暗红色"
-  height: "157cm"
-  body_type: "标准少女体型，活泼可爱"
-  other: "身穿改良中式厨师服——红色短上衣配围裙，腰间挂着锅铲，随身携带熊猫伙伴「锅巴」"
-personality: "元气满满、热爱美食与烹饪、冒险精神旺盛、天真烂漫、为了寻找食材不惧危险"
-tags: ["pyro", "polearm", "liyue", "chef", "wanmin-restaurant", "adventurous-eater"]
+  hair_style: "深蓝色的中短发，两边扎成特殊的环形发辫"
+  hair_color: "深蓝色"
+  eye_shape: "充满活力、亮晶晶的大眼睛"
+  eye_color: "金色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "活泼健美的少女体型"
+  other: "身穿红色短装厨师服，腰间挂着锅铲，身边常跟着小熊猫“锅巴”"
+personality: "热情开朗、好奇心强、热爱烹饪和探索新食材、乐观向上、非常慷慨"
+tags: ["pyro", "polearm", "liyue", "chef"]

@@ -3,12 +3,12 @@ name: "卡维"
 name_en: "Kaveh"
 series: genshin-impact
 appearance:
-  hair_style: "金红色中长发，大波浪卷，蓬松华丽"
-  hair_color: "金红 / 朝霞色"
-  eye_shape: "明亮的眼形，眼神热情丰富多变"
-  eye_color: "翡翠绿"
-  height: "178cm"
-  body_type: "修长匀称，建筑师气质"
-  other: "头饰有金色月亮形状的发冠，身穿华丽的须弥风格设计师服装，配色以金色和白色为主"
-personality: "理想主义者、感性冲动、容易情绪化、才华横溢的建筑师、经常陷入财务困境、与艾尔海森是冤家室友关系"
-tags: ["geo", "claymore", "sumeru", "architect", "idealist", "emotional", "poor", "roommate-of-alhaitham"]
+  hair_style: "金色的中长发，发梢微卷，佩戴着精致的发饰"
+  hair_color: "金色"
+  eye_shape: "明亮且富有感情色彩的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约182cm)"
+  body_type: "优雅修长的成年男性体型"
+  other: "身穿华丽且极具设计感的须弥服饰，披着斗篷，随身带着名为“梅赫拉克”的工具箱"
+personality: "感性多情、富有同情心、追求极致的艺术美学、容易因理想而陷入财务困境、性格开朗但偶尔忧郁"
+tags: ["dendro", "claymore", "sumeru", "architect"]

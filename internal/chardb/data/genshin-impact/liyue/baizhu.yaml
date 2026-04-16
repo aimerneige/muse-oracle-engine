@@ -3,12 +3,12 @@ name: "白术"
 name_en: "Baizhu"
 series: genshin-impact
 appearance:
-  hair_style: "青白色长发，低马尾，斜刘海"
-  hair_color: "青白 / 薄荷白"
-  eye_shape: "温和的眼形，眼神带着病态的柔弱"
-  eye_color: "翠绿色 / 草绿色"
-  height: "175cm"
-  body_type: "瘦弱苍白，体弱多病的体型"
-  other: "肩上常盘踞着一条小蛇「长生」，身穿浅色中式长衫配外褂，手持药书，整体气质文弱清冷"
-personality: "温柔体贴、医者仁心、对自己的身体状况讳莫如深、为了救人愿意付出一切代价、有些神秘的过往"
-tags: ["dendro", "catalyst", "liyue", "bubu-pharmacy-director", "frail", "snake-companion"]
+  hair_style: "长发扎成低马尾，额前有分叉的刘海"
+  hair_color: "绿色"
+  eye_shape: "狭长的眼形，瞳孔为金色的蛇类竖瞳"
+  eye_color: "金色"
+  height: "Adult/Large (约182cm)"
+  body_type: "略显文弱的成年男性体型"
+  other: "脖子上缠绕着白蛇“长生”，戴着金丝眼镜，身穿露脐的浅紫色与绿色相间的中式服饰"
+personality: "医术高明、温文尔雅、精于算计、对追求长生不老有着执念、对待病人极其温柔"
+tags: ["dendro", "catalyst", "liyue", "bubu-pharmacy"]

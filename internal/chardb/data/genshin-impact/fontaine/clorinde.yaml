@@ -1,14 +1,14 @@
 id: clorinde
-name: "克琳希德"
+name: "克洛琳德"
 name_en: "Clorinde"
 series: genshin-impact
 appearance:
-  hair_style: "银白色中长发，微卷，侧分造型"
-  hair_color: "银白 / 月白银"
-  eye_shape: "锐利冷静的眼形，剑士般果决的目光"
-  eye_color: "淡蓝色 / 冰蓝色"
-  height: "170cm"
-  body_type: "高挑健美，剑士身材"
-  other: "身穿深色系骑士礼服——黑色西装外套配白色衬衣和领结，佩戴手套，手持细剑，气质冷峻高贵"
-personality: "冷静理性、行事果断、忠于职责、剑术超群、与娜维娅有复杂的友情关系、外表冷酷但内心有原则"
-tags: ["electro", "sword", "fontaine", "champion-duelist", "calm", "principled"]
+  hair_style: "深紫色的中长发，发梢微卷，戴着一顶精致的黑色小礼帽"
+  hair_color: "深紫色"
+  eye_shape: "锐利且冷静的眼形"
+  eye_color: "紫色"
+  height: "Adult/Large (约170cm)"
+  body_type: "修长且富有力量感的成女性体型"
+  other: "身穿深蓝色的决斗代理人制服，配有白色衬衫和黑色紧身裤，腰间别着细剑和铳枪"
+personality: "冷静理智、行事果断、极具职业道德、剑术超群、外冷内热、非常看重荣誉"
+tags: ["electro", "sword", "fontaine", "champion-duelist"]

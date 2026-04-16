@@ -3,12 +3,12 @@ name: "枫原万叶"
 name_en: "Kaedehara Kazuha"
 series: genshin-impact
 appearance:
-  hair_style: "红棕色中长发，部分扎起，其余散落，带有枫叶发饰"
-  hair_color: "红棕色 / 枫叶红"
-  eye_shape: "温润的眼形，眼神平和自由"
-  eye_color: "金棕色 / 琥珀色"
-  height: "161cm"
-  body_type: "精瘦敏捷，浪人身材"
-  other: "腰间悬挂一片红色枫叶（好友遗物），身穿宽松的和服浪人装束，佩戴武士刀"
-personality: "自由洒脱、随遇而安、重视友情和承诺、喜爱诗词、漂泊旅人、内心坚韧平静"
-tags: ["anemo", "sword", "inazuma", "wandering-samurai", "poet-at-heart"]
+  hair_style: "浅白色的中长发，在脑后扎成一个小马尾，右侧有一抹显眼的红色挑染"
+  hair_color: "浅白偏灰色，带有一抹红色挑染"
+  eye_shape: "平和且深邃的眼形"
+  eye_color: "枫红色"
+  height: "Teen/Medium (约164cm)"
+  body_type: "精干且敏捷的少年体型"
+  other: "身穿印有枫叶图案的浪人和服，腰间佩戴武士刀，给人一种随性而自然的感觉"
+personality: "谦逊有礼、豁达洒脱、热爱诗歌与自然的漂泊武士、拥有敏锐的感知力、内心极其坚韧"
+tags: ["anemo", "sword", "inazuma", "ronin"]

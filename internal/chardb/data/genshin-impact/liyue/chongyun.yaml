@@ -3,12 +3,12 @@ name: "重云"
 name_en: "Chongyun"
 series: genshin-impact
 appearance:
-  hair_style: "浅蓝色短发，背头造型，干净利落"
-  hair_color: "冰蓝色 / 天蓝色"
-  eye_shape: "清澈正直的眼形，眼神认真执着"
-  eye_color: "淡蓝色"
-  height: "163cm"
-  body_type: "精瘦挺拔，少年身形"
-  other: "身后漂浮着驱邪符纸，身穿蓝白配色的道袍式服装，携带符咒道具"
-personality: "纯朴正直、一心向道、热衷于驱邪除妖、因纯阳之体无法体验快乐情绪而不自知、容易被朋友利用"
-tags: ["cryo", "polearm", "liyue", "exorcist", "pure-yang-body", "earnest", "naive"]
+  hair_style: "浅蓝色的短发，刘海修剪整齐"
+  hair_color: "浅蓝色"
+  eye_shape: "清亮且认真的眼形"
+  eye_color: "浅蓝色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "清瘦的少年体型"
+  other: "身穿蓝白相间的道袍式短装，手持冰棒，随身带着符咒"
+personality: "纯真正直、克己自律、容易因“纯阳之体”发作而陷入狂热状态、一心想成为伟大的驱邪人"
+tags: ["cryo", "claymore", "liyue", "exorcist"]

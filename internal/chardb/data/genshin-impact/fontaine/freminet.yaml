@@ -1,14 +1,14 @@
 id: freminet
-name: "弗雷米特"
+name: "菲米尼"
 name_en: "Freminet"
 series: genshin-impact
 appearance:
-  hair_style: "银灰色中长发，略显凌乱地披散"
-  hair_color: "银灰 / 冷灰色"
-  eye_shape: "低垂的眼形，眼神羞涩回避"
-  eye_color: "冰蓝色 / 淡蓝色"
-  height: "172cm"
-  body_type: "高大结实但有些驼背（不自信姿态）"
-  other: "身穿厚重的潜水/探险装备风格服装，背着沉重的机械背包（ Pers 小企鹅），整体给人一种沉默可靠的感觉"
-personality: "极度内向害羞、不善表达、默默做事的类型、对机械和潜水感兴趣、在兄妹中最不起眼但实力不可小觑"
-tags: ["cyro", "claymore", "fontaine", "diver", "introverted", "mechanic", "younger-brother"]
+  hair_style: "金色的短发，刘海修剪得有些细碎"
+  hair_color: "金色"
+  eye_shape: "羞涩且内向的眼形"
+  eye_color: "蓝色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "匀称的少年体型"
+  other: "身穿潜水服风格的探险装束，常戴着厚重的头盔或潜水镜，身边跟着机械企鹅“佩尔”"
+personality: "极度害羞内向、不擅长交际、沉默寡言但内心丰富、对机械和潜水有着极大的热情"
+tags: ["cryo", "claymore", "fontaine", "diver"]

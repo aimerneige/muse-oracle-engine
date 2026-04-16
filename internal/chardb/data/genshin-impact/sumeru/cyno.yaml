@@ -3,12 +3,12 @@ name: "赛诺"
 name_en: "Cyno"
 series: genshin-impact
 appearance:
-  hair_style: "深紫黑色短发，两侧剃短，中间留长并束成小辫"
-  hair_color: "暗紫黑 / 深灰"
-  eye_shape: "锐利的眼形，审判者般威严的目光"
-  eye_color: "暗红色 / 血红色"
-  height: "181cm"
-  body_type: "高大健壮，肌肉线条分明"
-  other: "头部有金色埃及风格的神祗面具（阿努比斯样式）可翻下遮面，身穿大祭司风格的战斗服，手持长柄武器"
-personality: "严肃认真、极度热爱讲冷笑话（尤其烂梗）、执行规则一丝不苟、重情义、作为大法官威严公正"
-tags: ["electro", "polearm", "sumeru", "general-mahamatra", "judge", "dad-jokes", "serious-but-goofy"]
+  hair_style: "白色的长发，在头盔下自然下垂"
+  hair_color: "白色"
+  eye_shape: "锐利且充满威慑力的眼形"
+  eye_color: "红色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "精壮的少年体型"
+  other: "戴着胡狼样式的古埃及风格头饰，身穿带有异域风情的露心战斗服，手戴爪形护具"
+personality: "严肃公正、行事果断、冷酷的执法者、私下里极其喜欢讲冷笑话和打七圣召唤"
+tags: ["electro", "polearm", "sumeru", "general-mahamatra"]

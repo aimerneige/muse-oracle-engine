@@ -3,12 +3,12 @@ name: "神里绫人"
 name_en: "Kamisato Ayato"
 series: genshin-impact
 appearance:
-  hair_style: "深蓝紫色短发，侧分造型，整洁干练"
-  hair_color: "深蓝紫 / 午夜紫"
-  eye_shape: "细长的狐狸眼，带着玩世不恭的笑容"
-  eye_color: "藏青色 / 暗紫色"
-  height: "182cm"
-  body_type: "高挑修长，优雅从容的贵族身姿"
-  other: "身穿改良版和服——深紫色外套配白色内衬，佩戴家纹扇子作为武器，举止优雅却城府深沉"
-personality: "表面轻浮不羁实则深谋远虑、擅长权谋之术、疼爱妹妹绫华、看似慵懒实则掌控全局、腹黑但本质善良"
-tags: ["hydro", "sword", "inazuma", "kamisato-clan-head", "strategic", "playful", "manipulative"]
+  hair_style: "浅蓝色的中短发，刘海错落有致，显得干练而儒雅"
+  hair_color: "浅蓝色"
+  eye_shape: "深邃且带着一丝温和笑意的眼形，嘴边有一颗痣"
+  eye_color: "蓝色"
+  height: "Adult/Large (约182cm)"
+  body_type: "修长优雅的成年男性体型"
+  other: "身穿白色的长款改良和服外套，细节处彰显权贵的身份，举手投足间充满领导者气质"
+personality: "处事圆滑、深谋远虑、行事低调且高效、非常关爱妹妹、偶尔展现出顽皮的一面（喜欢奶茶）"
+tags: ["hydro", "sword", "inazuma", "kamisato-clan"]

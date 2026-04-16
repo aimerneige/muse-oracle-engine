@@ -3,12 +3,12 @@ name: "北斗"
 name_en: "Beidou"
 series: genshin-impact
 appearance:
-  hair_style: "红棕色高马尾，粗犷有力，碎刘海"
-  hair_color: "红棕色 / 火焰红"
-  eye_shape: "豪爽的眼形，目光炯炯有神"
-  eye_color: "琥珀色 / 金红色"
-  height: "172cm"
-  body_type: "健美结实，充满力量感的身材"
-  other: "脸上有疤痕（左眉骨处），身穿海盗风格的宽松外衣配腰带，露出腹部，脚蹬长靴，手持巨剑"
-personality: "豪爽大气、敢作敢当、讲义气重情谊、不畏权威、保护弱者、身为南十字船队船长威望极高"
-tags: ["electro", "claymore", "liyue", "crux-fleet-captain", "pirate", "brave", "loyal"]
+  hair_style: "深褐色长发，通常扎起一半，额前有刘海"
+  hair_color: "深褐色"
+  eye_shape: "豪爽且英气十足的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约172cm)"
+  body_type: "健美高挑的成女性体型"
+  other: "左眼佩戴着眼罩，身穿红黑相间的旗袍风格战斗服，披着暗红色披风"
+personality: "豪爽大气、不拘小节、极具领袖魅力、深得船员信任、拥有极强的正义感"
+tags: ["electro", "claymore", "liyue", "the-crux"]

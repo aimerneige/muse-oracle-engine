@@ -3,12 +3,12 @@ name: "甘雨"
 name_en: "Ganyu"
 series: genshin-impact
 appearance:
-  hair_style: "蓝黑渐变长直发，侧边单角（龙角）突出"
-  hair_color: "深蓝色渐变至黑色"
-  eye_shape: "温柔的杏眼，略带睡意朦胧感"
-  eye_color: "金黄色 / 琥珀色"
-  height: "159cm"
-  body_type: "标准身材，偏柔美"
-  other: "头顶有一根黑色的麒麟角（右侧），身后有半透明的麒麟尾巴，穿着璃月风格职业装"
-personality: "温和善良、勤恳认真、有些优柔寡断、工作狂、身为仙人混血对身份有些迷茫、怕生"
-tags: ["cryo", "bow", "liyue", "qixing-secretary", "qilin-hybrid"]
+  hair_style: "蓝色的齐肩长发，发梢颜色略浅，头顶有一对黑色麒麟角"
+  hair_color: "蓝色"
+  eye_shape: "温柔且略带睡意的眼形"
+  eye_color: "紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "匀称柔美的少女体型"
+  other: "身穿黑色紧身衣配白色露背装，颈部戴着一个大金铃铛，风格典雅"
+personality: "温和谦逊、勤奋认真、非常看重工作责任、性格内向、有些怕生"
+tags: ["cryo", "bow", "liyue", "lue-qixing-secretary"]

@@ -3,12 +3,12 @@ name: "妮露"
 name_en: "Nilou"
 series: genshin-impact
 appearance:
-  hair_style: "红棕色中长发及腰，大波浪卷，头顶有侧分刘海"
-  hair_color: "红棕 / 赤褐色"
-  eye_shape: "妩媚的眼形，眼神温暖如阳光"
-  eye_color: "青绿色 / 红棕色异色瞳（左青绿右红褐）"
-  height: "163cm"
-  body_type: "丰满匀称，舞者般柔美的身材曲线"
-  other: "额前有金色宝石装饰，身穿波斯风格的舞蹈服饰——以红金配色为主，配有大量金色链饰、腰链和臂钏，赤足佩戴脚链"
-personality: "纯真烂漫、热爱舞蹈与艺术、乐观开朗、有些天真但坚持自己的信念、对祖拜尔剧场的同伴们极为珍视、为了守护梦想可以变得非常坚定"
-tags: ["hydro", "sword", "sumeru", "dancer", "zubayr-theater", "pure-hearted", "art-lover"]
+  hair_style: "火红色的长发，披散在脑后，戴着带有角状装饰的精致头巾"
+  hair_color: "红色"
+  eye_shape: "温柔且充满感染力的眼形"
+  eye_color: "蓝色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "柔美匀称的少女体型"
+  other: "身穿极具异域风情的舞娘装束，装饰有大量的金色铃铛和配饰，气质纯真烂漫"
+personality: "单纯善良、热爱舞蹈、待人诚恳、性格乐观向上、对祖拜尔剧场的同伴们非常关照"
+tags: ["hydro", "sword", "sumeru", "dancer"]
