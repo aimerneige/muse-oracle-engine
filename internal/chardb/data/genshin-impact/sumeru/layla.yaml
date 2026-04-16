@@ -1,0 +1,14 @@
+id: layla
+name: "莱依拉"
+name_en: "Layla"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝色的长卷发，发丝厚实且带有星光装饰，常戴着一顶带星星坠饰的学者帽"
+  hair_color: "深蓝色"
+  eye_shape: "带着倦意、惺忪但迷人的眼形"
+  eye_color: "淡金色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "纤弱、文雅的少女体型"
+  other: "身穿星空色彩的华丽长裙，装饰有星月元素和金边，经常带着一副没睡醒的呆萌表情"
+personality: "极度缺乏睡眠、文静、内向、在睡梦中会展现出截然不同的自信且强大的“里人格”、勤奋好学"
+tags: ["cryo", "sword", "sumeru", "astrologer"]

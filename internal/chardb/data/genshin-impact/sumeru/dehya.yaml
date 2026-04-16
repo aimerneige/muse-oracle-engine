@@ -1,0 +1,14 @@
+id: dehya
+name: "迪希雅"
+name_en: "Dehya"
+series: genshin-impact
+appearance:
+  hair_style: "黑色的长发，带有金色挑染，发束向上翘起，呈现出类似豹耳的形状"
+  hair_color: "黑色，带有金色挑染"
+  eye_shape: "深邃且带有野性魅力的眼睛"
+  eye_color: "湛蓝色"
+  height: "Adult/Large (约175cm)"
+  body_type: "矫健、富有力量感的战士体型"
+  other: "身穿极具沙漠风格的露腰紧身皮装，肩披红黑相间的披风，透出英气十足的佣兵气质"
+personality: "豪爽、正直、非常可靠、外表强悍但内心细腻温柔、极度忠诚且具有强烈的正义感"
+tags: ["pyro", "claymore", "sumeru", "mercenary"]

@@ -1,0 +1,14 @@
+id: wriothesley
+name: "莱欧斯利"
+name_en: "Wriothesley"
+series: genshin-impact
+appearance:
+  hair_style: "黑色的短发，略显凌乱且带有灰色的挑染，两鬓有类似狼耳的翘起"
+  hair_color: "黑色，带灰色挑染"
+  eye_shape: "深邃、锐利且带有压迫感的眼形"
+  eye_color: "冰蓝色"
+  height: "Adult/Large (约188cm)"
+  body_type: "高大强壮、充满爆发力的男性体型"
+  other: "身穿厚重的典狱长制服，披着一件巨大的黑色毛皮领斗篷，双手通常戴着格斗拳套，气场强大且沉稳"
+personality: "沉着冷静、处事圆滑、有原则、非常有责任感、具有极强的领导力和敏锐的洞察力"
+tags: ["cryo", "catalyst", "fontaine", "warden"]

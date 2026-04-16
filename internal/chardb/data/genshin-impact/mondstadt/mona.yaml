@@ -1,0 +1,14 @@
+id: mona
+name: "莫娜"
+name_en: "Mona"
+series: genshin-impact
+appearance:
+  hair_style: "深紫色的长发，扎成两根长长的双马尾，末端饰有罗盘状的发饰，戴着一顶巨大的尖顶占星帽"
+  hair_color: "深紫色"
+  eye_shape: "明亮且充满智慧的眼睛"
+  eye_color: "翠绿色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "纤细且灵活的少女体型"
+  other: "身穿深紫色的占星术士紧身礼服，装饰有星空图案和金饰，透出神秘的学者气质"
+personality: "自信、博学、坚持原则、有些傲娇、对占星术有着执着的追求、虽然生活拮据但绝不接受施舍"
+tags: ["hydro", "catalyst", "mondstadt", "astrologist"]

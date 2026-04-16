@@ -1,0 +1,14 @@
+id: eula
+name: "优菈"
+name_en: "Eula"
+series: genshin-impact
+appearance:
+  hair_style: "浅蓝色的短发，发丝凌厉且富有动感，戴着一个黑色的发箍"
+  hair_color: "浅蓝色"
+  eye_shape: "冷静且深邃的眼形"
+  eye_color: "紫金色"
+  height: "Adult/Large (约175cm)"
+  body_type: "高挑、优雅且极富力量感的御姐体型"
+  other: "身穿极具蒙德骑士风格的紧身作战服，肩披半透明的小斗篷，行走间透出高贵而又坚韧的气质"
+personality: "外冷内热、自尊心极强、常把“复仇”挂在嘴边但内心极其善良、坚韧且富有正义感"
+tags: ["cryo", "claymore", "mondstadt", "knight"]

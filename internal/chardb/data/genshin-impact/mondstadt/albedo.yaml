@@ -1,0 +1,14 @@
+id: albedo
+name: "阿贝多"
+name_en: "Albedo"
+series: genshin-impact
+appearance:
+  hair_style: "浅金色的中长发，发丝略显凌乱并向后梳理，脖颈处有一个明显的金色标记"
+  hair_color: "浅金色"
+  eye_shape: "平静且充满知性的眼形"
+  eye_color: "淡青色"
+  height: "Teen/Medium (约164cm)"
+  body_type: "文雅且冷静的少年体型"
+  other: "身穿白色的西风骑士团炼金术士长袍，装饰有繁复的金属扣件和炼金术图案，气质高雅且神秘"
+personality: "沉着冷静、博学多才、优雅淡然、对世界充满了好奇心、虽然待人有礼但总是保持着一定的距离感"
+tags: ["geo", "sword", "mondstadt", "alchemist"]
