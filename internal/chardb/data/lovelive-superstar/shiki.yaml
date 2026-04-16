@@ -1,14 +1,14 @@
 id: shiki
-name: "鬼堂院咲希"
-name_en: "Shiki"
+name: "鬼塚栞"
+name_en: "Onizuka Shiki"
 series: lovelive-superstar
 appearance:
-  hair_style: "暗红色短发带挑染，蓬松凌乱的造型感"
-  hair_color: "暗红黑 / 酒红色"
-  eye形状: "锐利的眼形，眼神个性十足"
-  eye_color: "深红色 / 暗紫色"
+  hair_style: "暗红色短发，蓬松自然的造型"
+  hair_color: "暗红色 / 酒红色"
+  eye_shape: "锐利的眼形，眼神个性十足"
+  eye_color: "红色"
   height: "158cm"
-  body_type: "纤细修长，中性风格"
-  other: "着装风格独特前卫，带有摇滚和街头元素，常佩戴个性化饰品"
+  body_type: "纤细修长"
+  other: "无特殊标记"
 personality: "个性张扬、特立独行、才华横溢、看似叛逆实则敏感、热爱创作和表达自我、有强烈的艺术主张"
-tags: ["Liella!", "fourth-year", "unique", "creative"]
+tags: ["Liella!", "second-year", "unique", "creative"]

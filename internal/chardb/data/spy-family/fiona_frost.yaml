@@ -1,14 +1,14 @@
 id: fiona_frost
-name: "菲奥娜·弗洛斯特"
+name: "菲奥娜·弗罗斯特"
 name_en: "Fiona Frost"
 series: spy-family
 appearance:
-  hair_style: "金色长直发或波浪卷发（伪装时），可变化造型"
-  hair_color: "金黄色 / 蜜色"
-  eye_shape: "妩媚的眼形，眼神多变（根据伪装调整）"
-  eye_color: "蓝色（伪装时可变）"
-  height: "168cm"
-  body_type: "高挑丰满，身材火辣"
-  other: "擅长各种伪装造型，可根据任务改变发型和妆容，常穿性感成熟的服饰"
-personality: "高傲自信、实力强大、对洛德有强烈执着（单相思）、工作专业但感情上幼稚、与阿尼亚是情敌关系"
-tags: ["twilight-rival", "operative", "nightfall", "obsessive"]
+  hair_style: "灰银色短发，刘海遮住一只眼睛"
+  hair_color: "灰银色 / 银灰色"
+  eye_shape: "冷淡的细长眼型"
+  eye_color: "紫色"
+  height: "162cm"
+  body_type: "标准成年女性体型"
+  other: "面无表情（面瘫）"
+personality: "面无表情、极度冷静、代号夜帷（Nightfall）、暗恋黄昏、工作能力出众、对约儿有敌意"
+tags: ["WISE", "spy", "Nightfall", "expressionless"]
