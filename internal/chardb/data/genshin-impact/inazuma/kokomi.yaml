@@ -1,0 +1,14 @@
+id: kokomi
+name: "珊瑚宫心海"
+name_en: "Sangonomiya Kokomi"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝色中长发微卷，低马尾配贝壳发饰，斜刘海"
+  hair_color: "深蓝 / 海军蓝"
+  eye_shape: "温柔的水滴形眼，眼神清澈灵动"
+  eye_color: "紫罗兰色 / 淡紫色"
+  height: "158cm"
+  body_type: "纤细苗条，少女体型"
+  other: "头戴珍珠和贝壳装饰的发饰，身穿海蓝白配色的巫女服风格服装——露肩短袖设计配有飘逸的半透明纱质披风和鱼尾状下摆"
+personality: "表面温柔无害实则精于谋略、军事天才但厌恶战斗、喜欢看轻小说和写日记、对战术兵法有独到见解、作为海祇岛统领责任感极强"
+tags: ["hydro", "catalyst", "inazuma", "watatsumi-island-priestess", "strategic", "gentle", "novel-reader"]
