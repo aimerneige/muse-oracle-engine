@@ -281,6 +281,15 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.GeminiImage25Flash
 		}
 		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+	case "openai":
+		model := image.DALLE3
+		switch cfg.ImageModel {
+		case "dall-e-2":
+			model = image.DALLE2
+		case "dall-e-3":
+			model = image.DALLE3
+		}
+		return image.NewOpenAIImageAdapter(cfg.OpenAIAPIKey, model), nil
 	default:
 		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
 	}
@@ -325,6 +334,9 @@ func printModels() {
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
+	fmt.Println("  Provider: openai")
+	fmt.Println("   ├─ dall-e-3 (DALL·E 3, 默认)")
+	fmt.Println("   └─ dall-e-2 (DALL·E 2)")
 	fmt.Println("  Provider: prompt")
 	fmt.Println("   └─ (输出 prompt 而不调用 API，可通过 --prompt-only 或 IMAGE_PROVIDER=prompt 启用)")
 }

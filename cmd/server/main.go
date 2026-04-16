@@ -508,6 +508,15 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.GeminiImage25Flash
 		}
 		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+	case "openai":
+		model := image.DALLE3
+		switch cfg.ImageModel {
+		case "dall-e-2":
+			model = image.DALLE2
+		case "dall-e-3":
+			model = image.DALLE3
+		}
+		return image.NewOpenAIImageAdapter(cfg.OpenAIAPIKey, model), nil
 	default:
 		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
 	}

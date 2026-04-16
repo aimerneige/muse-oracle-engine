@@ -12,6 +12,7 @@ type Config struct {
 	DeepSeekAPIKey string `json:"deepseek_api_key"`
 	OpenRouterKey  string `json:"openrouter_api_key"`
 	ThreeOTwoKey   string `json:"threeotwo_api_key"`
+	OpenAIAPIKey   string `json:"openai_api_key"`
 
 	// Model selection
 	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai", "mock"
@@ -43,6 +44,7 @@ func LoadFromEnv() *Config {
 		DeepSeekAPIKey: os.Getenv("DEEPSEEK_API_KEY"),
 		OpenRouterKey:  os.Getenv("OPENROUTER_API_KEY"),
 		ThreeOTwoKey:   os.Getenv("THREEOTWO_API_KEY"),
+		OpenAIAPIKey:   os.Getenv("OPENAI_API_KEY"),
 
 		LLMProvider:   getEnvDefault("LLM_PROVIDER", "gemini"),
 		LLMModel:      getEnvDefault("LLM_MODEL", "gemini-3.1-pro-preview"),
@@ -100,6 +102,10 @@ func (c *Config) Validate() error {
 	case "gemini":
 		if c.GeminiAPIKey == "" {
 			return fmt.Errorf("GEMINI_API_KEY is required when IMAGE_PROVIDER is 'gemini'")
+		}
+	case "openai":
+		if c.OpenAIAPIKey == "" {
+			return fmt.Errorf("OPENAI_API_KEY is required when IMAGE_PROVIDER is 'openai'")
 		}
 	case "prompt", "mock":
 		// prompt/mock mode: no API key needed for image generation
