@@ -1,4 +1,4 @@
-module github.com/aimerneige/lovelive-manga-generator
+module github.com/aimerneige/muse-oracle-engine
 
 go 1.26.1
 

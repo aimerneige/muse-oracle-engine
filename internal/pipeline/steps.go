@@ -3,8 +3,8 @@ package pipeline
 import (
 	"context"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
-	"github.com/aimerneige/lovelive-manga-generator/internal/service"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/service"
 )
 
 // StoryboardStep wraps the storyboard generation as a pipeline step.

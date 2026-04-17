@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
 
 // FileStore implements Store using the local filesystem.

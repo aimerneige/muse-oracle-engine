@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
-	"github.com/aimerneige/lovelive-manga-generator/internal/storage"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/storage"
 )
 
 // StepID identifies a pipeline step.

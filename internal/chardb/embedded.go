@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 	"gopkg.in/yaml.v3"
 )
 

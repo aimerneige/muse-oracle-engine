@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
 
 //go:embed templates/*

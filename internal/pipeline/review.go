@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
 
 // ReviewCallback is a function that handles the review interaction.

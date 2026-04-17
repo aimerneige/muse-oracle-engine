@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
-	"github.com/aimerneige/lovelive-manga-generator/internal/prompt"
-	"github.com/aimerneige/lovelive-manga-generator/internal/provider/image"
-	"github.com/aimerneige/lovelive-manga-generator/internal/storage"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/prompt"
+	"github.com/aimerneige/muse-oracle-engine/internal/provider/image"
+	"github.com/aimerneige/muse-oracle-engine/internal/storage"
 )
 
 // ComicService handles comic image generation.

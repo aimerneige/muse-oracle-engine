@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
-	"github.com/aimerneige/lovelive-manga-generator/internal/prompt"
-	"github.com/aimerneige/lovelive-manga-generator/internal/provider/llm"
-	"github.com/aimerneige/lovelive-manga-generator/pkg/mdutil"
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
+	"github.com/aimerneige/muse-oracle-engine/internal/prompt"
+	"github.com/aimerneige/muse-oracle-engine/internal/provider/llm"
+	"github.com/aimerneige/muse-oracle-engine/pkg/mdutil"
 )
 
 // StoryService handles story and storyboard generation.

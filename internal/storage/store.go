@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/aimerneige/lovelive-manga-generator/internal/domain"
+import "github.com/aimerneige/muse-oracle-engine/internal/domain"
 
 // Store defines the interface for persisting project state.
 type Store interface {
