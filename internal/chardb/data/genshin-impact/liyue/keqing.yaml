@@ -1,0 +1,14 @@
+id: keqing
+name: "刻晴"
+name_en: "Keqing"
+series: genshin-impact
+appearance:
+  hair_style: "紫色长发，扎成类似猫耳的两个发髻，其余部分垂下"
+  hair_color: "紫色"
+  eye_shape: "锐利且充满智慧的丹凤眼"
+  eye_color: "紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "娇小敏捷的少女体型"
+  other: "身穿带有紫色花边装饰的华丽战斗服，脚穿紫色高跟鞋，整体风格利落"
+personality: "雷厉风行、务实严谨、敢于挑战传统、勤奋得近乎苛刻、深爱着璃月的大地"
+tags: ["electro", "sword", "liyue", "lue-qixing-yuheng"]

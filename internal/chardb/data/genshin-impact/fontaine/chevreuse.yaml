@@ -1,0 +1,14 @@
+id: chevreuse
+name: "夏沃蕾"
+name_en: "Chevreuse"
+series: genshin-impact
+appearance:
+  hair_style: "深紫色的长发，其中一束刘海挡住了一只眼（通常戴着眼罩）"
+  hair_color: "深紫色"
+  eye_shape: "锐利且具有威慑力的眼睛"
+  eye_color: "明黄色"
+  height: "Teen/Medium (约168cm)"
+  body_type: "利落且英武的少女体型"
+  other: "穿着特巡队队长的红色制服，佩戴着贝雷帽，腰间挂着作为武器的统领步枪，显得专业且极具正义感"
+personality: "严肃公正、坚持原则、在执法时毫不留情、对待犯罪行为绝不姑息、私下里却很喜欢吃炸鱼薯条"
+tags: ["pyro", "polearm", "fontaine", "captain"]

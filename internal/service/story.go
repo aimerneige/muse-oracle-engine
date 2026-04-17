@@ -1,0 +1,93 @@
+package service
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/aimerneige/lovelive-manga-generator/internal/domain"
+	"github.com/aimerneige/lovelive-manga-generator/internal/prompt"
+	"github.com/aimerneige/lovelive-manga-generator/internal/provider/llm"
+	"github.com/aimerneige/lovelive-manga-generator/pkg/mdutil"
+)
+
+// StoryService handles story and storyboard generation.
+type StoryService struct {
+	llmProvider  llm.Provider
+	promptEngine *prompt.Engine
+}
+
+// NewStoryService creates a new story generation service.
+func NewStoryService(provider llm.Provider, engine *prompt.Engine) *StoryService {
+	return &StoryService{
+		llmProvider:  provider,
+		promptEngine: engine,
+	}
+}
+
+// GenerateStoryboard generates the complete storyboard in a single LLM call.
+// It renders the storybook prompt with character data and plot hint, calls the LLM once,
+// and parses the code blocks as storyboard panels.
+// CharacterSetting is generated programmatically from the character data for downstream use.
+func (s *StoryService) GenerateStoryboard(ctx context.Context, project *domain.Project) error {
+	// Render the storybook prompt with character data
+	promptText, err := s.promptEngine.RenderStorybook(prompt.StorybookData{
+		Characters: project.Characters,
+		PlotHint:   project.PlotHint,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to render storybook prompt: %w", err)
+	}
+
+	// Call LLM — single call generates all storyboard panels
+	response, err := s.llmProvider.GenerateText(ctx, promptText)
+	if err != nil {
+		return fmt.Errorf("storyboard generation failed: %w", err)
+	}
+
+	// Parse response — each code block is one panel/episode
+	blocks := mdutil.ExtractCodeBlocks(response)
+	if len(blocks) == 0 {
+		return fmt.Errorf("LLM returned no code blocks for storyboard")
+	}
+
+	// Build storyboard panels
+	panels := make([]domain.StoryboardPanel, 0, len(blocks))
+	for i, block := range blocks {
+		panels = append(panels, domain.StoryboardPanel{
+			Index:   i + 1,
+			Content: block.Content,
+		})
+	}
+
+	// Generate CharacterSetting programmatically from Characters data
+	characterSetting := buildCharacterSetting(project.Characters)
+
+	project.StoryResult = &domain.StoryResult{
+		CharacterSetting: characterSetting,
+		RawResponse:      response,
+	}
+
+	project.Storyboard = &domain.Storyboard{
+		Panels:      panels,
+		RawResponse: response,
+	}
+
+	project.Status = domain.StatusStoryboardDone
+	return nil
+}
+
+// buildCharacterSetting generates a markdown character setting string from character data.
+// This replaces the previous approach of extracting it from LLM output.
+func buildCharacterSetting(characters []domain.Character) string {
+	var sb strings.Builder
+	sb.WriteString("### 全局固有生理特征设定：(注：此处设定不可变的生理特征，后续分镜中不再赘述)\n")
+	for _, c := range characters {
+		sb.WriteString(fmt.Sprintf("\n- **%s**：\n", c.Name))
+		sb.WriteString(fmt.Sprintf("  - **发型与发色**：%s / %s\n", c.Appearance.HairStyle, c.Appearance.HairColor))
+		sb.WriteString(fmt.Sprintf("  - **眼型与瞳色**：%s / %s\n", c.Appearance.EyeShape, c.Appearance.EyeColor))
+		sb.WriteString(fmt.Sprintf("  - **身高与身材**：%s / %s\n", c.Appearance.Height, c.Appearance.BodyType))
+		sb.WriteString(fmt.Sprintf("  - **其他特征**：%s\n", c.Appearance.Other))
+	}
+	return sb.String()
+}

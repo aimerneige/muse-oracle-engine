@@ -1,0 +1,14 @@
+id: yoimiya
+name: "宵宫"
+name_en: "Yoimiya"
+series: genshin-impact
+appearance:
+  hair_style: "浅橙色的中短发，发束呈现出类似烟花绽放的形状，发梢微微翘起，饰有发卡"
+  hair_color: "浅橙色"
+  eye_shape: "热情且充满活力的眼形"
+  eye_color: "金橙色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "元气满满的少女体型"
+  other: "身穿露出单肩的和服短裙，身上缠绕着大量的绷带装饰，整体造型充满了祭典和烟花的氛围"
+personality: "性格开朗、热情如火、有着一颗童心、热爱烟花、非常健谈且极具亲和力"
+tags: ["pyro", "bow", "inazuma", "artisan"]

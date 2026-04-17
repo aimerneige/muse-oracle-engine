@@ -1,0 +1,14 @@
+id: klee
+name: "可莉"
+name_en: "Klee"
+series: genshin-impact
+appearance:
+  hair_style: "浅金色的长发，扎成两条蓬松的双马尾，戴着一顶装饰有羽毛和四叶草图案的大红帽子"
+  hair_color: "淡金色"
+  eye_shape: "圆润且充满活力的眼睛"
+  eye_color: "琥珀红色"
+  height: "Child/Small (约132cm)"
+  body_type: "活泼可爱的幼童体型"
+  other: "身穿红色蓬蓬裙，背着一个挂有蹦蹦炸弹玩偶的棕色小书包，看起来十分天真烂漫"
+personality: "天真无邪、热爱冒险、对爆炸物有着迷之狂热、性格开朗活泼、虽然经常闯祸但本质纯真善良"
+tags: ["pyro", "catalyst", "mondstadt", "knight"]

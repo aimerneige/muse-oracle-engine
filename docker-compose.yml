@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  manga-generator:
+    build: .
+    container_name: manga-generator-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/projects:/app/data
+      # Uncomment the following lines to mount custom characters and styles
+      # - ./my_characters:/app/chardb
+      # - ./my_styles:/app/styles
+    environment:
+      # API Keys (Provide at least one)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - THREEOTWO_API_KEY=${THREEOTWO_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      
+      # Model Configuration
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - LLM_MODEL=${LLM_MODEL:-gemini-3.1-pro-preview}
+      - IMAGE_PROVIDER=${IMAGE_PROVIDER:-gemini}
+      - IMAGE_MODEL=${IMAGE_MODEL:-gemini-3.1-flash-image-preview}
+    restart: unless-stopped

@@ -1,0 +1,14 @@
+id: fischl
+name: "菲谢尔"
+name_en: "Fischl"
+series: genshin-impact
+appearance:
+  hair_style: "金色的长发，左右两侧扎着细长的双马尾，左眼戴着黑色的眼罩"
+  hair_color: "金色"
+  eye_shape: "深邃且带有一丝神秘感"
+  eye_color: "浅绿色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "苗条优雅的少女体型"
+  other: "穿着哥特风格的紫色礼服，装饰有蕾丝和深色羽毛，给人一种异世界皇女的既视感"
+personality: "中二病、言语华丽且深奥、内心温柔且渴望认可、偶尔会流露出普通少女的羞涩、对奥兹非常信赖"
+tags: ["electro", "bow", "mondstadt", "adventurer"]

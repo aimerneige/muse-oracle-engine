@@ -1,0 +1,14 @@
+id: tighnari
+name: "提纳里"
+name_en: "Tighnari"
+series: genshin-impact
+appearance:
+  hair_style: "墨绿色的短发，刘海处有两条浅绿色的横纹挑染，头顶有一对醒目的大长耳朵"
+  hair_color: "墨绿色带浅绿色条染"
+  eye_shape: "聪慧且敏锐的眼形"
+  eye_color: "棕绿色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "匀称敏捷的少年体型"
+  other: "身后有一条蓬松的深色大尾巴，身穿巡林官制服，佩戴着各种野外探索工具"
+personality: "博学严谨、直言不讳、对待工作极其认真、非常护短、拥有丰富的植物学和生态学知识"
+tags: ["dendro", "bow", "sumeru", "forest-watch"]

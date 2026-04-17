@@ -1,0 +1,14 @@
+id: raiden_shogun
+name: "雷电将军"
+name_en: "Raiden Shogun"
+series: genshin-impact
+appearance:
+  hair_style: "深紫色的长发，编成粗大的长发辫垂在脑后，发间别着精致的龙胆花发饰"
+  hair_color: "紫色"
+  eye_shape: "威严且深邃的凤眼，右眼下方有一颗泪痣"
+  eye_color: "紫色"
+  height: "Adult/Large (约170cm)"
+  body_type: "高贵修长的成女性体型"
+  other: "身穿华丽的长款紫色和服战斗装，印有雷神巴尔泽布的纹章，气场强大且冰冷"
+personality: "冷酷威严、追求“永恒”、不为情感所动（将军人格）、内心深处有着孤独与坚持（影人格）"
+tags: ["electro", "polearm", "inazuma", "archon"]

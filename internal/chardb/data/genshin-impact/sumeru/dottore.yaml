@@ -1,0 +1,14 @@
+id: dottore
+name: "多托雷"
+name_en: "Dottore"
+series: genshin-impact
+appearance:
+  hair_style: "浅蓝色的短发，显得有些凌乱"
+  hair_color: "浅蓝色"
+  eye_shape: "被面具遮挡，透着疯狂且冰冷的目光"
+  eye_color: "红色"
+  height: "Adult/Large (约188cm)"
+  body_type: "挺拔且带着压迫感的成年男性体型"
+  other: "戴着鸟嘴样式的黑蓝色面具，身穿华丽的愚人众执行官大衣，气质诡异且危险"
+personality: "疯狂、冷酷、追求知识而不择手段、极度傲慢、视生命如草芥的邪恶科学家"
+tags: ["fatui", "harbinger", "scholar"]

@@ -1,0 +1,14 @@
+id: loid
+name: "罗伊德·福杰"
+name_en: "Loid Forger"
+series: spy-family
+appearance:
+  hair_style: "金色短发，整齐向后梳理，干练利落"
+  hair_color: "金色"
+  eye_shape: "锐利而冷静的细长眼"
+  eye_color: "蓝色"
+  height: "187cm"
+  body_type: "高大健壮的成年男性体型"
+  other: "平时戴眼镜（伪装用）"
+personality: "西国情报机关最强间谍（代号黄昏）、高智商冷静、逐渐对家庭产生真感情、面瘫但内心温柔"
+tags: ["Forger-family", "spy", "Twilight", "father"]

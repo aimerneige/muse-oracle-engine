@@ -1,0 +1,14 @@
+id: rosaria
+name: "罗莎莉亚"
+name_en: "Rosaria"
+series: genshin-impact
+appearance:
+  hair_style: "深红紫色的短发，常年戴着修女头巾"
+  hair_color: "深红紫色"
+  eye_shape: "冰冷且锐利的眼神"
+  eye_color: "浅紫色（略带灰色）"
+  height: "Adult/Large (约172cm)"
+  body_type: "高挑冷艳的成年女性体型"
+  other: "穿着改良过的、颜色偏深的修女服，上面布满了荆棘和锐利的金属饰品，散发着危险而神秘的气息"
+personality: "冷漠、务实、独来独往、对繁琐的教会活动不感兴趣、在暗处守护蒙德、言谈直白"
+tags: ["cryo", "polearm", "mondstadt", "sister"]

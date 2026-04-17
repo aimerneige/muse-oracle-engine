@@ -1,0 +1,14 @@
+id: diluc
+name: "迪卢克"
+name_en: "Diluc"
+series: genshin-impact
+appearance:
+  hair_style: "火红色的浓密长发，通常扎成低马尾"
+  hair_color: "红色"
+  eye_shape: "锐利冷峻的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约185cm)"
+  body_type: "高大健硕的成年男性体型"
+  other: "身穿深色的贵族服饰，佩戴黑色手套，常备一件厚重的黑色大衣"
+personality: "沉着冷静、行事果断、正义感极强、外冷内热、对蒙德有着深沉的责任感"
+tags: ["pyro", "claymore", "mondstadt", "dawn-winery", "darknight-hero"]

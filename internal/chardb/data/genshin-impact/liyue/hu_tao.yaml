@@ -1,0 +1,14 @@
+id: hu_tao
+name: "胡桃"
+name_en: "Hu Tao"
+series: genshin-impact
+appearance:
+  hair_style: "深褐色长发扎成高双马尾，末端自然垂落，戴着装饰有梅花的乾坤泰卦帽"
+  hair_color: "深褐色"
+  eye_shape: "灵动俏皮的桃花眼，瞳孔呈现独特的梅花形状"
+  eye_color: "红色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "纤细活泼的少女体型"
+  other: "身穿黑色中式长衫，背后印有往生堂的纹章，手上戴着许多戒指"
+personality: "古灵精怪、活泼开朗、幽默风趣、对待生死有独特的见解、偶尔会让人感到难以捉摸"
+tags: ["pyro", "polearm", "liyue", "wangsheng-funeral-parlor"]

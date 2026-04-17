@@ -1,0 +1,14 @@
+id: baizhu
+name: "白术"
+name_en: "Baizhu"
+series: genshin-impact
+appearance:
+  hair_style: "长发扎成低马尾，额前有分叉的刘海"
+  hair_color: "绿色"
+  eye_shape: "狭长的眼形，瞳孔为金色的蛇类竖瞳"
+  eye_color: "金色"
+  height: "Adult/Large (约182cm)"
+  body_type: "略显文弱的成年男性体型"
+  other: "脖子上缠绕着白蛇“长生”，戴着金丝眼镜，身穿露脐的浅紫色与绿色相间的中式服饰"
+personality: "医术高明、温文尔雅、精于算计、对追求长生不老有着执念、对待病人极其温柔"
+tags: ["dendro", "catalyst", "liyue", "bubu-pharmacy"]

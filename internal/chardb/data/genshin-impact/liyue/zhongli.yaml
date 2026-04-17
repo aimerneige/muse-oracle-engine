@@ -1,0 +1,14 @@
+id: zhongli
+name: "钟离"
+name_en: "Zhongli"
+series: genshin-impact
+appearance:
+  hair_style: "深褐色的长发，在脑后扎成细长的马尾，发梢渐变为橙黄色"
+  hair_color: "深褐色，发梢渐变为橙黄色"
+  eye_shape: "沉稳深邃的眼形，眼角带有独特的红色眼影"
+  eye_color: "橙黄色"
+  height: "Adult/Large (约186cm)"
+  body_type: "挺拔俊朗的成年男性体型"
+  other: "身穿设计考究的深褐色西装风格长衫，戴着耳坠，举手投足间尽显博学与尊贵"
+personality: "沉稳儒雅、博学多才、极其讲究契约与规矩、生活态度悠闲、对金钱似乎没什么概念"
+tags: ["geo", "polearm", "liyue", "archon", "rex-lapis"]

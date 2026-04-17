@@ -1,0 +1,14 @@
+id: thoma
+name: "托马"
+name_en: "Thoma"
+series: genshin-impact
+appearance:
+  hair_style: "蓬松的金发，戴着一个黑色的金属头带"
+  hair_color: "金色"
+  eye_shape: "亲切和蔼的眼睛"
+  eye_color: "绿色"
+  height: "Adult/Large (约182cm)"
+  body_type: "高大健壮的成年男性体型"
+  other: "穿着改良过的红黑相间的武士风格服饰，由于担任社奉行家政官，总是给人一种利落且靠得住的感觉"
+personality: "热情友好、极其擅长社交、是个家务全才、忠诚可靠、被誉为“地头蛇”"
+tags: ["pyro", "polearm", "inazuma", "fixer"]

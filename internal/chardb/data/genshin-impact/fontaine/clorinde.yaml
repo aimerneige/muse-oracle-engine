@@ -1,0 +1,14 @@
+id: clorinde
+name: "克洛琳德"
+name_en: "Clorinde"
+series: genshin-impact
+appearance:
+  hair_style: "深紫色的中长发，发梢微卷，戴着一顶精致的黑色小礼帽"
+  hair_color: "深紫色"
+  eye_shape: "锐利且冷静的眼形"
+  eye_color: "紫色"
+  height: "Adult/Large (约170cm)"
+  body_type: "修长且富有力量感的成女性体型"
+  other: "身穿深蓝色的决斗代理人制服，配有白色衬衫和黑色紧身裤，腰间别着细剑和铳枪"
+personality: "冷静理智、行事果断、极具职业道德、剑术超群、外冷内热、非常看重荣誉"
+tags: ["electro", "sword", "fontaine", "champion-duelist"]

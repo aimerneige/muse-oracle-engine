@@ -1,0 +1,14 @@
+id: fiona_frost
+name: "菲奥娜·弗罗斯特"
+name_en: "Fiona Frost"
+series: spy-family
+appearance:
+  hair_style: "灰银色短发，刘海遮住一只眼睛"
+  hair_color: "灰银色 / 银灰色"
+  eye_shape: "冷淡的细长眼型"
+  eye_color: "紫色"
+  height: "162cm"
+  body_type: "标准成年女性体型"
+  other: "面无表情（面瘫）"
+personality: "面无表情、极度冷静、代号夜帷（Nightfall）、暗恋黄昏、工作能力出众、对约儿有敌意"
+tags: ["WISE", "spy", "Nightfall", "expressionless"]

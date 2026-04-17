@@ -1,0 +1,14 @@
+id: yae_miko
+name: "八重神子"
+name_en: "Yae Miko"
+series: genshin-impact
+appearance:
+  hair_style: "粉色的长发，梳成蓬松的样式，有一对可爱的粉色狐狸耳朵"
+  hair_color: "粉色"
+  eye_shape: "妩媚且充满智慧的眼形"
+  eye_color: "紫色"
+  height: "Adult/Large (约170cm)"
+  body_type: "丰满优雅的成女性体型"
+  other: "身穿露肩的改良巫女服，戴着巨大的耳环，举手投足间散发着迷人且危险的气息"
+personality: "古灵精怪、狡黠聪慧、言语犀利（毒舌）、喜欢捉弄人、作为鸣神大社宫司非常可靠"
+tags: ["electro", "catalyst", "inazuma", "kitsune"]

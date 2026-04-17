@@ -1,0 +1,14 @@
+id: kaveh
+name: "卡维"
+name_en: "Kaveh"
+series: genshin-impact
+appearance:
+  hair_style: "金色的中长发，发梢微卷，佩戴着精致的发饰"
+  hair_color: "金色"
+  eye_shape: "明亮且富有感情色彩的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约182cm)"
+  body_type: "优雅修长的成年男性体型"
+  other: "身穿华丽且极具设计感的须弥服饰，披着斗篷，随身带着名为“梅赫拉克”的工具箱"
+personality: "感性多情、富有同情心、追求极致的艺术美学、容易因理想而陷入财务困境、性格开朗但偶尔忧郁"
+tags: ["dendro", "claymore", "sumeru", "architect"]

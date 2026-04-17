@@ -1,0 +1,14 @@
+id: kuki_shinobu
+name: "久岐忍"
+name_en: "Kuki Shinobu"
+series: genshin-impact
+appearance:
+  hair_style: "淡绿色的中短发，发丝被黑色面具遮挡了一部分，戴着黑色的发箍"
+  hair_color: "淡绿色"
+  eye_shape: "冷静且犀利的眼形"
+  eye_color: "亮紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "矫健且灵活的少女体型"
+  other: "常年佩戴黑色的面具，身穿紫黑相间的忍者作战服，腰间挂着多功能的工具包，给人一种专业且干练的感觉"
+personality: "冷静、睿智、处事老练、多才多艺、是荒泷帮中不可或缺的“大管家”、非常有原则且受人信赖"
+tags: ["electro", "sword", "inazuma", "ninja"]

@@ -1,0 +1,14 @@
+id: aether
+name: "空"
+name_en: "Aether"
+series: genshin-impact
+appearance:
+  hair_style: "金色长发，编成粗长的辫子垂在脑后，额前有碎刘海"
+  hair_color: "金色"
+  eye_shape: "清澈且坚定的眼形"
+  eye_color: "金色"
+  height: "Teen/Medium (约164cm)"
+  body_type: "匀称的少年体型"
+  other: "身穿带有异世界风格的棕黑色短上衣和长裤，披着短斗篷，身上有随元素变换颜色的发光部件"
+personality: "沉稳可靠、正义感强、对寻找妹妹充满执着、乐于助人、虽然沉默寡言但内心细腻"
+tags: ["traveler", "male", "sword", "protagonist"]

@@ -1,0 +1,14 @@
+id: arataki_itto
+name: "荒泷一斗"
+name_en: "Arataki Itto"
+series: genshin-impact
+appearance:
+  hair_style: "白色的长发，发丛高耸，额头有两只显眼的红色长角"
+  hair_color: "白色"
+  eye_shape: "张扬且充满野性的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约192cm)"
+  body_type: "高大健壮、肌肉发达的男性体型"
+  other: "身穿极具豪侠风格的敞怀背心，身上有深红色的纹身，手持巨大的重型武器，充满了狂野的气息"
+personality: "豪爽耿直、重情重义、虽然看起来很凶但内心非常单纯、喜欢与人比赛、极具感染力的帮派领袖"
+tags: ["geo", "claymore", "inazuma", "oni"]

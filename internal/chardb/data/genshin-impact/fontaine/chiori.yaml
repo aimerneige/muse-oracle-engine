@@ -1,0 +1,14 @@
+id: chiori
+name: "千织"
+name_en: "Chiori"
+series: genshin-impact
+appearance:
+  hair_style: "深褐色的中长发，在脑后盘成复杂的发髻，并饰有华丽的和风发卡"
+  hair_color: "深褐色"
+  eye_shape: "冷静、锐利且带有独特时尚感的眼睛"
+  eye_color: "金红色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "精致、优雅且充满自信的少女体型"
+  other: "身穿极具设计感的改良版和服，裙摆上有精美的花纹，举手投足间展现出顶尖设计师的傲气与专业"
+personality: "毒舌、直接、非常自信、追求完美、虽然言语犀利但对自己的朋友和工作有着极高的热忱"
+tags: ["geo", "sword", "fontaine", "designer"]

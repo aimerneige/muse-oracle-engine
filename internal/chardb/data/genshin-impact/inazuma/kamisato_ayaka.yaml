@@ -1,0 +1,14 @@
+id: kamisato_ayaka
+name: "神里绫华"
+name_en: "Kamisato Ayaka"
+series: genshin-impact
+appearance:
+  hair_style: "浅蓝色的长发，梳成整齐的齐刘海，扎着高马尾并用武士头盔状的发饰固定"
+  hair_color: "浅蓝色偏白"
+  eye_shape: "端庄且清澈的杏眼，眼角下有一颗泪痣"
+  eye_color: "蓝色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "优雅匀称的少女体型"
+  other: "身穿带有神里家纹的华丽折扇裙装，手持折扇，展现出名门闺秀的高雅气质"
+personality: "端庄优雅、善良体贴、责任心强、内心有着少女纯真的一面、对剑道有着极高的造诣"
+tags: ["cryo", "sword", "inazuma", "kamisato-clan"]

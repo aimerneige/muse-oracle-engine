@@ -1,0 +1,14 @@
+id: bennett
+name: "班尼特"
+name_en: "Bennett"
+series: genshin-impact
+appearance:
+  hair_style: "凌乱的浅灰色短发"
+  hair_color: "浅灰色"
+  eye_shape: "圆润且充满活力的眼睛"
+  eye_color: "浅绿色"
+  height: "Teen/Medium (约160cm)"
+  body_type: "充满活力的少年体型"
+  other: "戴着一副护目镜，身上有多处因冒险留下的伤痕和绷带，穿着便于活动的冒险家短装，标志性的是他左肩上的创可贴"
+personality: "性格开朗乐观、非常善良、尽管运气极差但从未放弃、对冒险充满热情、非常看重同伴"
+tags: ["pyro", "sword", "mondstadt", "adventurer"]

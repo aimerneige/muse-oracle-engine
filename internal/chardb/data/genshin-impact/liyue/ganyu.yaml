@@ -1,0 +1,14 @@
+id: ganyu
+name: "甘雨"
+name_en: "Ganyu"
+series: genshin-impact
+appearance:
+  hair_style: "蓝色的齐肩长发，发梢颜色略浅，头顶有一对黑色麒麟角"
+  hair_color: "蓝色"
+  eye_shape: "温柔且略带睡意的眼形"
+  eye_color: "紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "匀称柔美的少女体型"
+  other: "身穿黑色紧身衣配白色露背装，颈部戴着一个大金铃铛，风格典雅"
+personality: "温和谦逊、勤奋认真、非常看重工作责任、性格内向、有些怕生"
+tags: ["cryo", "bow", "liyue", "lue-qixing-secretary"]

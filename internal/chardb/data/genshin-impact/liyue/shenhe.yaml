@@ -1,0 +1,14 @@
+id: shenhe
+name: "申鹤"
+name_en: "Shenhe"
+series: genshin-impact
+appearance:
+  hair_style: "银白色的长发，末端颜色逐渐变深，挽成复杂的发式"
+  hair_color: "白色"
+  eye_shape: "清冷如冰的眼形"
+  eye_color: "浅紫色"
+  height: "Adult/Large (约170cm)"
+  body_type: "高挑匀称的成女性体型"
+  other: "身穿黑白蓝相间的贴身服饰，带有仙家符文装饰，由于长期隐居，气质超凡脱俗"
+personality: "孤僻清冷、不通世俗、一旦被激怒会表现得非常危险、对亲近的人十分信任"
+tags: ["cryo", "polearm", "liyue", "adeptus-disciple"]

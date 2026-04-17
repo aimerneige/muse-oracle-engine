@@ -1,0 +1,14 @@
+id: emilie
+name: "艾梅莉埃"
+name_en: "Emilie"
+series: genshin-impact
+appearance:
+  hair_style: "浅绿色的中短发，发束整齐，佩戴着一副金边眼镜"
+  hair_color: "浅绿色"
+  eye_shape: "优雅且透着职业睿智感的眼睛"
+  eye_color: "浅蓝绿色"
+  height: "Adult/Large (约168cm)"
+  body_type: "知性优雅的成年女性体型"
+  other: "穿着由精密刺绣和轻薄绸缎构成的修身裙装，整体色调以绿、白为主，给人以一种芬芳清新的职业调香师感觉"
+personality: "细致严谨、对气味极其敏感、有着独特的审美观、说话温文尔雅但非常有原则"
+tags: ["dendro", "polearm", "fontaine", "perfumer"]

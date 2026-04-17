@@ -1,0 +1,14 @@
+id: barbara
+name: "芭芭拉"
+name_en: "Barbara"
+series: genshin-impact
+appearance:
+  hair_style: "浅金色的卷发，扎成两个螺旋状的双马尾"
+  hair_color: "浅金色"
+  eye_shape: "清澈明亮的眼睛"
+  eye_color: "水蓝色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "活泼可爱的少女体型"
+  other: "身穿白蓝相间的西风教会修女服，样式参考了偶像演出的服装，腰间挂着带有水元素神之眼的法典，总是带着灿烂的笑容"
+personality: "勤奋努力、充满爱心、治愈人心、虽然会有烦恼但总是能自我调节并鼓励他人、蒙德城的闪耀偶像"
+tags: ["hydro", "catalyst", "mondstadt", "deaconess"]

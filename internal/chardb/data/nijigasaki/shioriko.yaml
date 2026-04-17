@@ -1,0 +1,14 @@
+id: shioriko
+name: "三船栞子"
+name_en: "Mifune Shioriko"
+series: nijigasaki
+appearance:
+  hair_style: "深绿色长发，整齐古典的直发，斜刘海，右侧有一根细长的麻花辫"
+  hair_color: "深绿色"
+  eye_shape: "认真而尖锐的丹凤眼"
+  eye_color: "翡翠绿"
+  height: "160cm"
+  body_type: "端庄秀丽的体型"
+  other: "有一颗小虎牙"
+personality: "极为认真、一丝不苟、最初反对偶像活动后来真香、学生会会长、出身日本传统家庭"
+tags: ["Nijigasaki", "solo-idol", "student-council", "serious"]

@@ -1,0 +1,14 @@
+id: lumine
+name: "荧"
+name_en: "Lumine"
+series: genshin-impact
+appearance:
+  hair_style: "金色短发，两侧留有稍长的发束并别着因提瓦特花"
+  hair_color: "金色"
+  eye_shape: "明亮且温柔的眼形"
+  eye_color: "金色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "纤细的少女体型"
+  other: "身穿带有异世界风格的白色无袖连衣裙，披着白色的短斗篷，身上有随元素变换颜色的发光部件"
+personality: "勇敢坚毅、温柔善良、对哥哥非常思念、行事果断且富有同情心"
+tags: ["traveler", "female", "sword", "protagonist"]

@@ -1,0 +1,14 @@
+id: sigewinne
+name: "希格雯"
+name_en: "Sigewinne"
+series: genshin-impact
+appearance:
+  hair_style: "浅粉白色的微卷短发，头顶有一对长长的美露莘耳朵"
+  hair_color: "粉白色"
+  eye_shape: "像美露莘一样略显圆润且纯真的眼睛"
+  eye_color: "粉蓝异色质感"
+  height: "Child/Small (约132cm)"
+  body_type: "娇小可爱的孩童体型"
+  other: "身穿梅洛彼得堡风格的护士服，带着可爱的爱心护士帽，既有美露莘的生物特征也具备护士的专业感"
+personality: "性格温柔善良、极具同情心、甚至会为了安慰他人而开出特殊的“处方”、非常关心公爵莱欧斯利"
+tags: ["hydro", "bow", "fontaine", "nurse"]

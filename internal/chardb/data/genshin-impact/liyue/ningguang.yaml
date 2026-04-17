@@ -1,0 +1,14 @@
+id: ningguang
+name: "凝光"
+name_en: "Ningguang"
+series: genshin-impact
+appearance:
+  hair_style: "白色的极长发，部分挽成精致的发髻，其余部分如瀑布般垂下"
+  hair_color: "白色"
+  eye_shape: "高贵且深邃的凤眼"
+  eye_color: "红色"
+  height: "Adult/Large (约170cm)"
+  body_type: "成熟丰腴的成女性体型"
+  other: "身穿极其华丽的金色旗袍，装饰着精美的玉石，指尖戴着金色护甲"
+personality: "精明强干、掌控欲强、富有远见、对手中财富和权力运用自如、守护璃月的底牌深厚"
+tags: ["geo", "catalyst", "liyue", "lue-qixing-tianquan"]

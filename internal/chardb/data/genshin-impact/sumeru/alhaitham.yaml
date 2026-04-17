@@ -1,0 +1,14 @@
+id: alhaitham
+name: "艾尔海森"
+name_en: "Alhaitham"
+series: genshin-impact
+appearance:
+  hair_style: "灰色的短发，带有几抹青绿色的挑染，显得凌乱而有型"
+  hair_color: "灰色，内侧带有青绿色挑染"
+  eye_shape: "冷静且带有审视意味的眼形"
+  eye_color: "绿底红瞳"
+  height: "Adult/Large (约186cm)"
+  body_type: "肌肉线条分明的成年男性体型"
+  other: "戴着一副特殊的耳机，身穿紧身的深色半袖上衣，搭配披肩，手臂上有绿色的饰物"
+personality: "极度理性、特立独行、追求简单的生活、不喜欢无意义的社交、拥有极高的智慧和战斗能力"
+tags: ["dendro", "sword", "sumeru", "scribe"]

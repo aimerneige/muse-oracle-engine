@@ -1,0 +1,14 @@
+id: furina
+name: "芙宁娜"
+name_en: "Furina"
+series: genshin-impact
+appearance:
+  hair_style: "白色的短发，带有浅蓝色的挑染，通常戴着一顶高耸的礼帽"
+  hair_color: "白色，带有浅蓝色挑染"
+  eye_shape: "明亮且富有戏剧感的异色瞳"
+  eye_color: "蓝白异色瞳"
+  height: "Teen/Medium (约158cm)"
+  body_type: "娇小优雅的少女体型"
+  other: "身穿极具华丽感的枫丹风格礼服，装饰有大量的荷叶边和宝石，举手投足间带着表演者的气质"
+personality: "戏剧化、骄傲但内心脆弱、拥有极强的意志力、为了守护枫丹而忍受了漫长的孤独、天真烂漫"
+tags: ["hydro", "sword", "fontaine", "focalors"]

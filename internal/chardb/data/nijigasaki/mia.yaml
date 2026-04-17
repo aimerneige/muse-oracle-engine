@@ -1,0 +1,14 @@
+id: mia
+name: "米娅·泰勒"
+name_en: "Mia Taylor"
+series: nijigasaki
+appearance:
+  hair_style: "白金色的短发，左边别着星星发夹"
+  hair_color: "白金色 / 浅亚麻色"
+  eye_shape: "自信又略带慵懒的眼睛"
+  eye_color: "黄色 / 琥珀色"
+  height: "156cm"
+  body_type: "偏瘦的孩童体型"
+  other: "美籍留学生，14岁就能升入高中"
+personality: "天才作曲家、讨厌吃蔬菜、喜欢吃汉堡、经常夹杂英文词汇、傲娇而且怕丢脸"
+tags: ["Nijigasaki", "solo-idol", "composer", "american", "burgers"]

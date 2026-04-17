@@ -1,0 +1,14 @@
+id: ai
+name: "宫下爱"
+name_en: "Miyashita Ai"
+series: nijigasaki
+appearance:
+  hair_style: "金色短发，活泼利落，头顶有一小撮翘毛"
+  hair_color: "金色 / 明黄色"
+  eye_shape: "活泼明亮的大眼"
+  eye_color: "橙色"
+  height: "163cm"
+  body_type: "运动健康的体型，身材较高"
+  other: "肤色略深（健康小麦色）"
+personality: "开朗阳光、超级社交牛人、运动万能、无论何时都笑口常开"
+tags: ["Nijigasaki", "solo-idol", "energetic", "athletic", "gyaru"]

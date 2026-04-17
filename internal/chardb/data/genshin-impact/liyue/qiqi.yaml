@@ -1,0 +1,14 @@
+id: qiqi
+name: "七七"
+name_en: "Qiqi"
+series: genshin-impact
+appearance:
+  hair_style: "浅紫色直发，额前贴有一张符咒"
+  hair_color: "浅紫色"
+  eye_shape: "略显呆滞但纯净的眼形"
+  eye_color: "紫色"
+  height: "Child/Small (约130cm)"
+  body_type: "娇小的幼女体型"
+  other: "身穿紫色的僵尸服，戴着圆形的帽子，身上挂着草药包，由于是僵尸，面部表情较少"
+personality: "乖巧听话、记忆力很差、需要靠笔记辅助记忆、行事认真、有时会陷入发呆状态"
+tags: ["cryo", "sword", "liyue", "bubu-pharmacy", "zombie"]

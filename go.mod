@@ -8,6 +8,7 @@ require (
 	github.com/openai/openai-go v1.12.0
 	github.com/yuin/goldmark v1.8.2
 	google.golang.org/genai v1.53.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

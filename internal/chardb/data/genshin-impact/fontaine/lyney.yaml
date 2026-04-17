@@ -1,0 +1,14 @@
+id: lyney
+name: "林尼"
+name_en: "Lyney"
+series: genshin-impact
+appearance:
+  hair_style: "浅灰色的短发，刘海处有一抹浅粉色挑染，左眼下有一个泪滴形状的标记"
+  hair_color: "浅灰色，带有浅粉色挑染"
+  eye_shape: "魅惑且充满自信的眼形"
+  eye_color: "紫色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "匀称优雅的少年体型"
+  other: "身穿华丽的魔术师演出服，戴着礼帽和手套，整体装扮极具舞台感和神秘感"
+personality: "优雅迷人、口才了得、擅长心理操纵、对弟妹极其关照、内心深处隐藏着不为人知的秘密"
+tags: ["pyro", "bow", "fontaine", "magician"]

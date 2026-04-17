@@ -1,0 +1,14 @@
+id: yanfei
+name: "烟绯"
+name_en: "Yanfei"
+series: genshin-impact
+appearance:
+  hair_style: "浅粉色的短发，带有白色的尖角发饰，戴着一顶夸张的学者帽"
+  hair_color: "浅粉色"
+  eye_shape: "灵动且充满朝气的眼睛"
+  eye_color: "翠绿色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "活泼且充满灵气的少女体型"
+  other: "身穿极具璃月风特色的红色露背短装，腰间挂着巨大的天平饰品，透出法律顾问的严谨与活力"
+personality: "严谨客观、思维敏捷、能言善辩、热情且乐于助人、对法律有着独特的见解和极高的职业素养"
+tags: ["pyro", "catalyst", "liyue", "adepti"]

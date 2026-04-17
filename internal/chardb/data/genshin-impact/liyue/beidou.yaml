@@ -1,0 +1,14 @@
+id: beidou
+name: "北斗"
+name_en: "Beidou"
+series: genshin-impact
+appearance:
+  hair_style: "深褐色长发，通常扎起一半，额前有刘海"
+  hair_color: "深褐色"
+  eye_shape: "豪爽且英气十足的眼形"
+  eye_color: "红色"
+  height: "Adult/Large (约172cm)"
+  body_type: "健美高挑的成女性体型"
+  other: "左眼佩戴着眼罩，身穿红黑相间的旗袍风格战斗服，披着暗红色披风"
+personality: "豪爽大气、不拘小节、极具领袖魅力、深得船员信任、拥有极强的正义感"
+tags: ["electro", "claymore", "liyue", "the-crux"]

@@ -1,0 +1,14 @@
+id: jean
+name: "琴"
+name_en: "Jean"
+series: genshin-impact
+appearance:
+  hair_style: "金色长发，扎成干练的高马尾"
+  hair_color: "金色"
+  eye_shape: "坚定且充满使命感的杏眼"
+  eye_color: "灰蓝色"
+  height: "Adult/Large (约170cm)"
+  body_type: "挺拔修长的成女性体型"
+  other: "身穿西风骑士团代理团长制服，包含白色紧身衣、蓝色外套和白色披肩，佩戴着代表荣誉的徽章"
+personality: "认真负责、正直严谨、勤勉尽责、深受市民爱戴、偶尔会因工作过度而感到疲惫"
+tags: ["anemo", "sword", "mondstadt", "knight", "acting-grand-master"]
