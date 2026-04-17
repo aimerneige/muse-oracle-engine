@@ -1,0 +1,14 @@
+id: yaoyao
+name: "瑶瑶"
+name_en: "Yaoyao"
+series: genshin-impact
+appearance:
+  hair_style: "棕色的长发，扎成两个巨大的包包头，非常可爱"
+  hair_color: "棕色"
+  eye_shape: "圆乎乎的大眼睛"
+  eye_color: "琥珀色"
+  height: "Child/Small (约130cm)"
+  body_type: "娇小可爱的孩童体型"
+  other: "身穿黄绿相间的可爱服饰，背着一个放有月桂（机关兔子）的背篓，显得格外懂事且充满亲和力"
+personality: "不仅体贴且极具母性光辉、性格稳重踏实、总是能照顾好身边的每个人、像个小大人"
+tags: ["dendro", "polearm", "liyue", "adepti-disciple"]

@@ -1,0 +1,14 @@
+id: yunjin
+name: "云堇"
+name_en: "Yun Jin"
+series: genshin-impact
+appearance:
+  hair_style: "乌黑的长发，常佩戴华丽的云肩和戏曲风格的头饰"
+  hair_color: "黑色"
+  eye_shape: "具有东方韵味的眼妆"
+  eye_color: "淡紫红色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "气质典雅的少女体型"
+  other: "穿着极富中国戏曲风格的繁复裙装，举手投足间尽显名伶的优雅与威严，给人以深厚的艺术修养感"
+personality: "端庄优雅、多才多艺、对传统戏曲极度热爱、待人接物彬彬有礼、有着坚韧的职业操守"
+tags: ["geo", "polearm", "liyue", "opera-singer"]

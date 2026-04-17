@@ -1,0 +1,14 @@
+id: gorou
+name: "五郎"
+name_en: "Gorou"
+series: genshin-impact
+appearance:
+  hair_style: "浅棕色短发，头顶有一对直立的犬耳"
+  hair_color: "浅棕色，带有白色斑纹"
+  eye_shape: "坚定且清澈的眼神"
+  eye_color: "水蓝色"
+  height: "Teen/Medium (约160cm)"
+  body_type: "结实匀称的少年体型"
+  other: "露腰的武士铠甲服饰，身后有一条蓬松的浅棕色尾巴，整体呈现出一种可靠的大将风范"
+personality: "勇敢无畏、对同伴极其忠诚、做事专注、虽然身为大将但偶尔会被调侃而害羞"
+tags: ["geo", "bow", "inazuma", "general"]

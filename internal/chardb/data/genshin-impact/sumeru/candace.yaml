@@ -1,0 +1,14 @@
+id: candace
+name: "坎蒂丝"
+name_en: "Candace"
+series: genshin-impact
+appearance:
+  hair_style: "深蓝色的长发，佩戴有华丽的金饰和黑色头饰"
+  hair_color: "深蓝色"
+  eye_shape: "神秘且深邃的异色瞳"
+  eye_color: "左黄右蓝异色瞳"
+  height: "Adult/Large (约172cm)"
+  body_type: "健美且极具异域风情的成年女性体型"
+  other: "穿着具有阿如村传统特色的露腰长裙，佩戴着沉重的金色饰品，战斗时会持盾牌，显得威严且神圣"
+personality: "温柔包容、极具正义感、平时和蔼可亲但保护村民时会变得非常严肃且强大"
+tags: ["hydro", "polearm", "sumeru", "guardian"]

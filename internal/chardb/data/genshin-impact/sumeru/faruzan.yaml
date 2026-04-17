@@ -1,0 +1,14 @@
+id: faruzan
+name: "珐露珊"
+name_en: "Faruzan"
+series: genshin-impact
+appearance:
+  hair_style: "浅蓝色的双马尾长发，发梢呈现出半透明的质感"
+  hair_color: "浅蓝色"
+  eye_shape: "略显高傲且极具个性的眼睛"
+  eye_color: "青色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "娇小但充满前辈威严的少女体型"
+  other: "穿着深浅交织的教令院风格裙装，身上点缀着精密的机械零件和几何图案，体现其对机关术的深厚造诣"
+personality: "性格直爽好面子、自尊心极强、喜欢以前辈自居、博学多识、对后辈非常照顾"
+tags: ["anemo", "bow", "sumeru", "professor"]

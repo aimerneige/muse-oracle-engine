@@ -1,0 +1,14 @@
+id: arlecchino
+name: "阿蕾奇诺"
+name_en: "Arlecchino"
+series: genshin-impact
+appearance:
+  hair_style: "白色的短发，带有黑色的挑染，修剪得非常利落"
+  hair_color: "白色，带有黑色挑染"
+  eye_shape: "冷静且带有十字形状纹路的眼睛"
+  eye_color: "黑色（十字图案）"
+  height: "Adult/Large (约175cm)"
+  body_type: "冷酷且极具压迫感的成年女性体型"
+  other: "穿着黑白相间的愚人众礼服，双手常戴着黑色手套，整体装束极度简洁却透出无与伦比的威严感"
+personality: "冷静理智、威严十足、作为“父亲”极其护短、做事果决从不拖泥带水、带有很强的统领力"
+tags: ["pyro", "polearm", "snezhnaya", "fatui-harbinger"]

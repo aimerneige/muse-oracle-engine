@@ -1,0 +1,14 @@
+id: xianyun
+name: "闲云"
+name_en: "Xianyun"
+series: genshin-impact
+appearance:
+  hair_style: "黑青色长发，一部分扎成发髻，另一部分自然垂下，佩戴着一副红框眼镜"
+  hair_color: "黑青色，发梢带有一抹青蓝色"
+  eye_shape: "睿智且具有仙家气质的凤眼"
+  eye_color: "浅金色"
+  height: "Adult/Large (约170cm)"
+  body_type: "优雅且具有出尘之感的女性体型"
+  other: "穿着仙人风格的旗袍，装饰有羽毛和飘带，体现了其“留云借风真君”的身份背景"
+personality: "话多（甚至有些唠叨）、博学多才、热衷于机关发明、护短但表面严厉、带有典型的长辈气质"
+tags: ["anemo", "catalyst", "liyue", "adepti"]

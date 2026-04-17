@@ -1,0 +1,14 @@
+id: shikanoin_heizou
+name: "鹿野院平藏"
+name_en: "Shikanoin Heizou"
+series: genshin-impact
+appearance:
+  hair_style: "暗红色的短发"
+  hair_color: "暗红色"
+  eye_shape: "灵动且充满侦探气质的眼睛，眼下有两颗泪痣"
+  eye_color: "橄榄绿"
+  height: "Teen/Medium (约166cm)"
+  body_type: "精悍灵活的少年体型"
+  other: "身穿天领奉行风格的侦探制服，整体色调以红、紫、白为主，腰间挂着十手和神之眼，显得英姿飒爽"
+personality: "头脑聪明过人、性格洒脱且不拘小节、观察力敏锐、虽然有点自恋但很有正义感"
+tags: ["anemo", "catalyst", "inazuma", "detective"]

@@ -1,0 +1,14 @@
+id: collei
+name: "柯莱"
+name_en: "Collei"
+series: genshin-impact
+appearance:
+  hair_style: "浅绿色的齐肩中短发"
+  hair_color: "浅绿色"
+  eye_shape: "略带不安但充满希望的眼睛"
+  eye_color: "紫色"
+  height: "Teen/Medium (约158cm)"
+  body_type: "略显纤细的少女体型"
+  other: "身穿须弥巡林员风格的绿色斗篷和短装，随身带着一只黑色的猫型挂件（安柏送的礼物），给人一种在成长的坚韧感"
+personality: "认真努力、有些内向害羞、非常崇拜安柏、对待巡林工作认真负责、内心渴望友谊"
+tags: ["dendro", "bow", "sumeru", "trainee"]

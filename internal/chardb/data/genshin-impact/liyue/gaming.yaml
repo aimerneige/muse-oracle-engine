@@ -1,0 +1,14 @@
+id: gaming
+name: "嘉明"
+name_en: "Gaming"
+series: genshin-impact
+appearance:
+  hair_style: "蓬松的深褐色短发"
+  hair_color: "深褐色"
+  eye_shape: "明亮且充满活力的眼睛"
+  eye_color: "亮橙色"
+  height: "Teen/Medium (约162cm)"
+  body_type: "轻捷灵活的少年体型"
+  other: "穿着轻便且带有传统中国元素的运动服，常背着一只大大的狮头挂件，全身充满着舞兽戏的活力感"
+personality: "性格开朗活泼、工作非常勤恳且充满激情、对待生活积极向上、非常重视家庭和传统艺术"
+tags: ["pyro", "claymore", "liyue", "wushou-dancer"]
