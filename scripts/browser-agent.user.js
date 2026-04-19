@@ -210,145 +210,249 @@
   }
 
   // ========================
-  // Image Detection & Extraction
+  // Image Detection & Download via Native Button
   // ========================
 
   /**
-   * Scans the Gemini response area for newly generated images.
+   * Finds the Gemini-native download button in the page.
+   * The button structure (Angular Material + mdc):
+   *   button > .mdc-button__label > .button-icon-wrapper > mat-icon[fonticon="download"]
    *
-   * Strategy:
-   * 1. Look for <img> elements inside the latest message/response container
-   * 2. Filter out user avatars and small icons by checking dimensions
-   * 3. Convert the found image to a Blob for uploading
-   *
-   * Returns: { blob: Blob, width: number } | null
+   * @returns {HTMLElement|null} the download button element, or null
    */
-  async function findGeneratedImage() {
-    // Gemini typically puts responses in containers like:
-    // - .model-response-text
-    // - message-content blocks
-    // - role="presentation" areas
-
-    const candidates = document.querySelectorAll(
-      'img[src*="blob:"], img[src*="data:image"], ' +
-      '.model-response-text img, ' +
-      'message-content img, ' +
-      '[data-message-author-role="model"] img'
-    );
-
-    let bestImage = null;
-    let bestSize = 0;
-
-    for (const img of candidates) {
-      // Skip tiny icons, avatars, thumbnails (< 150px either dimension)
-      if (img.naturalWidth < 150 || img.naturalHeight < 150) continue;
-      if (img.naturalWidth > img.naturalHeight * 2) continue; // skip banners
-
-      const size = img.naturalWidth * img.naturalHeight;
-      if (size > bestSize) {
-        bestSize = size;
-        bestImage = img;
+  function findDownloadButton() {
+    // Primary selector: mat-icon with fonticon="download"
+    const downloadIcons = document.querySelectorAll('mat-icon[data-mat-icon-name="download"], mat-icon[fonticon="download"]');
+    for (const icon of downloadIcons) {
+      // Walk up to find the clickable ancestor (button / [role=button])
+      let el = icon.parentElement;
+      while (el) {
+        const tag = el.tagName?.toLowerCase();
+        if (tag === "button" || el.getAttribute("role") === "button") return el;
+        if (el.tagName === "BODY") break;
+        el = el.parentElement;
       }
     }
 
-    if (!bestImage) return null;
+    // Fallback: aria-label contains "Download" or "下载"
+    const ariaSelectors = [
+      'button[aria-label*="Download" i]',
+      'button[aria-label*="\u4e0b\u8f7d" i]',     // 下载
+      '[role="button"][aria-label*="Download" i]',
+      '[role="button"][aria-label*="\u4e0b\u8f7d" i]',
+      'button .mat-icon-download',
+    ];
+    for (const sel of ariaSelectors) {
+      const btn = document.querySelector(sel);
+      if (btn) return btn;
+    }
 
-    // Try to get the full-size version first
-    const src = bestImage.src || "";
-    log(`Found image candidate: ${bestImage.naturalWidth}x${bestImage.naturalHeight}, src prefix: ${src.substring(0, 50)}...`);
+    return null;
+  }
+
+  /**
+   * Checks whether a download button exists on the page.
+   * Used as the signal that image generation has completed.
+   */
+  function hasDownloadButton() {
+    return findDownloadButton() !== null;
+  }
+
+  /**
+   * Locates the image element that belongs to the same response container as the download button.
+   * Walks up from the download button to find the nearest large image.
+   *
+   * @param {HTMLElement} downloadBtn - the download button element
+   * @returns {HTMLImageElement|null} the target image element, or null
+   */
+  function findImageNearDownload(downloadBtn) {
+    if (!downloadBtn) return null;
+
+    // Strategy 1: Find the closest common container (usually a response/message block)
+    // and look for images within it
+    let container = downloadBtn.parentElement;
+    for (let depth = 0; depth < 15 && container; depth++) {
+      const tag = container.tagName;
+      if (tag === "BODY") break;
+
+      // Look for images inside this container
+      const imgs = container.querySelectorAll("img");
+      let bestImg = null;
+      let bestSize = 0;
+
+      for (const img of imgs) {
+        const w = img.naturalWidth || img.width || 0;
+        const h = img.naturalHeight || img.height || 0;
+
+        // Skip tiny decorative images
+        if (w < 128 || h < 128) continue;
+        if (w === h && w <= 80) continue; // small square icon
+
+        // Skip avatar-like images
+        const cls = (img.className || "").toLowerCase();
+        if (cls.includes("avatar") || cls.includes("user-photo")) continue;
+
+        const size = w * h;
+        if (size > bestSize) {
+          bestSize = size;
+          bestImg = img;
+        }
+      }
+
+      if (bestImg) return bestImg;
+      container = container.parentElement;
+    }
+
+    // Strategy 2: Sibling-based search — look at nearby elements
+    const parent = downloadBtn.closest(".response-container, .message-content, [class*=response], [class*=message], .model-response");
+    if (parent) {
+      const imgs = parent.querySelectorAll("img");
+      for (const img of imgs) {
+        const w = img.naturalWidth || img.width || 0;
+        const h = img.naturalHeight || img.height || 0;
+        if (w >= 200 && h >= 200) return img;
+      }
+    }
+
+    // Strategy 3: Last resort — scan entire page for the largest image not previously seen
+    log("Falling back to global image scan...");
+    const allImgs = document.querySelectorAll("img");
+    let bestGlobalImg = null;
+    let bestGlobalSize = 0;
+    for (const img of allImgs) {
+      const w = img.naturalWidth || img.width || 0;
+      const h = img.naturalHeight || img.height || 0;
+      if (w < 200 || h < 200) continue;
+      const cls = (img.className || "").toLowerCase();
+      if (cls.includes("avatar") || cls.includes("logo") || cls.includes("icon")) continue;
+      if (w * h > bestGlobalSize) {
+        bestGlobalSize = w * h;
+        bestGlobalImg = img;
+      }
+    }
+    return bestGlobalImg;
+  }
+
+  /**
+   * Converts an HTMLImageElement to a Blob by fetching its source.
+   * Handles blob:, data:, and regular HTTP(S) URLs.
+   *
+   * @param {HTMLImageElement} imgEl - the image element
+   * @returns {Promise<Blob|null>} image blob or null on failure
+   */
+  async function imageElementToBlob(imgEl) {
+    const src = imgEl.src;
+    if (!src) return null;
+
+    log(`Converting image to blob (${imgEl.naturalWidth}x${imgEl.naturalHeight}), src type: ${src.substring(0, 30)}...`);
 
     try {
-      // For blob: or data: URLs, we can directly convert
-      if (src.startsWith("data:image")) {
+      if (src.startsWith("data:image/")) {
         const resp = await fetch(src);
         return await resp.blob();
       }
 
-      // For regular URLs or blob URLs, fetch and convert
-      const resp = await fetch(src, { credentials: "include" });
-      if (!resp.ok) return null;
-      const blob = await resp.blob();
-      if (blob.size > 10000) { // >10KB seems like a real image
-        return blob;
+      // For blob: URLs (common in SPA apps like Gemini after rendering)
+      if (src.startsWith("blob:")) {
+        const resp = await fetch(src);
+        if (!resp.ok) return null;
+        return await resp.blob();
       }
-    } catch (e) {
-      logError(`Failed to extract image: ${e.message}`);
-    }
 
-    return null;
+      // Regular HTTP(S) URL
+      const resp = await fetch(src, { credentials: "include", cache: "no-store" });
+      if (!resp.ok) return null;
+      const contentType = resp.headers.get("content-type") || "";
+
+      // Verify it looks like an image
+      if (!contentType.startsWith("image/") && contentType !== "") {
+        logWarning(`Response content-type is "${contentType}", may not be an image`);
+      }
+      return await resp.blob();
+    } catch (e) {
+      logError(`Failed to convert image to blob: ${e.message}`);
+
+      // Last-ditch effort: canvas extraction
+      try {
+        return await canvasExtract(imgEl);
+      } catch (_) {}
+      return null;
+    }
   }
 
   /**
-   * Fallback: use canvas to capture the largest visible image element.
-   * Works when direct src access is blocked (CORS).
+   * Canvas-based fallback extraction for cross-origin restricted images.
    */
-  async function extractImageViaCanvas(imgElement) {
+  function canvasExtract(imgEl) {
     return new Promise((resolve) => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = imgElement.naturalWidth || imgElement.width;
-        canvas.height = imgElement.naturalHeight || imgElement.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(imgElement, 0, 0);
-        canvas.toBlob(
-          (blob) => resolve(blob),
-          "image/png"
-        );
-      } catch (e) {
-        logError(`Canvas extraction failed: ${e.message}`);
-        resolve(null);
-      }
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth || imgEl.width || 512;
+      canvas.height = imgEl.naturalHeight || imgEl.height || 512;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0);
+      canvas.toBlob((blob) => resolve(blob), "image/png");
     });
   }
 
   /**
-   * Comprehensive image finder with multiple strategies.
+   * Main image acquisition flow using Gemini's native download button as trigger:
+   *
+   * 1. Poll until download button appears → image ready
+   * 2. Locate image element adjacent to download button
+   * 3. Convert image element to Blob
+   * 4. Return Blob for upload
+   *
+   * @returns {Promise<Blob|null>} the image blob, or null if failed/timed out
    */
-  async function extractBestImage() {
-    // Strategy 1: Direct DOM image detection + fetch
-    let blob = await findGeneratedImage();
-    if (blob && blob.size > 10000) return blob;
+  async function waitForAndDownloadImage() {
+    const startTime = Date.now();
 
-    // Strategy 2: Broader search for any large image in the viewport
-    const allImages = document.querySelectorAll("img");
-    let largestImg = null;
-    let maxSize = 0;
+    // Phase 1: Wait for download button to appear (signals image generation done)
+    log("Waiting for download button to appear (image ready indicator)...");
+    let dlBtn = null;
 
-    for (const img of allImages) {
-      const w = img.naturalWidth || img.width || 0;
-      const h = img.naturalHeight || img.height || 0;
-      if (w >= 256 && h >= 256 && w * h > maxSize) {
-        // Exclude obvious non-content images (avatars, icons)
-        const cls = (img.className || "").toLowerCase();
-        if (cls.includes("avatar") || cls.includes("icon") || cls.includes("logo")) continue;
-        if (w === h && w <= 64) continue; // square small icon
+    while (Date.now() - startTime < IMAGE_WAIT_TIMEOUT_MS) {
+      dlBtn = findDownloadButton();
+      if (dlBtn) break;
+      await sleep(IMAGE_CHECK_INTERVAL_MS);
 
-        maxSize = w * h;
-        largestImg = img;
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      if (elapsed % 15 === 0 && elapsed > 0) {
+        log(`Still waiting for download button... (${elapsed}s)`);
       }
     }
 
-    if (largestImg) {
-      log(`Fallback: trying largest visible image (${largestImg.naturalWidth}x${largestImg.naturalHeight})`);
-
-      // Try fetching its src first
-      try {
-        const src = largestImg.src || "";
-        if (src && !src.startsWith("data:") && !src.startsWith("blob:")) {
-          const resp = await fetch(src, { credentials: "include" });
-          if (resp.ok) {
-            const b = await resp.blob();
-            if (b.size > 10000) return b;
-          }
-        }
-      } catch (_) {}
-
-      // Try canvas approach
-      blob = await extractImageViaCanvas(largestImg);
-      if (blob && blob.size > 10000) return blob;
+    if (!dlBtn) {
+      logError("Timeout: download button did not appear within the time limit.");
+      return null;
     }
 
-    return null;
+    log("Download button detected! Image generation appears complete.");
+    await randomDelay(); // brief pause before reading the image
+
+    // Phase 2: Locate the actual image element relative to the download button
+    const imageEl = findImageNearDownload(dlBtn);
+    if (!imageEl) {
+      logError("Could not find image element near the download button.");
+      return null;
+    }
+
+    log(`Target image found: ${imageEl.naturalWidth || "?"}x${imageEl.naturalHeight || "?"}`);
+
+    // Phase 3: Convert to Blob
+    const blob = await imageElementToBlob(imageEl);
+    if (!blob || blob.size < 5000) {
+      logError(`Image conversion failed or result too small (${blob ? blob.size : 0} bytes).`);
+      return null;
+    }
+
+    log(`Image captured! Size: ${(blob.size / 1024).toFixed(1)} KB`);
+    return blob;
+  }
+
+  function logWarning(msg) {
+    console.warn(`[Agent] WARN | ${msg}`);
+    addToLogPanel(`⚠ ${msg}`);
   }
 
   // ========================
@@ -413,31 +517,13 @@
         return;
       }
 
-      // --- Step 4: Wait for image to appear ---
-      log("Waiting for image generation (up to 5 minutes)...");
-      let imageBlob = null;
-      const startTime = Date.now();
-
-      while (Date.now() - startTime < IMAGE_WAIT_TIMEOUT_MS) {
-        await sleep(IMAGE_CHECK_INTERVAL_MS);
-
-        imageBlob = await extractBestImage();
-        if (imageBlob) {
-          log(`Image detected! Size: ${(imageBlob.size / 1024).toFixed(1)} KB`);
-          break;
-        }
-
-        // Check if there was an error response (text-only, no image)
-        // This is heuristic: if we see error messages in the response area
-        const elapsed = Math.round((Date.now() - startTime) / 1000);
-        if (elapsed % 30 === 0) {
-          log(`Still waiting... (${elapsed}s elapsed)`);
-        }
-      }
+      // --- Step 4: Wait for download button (image ready) and capture image ---
+      log("Waiting for image generation via download button indicator...");
+      const imageBlob = await waitForAndDownloadImage();
 
       if (!imageBlob) {
-        logError(`Timeout: no image detected after ${IMAGE_WAIT_TIMEOUT_MS / 1000}s — reporting failure.`);
-        await api.reportFail(task.id, `Timeout: no image generated within ${IMAGE_WAIT_TIMEOUT_MS / 1000}s`);
+        logError(`Timeout: download button / image not ready within ${IMAGE_WAIT_TIMEOUT_MS / 1000}s — reporting failure.`);
+        await api.reportFail(task.id, `Timeout: image not generated within ${IMAGE_WAIT_TIMEOUT_MS / 1000}s`);
         await randomDelay();
         return;
       }
