@@ -15,6 +15,8 @@ import (
 	"github.com/aimerneige/muse-oracle-engine/internal/provider/llm"
 	"github.com/aimerneige/muse-oracle-engine/internal/service"
 	"github.com/aimerneige/muse-oracle-engine/internal/storage"
+
+	browseragent "github.com/aimerneige/muse-oracle-engine/internal/browser"
 	"github.com/aimerneige/muse-oracle-engine/ui"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -80,6 +82,13 @@ func main() {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
+	// Initialize browser agent task queue
+	browserQueue, err := browseragent.NewQueue(cfg.DataDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize browser agent queue: %v", err)
+	}
+	browserHandler := browseragent.NewHandler(browserQueue, cfg.DataDir)
+
 	app := &App{
 		charRegistry: charRegistry,
 		storySvc:     service.NewStoryService(llmProvider, promptEngine),
@@ -113,6 +122,9 @@ func main() {
 
 	// Image retrieval
 	mux.HandleFunc("GET /api/v1/projects/{id}/images/{index}", app.handleGetImage)
+
+	// Browser Agent task management
+	browserHandler.RegisterRoutes(mux)
 
 	// Serve Static Frontend UI
 	staticFS, err := fs.Sub(ui.Files, "dist")
