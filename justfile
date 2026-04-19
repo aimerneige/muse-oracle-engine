@@ -11,8 +11,12 @@ default:
 # 构建所有二进制文件
 build: (build_server) (build_generate)
 
+# 构建 UI (前端)
+build_ui:
+    cd ui && npm install && npm run build
+
 # 构建 server 二进制文件
-build_server:
+build_server: build_ui
     go build {{ go_flags }} -o {{ bin_dir }}/server ./cmd/server/main.go
 
 # 构建 generate 二进制文件
@@ -22,7 +26,7 @@ build_generate:
 # 以生产模式构建（禁用 CGO，指定 Linux 平台）
 build_prod: (build_server_prod) (build_generate_prod)
 
-build_server_prod:
+build_server_prod: build_ui
     CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o {{ bin_dir }}/server ./cmd/server/main.go
 
 build_generate_prod:
