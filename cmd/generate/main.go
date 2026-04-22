@@ -287,6 +287,8 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.DALLE3
 		}
 		return image.NewOpenAIImageAdapter(cfg.OpenAIAPIKey, model), nil
+	case "gpt-image":
+		return image.NewGPTImageAdapter(cfg), nil
 
 	default:
 		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
@@ -323,7 +325,6 @@ func printModels() {
 	fmt.Println("   ├─ deepseek-chat                (DeepSeek Chat)")
 	fmt.Println("   └─ deepseek-reasoner            (DeepSeek Reasoner)")
 
-
 	fmt.Println("\n🖼️  图像生成模型:")
 	fmt.Println("  Provider: gemini")
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
@@ -332,7 +333,12 @@ func printModels() {
 	fmt.Println("  Provider: openai")
 	fmt.Println("   ├─ dall-e-3 (DALL·E 3, 默认)")
 	fmt.Println("   └─ dall-e-2 (DALL·E 2)")
-
+	fmt.Println("  Provider: gpt-image")
+	fmt.Println("   ├─ gpt-image-2-plus (默认)")
+	fmt.Println("   ├─ gpt-image-1")
+	fmt.Println("   ├─ gpt-image-1-mini")
+	fmt.Println("   └─ gpt-image-1.5")
+	fmt.Println("   环境变量 GPT_IMAGE_ENDPOINT 可自定义 API 地址 (默认: 302.ai proxy)")
 	fmt.Println("  Provider: prompt")
 	fmt.Println("   └─ (输出 prompt 而不调用 API，可通过 --prompt-only 或 IMAGE_PROVIDER=prompt 启用)")
 }

@@ -22,7 +22,7 @@ LLM_PROVIDER=gemini
 # 对应的模型名字 (例如 gemini-3.1-pro-preview, deepseek-chat)
 LLM_MODEL=gemini-3.1-pro-preview
 
-# 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai)
+# 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai, gpt-image)
 IMAGE_PROVIDER=gemini
 IMAGE_MODEL=gemini-3.1-flash-image-preview
 ```
