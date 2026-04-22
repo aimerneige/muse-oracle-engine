@@ -3,6 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
@@ -43,6 +46,14 @@ func (s *StoryService) GenerateStoryboard(ctx context.Context, project *domain.P
 	response, err := s.llmProvider.GenerateText(ctx, promptText)
 	if err != nil {
 		return fmt.Errorf("storyboard generation failed: %w", err)
+	}
+
+	// Save the raw response to the project directory for debugging
+	projectDir := filepath.Join("data", "projects", project.ID)
+	_ = os.MkdirAll(projectDir, 0755)
+	responseFile := filepath.Join(projectDir, "storyboard_response.md")
+	if writeErr := os.WriteFile(responseFile, []byte(response), 0644); writeErr != nil {
+		log.Printf("[StoryService] WARNING: failed to write storyboard response: %v", writeErr)
 	}
 
 	// Parse response — each code block is one panel/episode
