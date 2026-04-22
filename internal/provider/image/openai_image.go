@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/openai/openai-go"
@@ -70,5 +71,10 @@ func (o *OpenAIImageAdapter) GenerateImage(ctx context.Context, prompt string) (
 		return nil, fmt.Errorf("empty base64 data in response")
 	}
 
-	return []byte(data), nil
+	decoded, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base64 image data: %w", err)
+	}
+
+	return decoded, nil
 }

@@ -3,10 +3,12 @@ package image
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/config"
 )
@@ -155,9 +157,37 @@ func (g *GPTImageAdapter) GenerateImage(ctx context.Context, prompt string) ([]b
 	}
 
 	b64Data := apiResp.Data[0].B64JSON
-	if b64Data == "" {
-		return nil, fmt.Errorf("gpt-image: empty base64 data in response")
+	if b64Data != "" {
+		if idx := strings.Index(b64Data, "base64,"); idx != -1 {
+			b64Data = b64Data[idx+7:]
+		}
+
+		decoded, err := base64.StdEncoding.DecodeString(b64Data)
+		if err != nil {
+			return nil, fmt.Errorf("gpt-image: failed to decode base64 image data: %w", err)
+		}
+		return decoded, nil
 	}
 
-	return []byte(b64Data), nil
+	imageURL := apiResp.Data[0].URL
+	if imageURL != "" {
+		imgReq, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("gpt-image: failed to create image request: %w", err)
+		}
+
+		imgResp, err := g.httpClient.Do(imgReq)
+		if err != nil {
+			return nil, fmt.Errorf("gpt-image: failed to fetch image from url: %w", err)
+		}
+		defer imgResp.Body.Close()
+
+		if imgResp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("gpt-image: failed to fetch image, status %d", imgResp.StatusCode)
+		}
+
+		return io.ReadAll(imgResp.Body)
+	}
+
+	return nil, fmt.Errorf("gpt-image: no image data or url in response")
 }
