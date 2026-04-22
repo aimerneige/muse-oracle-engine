@@ -19,6 +19,8 @@ type GPTImageModel int
 const (
 	// GPT2Plus is the latest GPT-Image-2-Plus model (default).
 	GPT2Plus GPTImageModel = iota
+	// GPT2 is the GPT-Image-2 model.
+	GPT2
 	// GPT1 is the original GPT-Image model.
 	GPT1
 	// GPT1Mini is the lightweight GPT-Image-1-Mini model.
@@ -31,6 +33,8 @@ func (m GPTImageModel) String() string {
 	switch m {
 	case GPT2Plus:
 		return "gpt-image-2-plus"
+	case GPT2:
+		return "gpt-image-2"
 	case GPT1:
 		return "gpt-image-1"
 	case GPT1Mini:
@@ -47,6 +51,8 @@ func ParseGPTImageModel(s string) GPTImageModel {
 	switch s {
 	case "gpt-image-2-plus", "":
 		return GPT2Plus
+	case "gpt-image-2":
+		return GPT2
 	case "gpt-image-1":
 		return GPT1
 	case "gpt-image-1-mini":

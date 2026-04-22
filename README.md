@@ -140,7 +140,7 @@
 |--------|-------------|
 | Gemini Image | `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
 | OpenAI DALL-E | `dall-e-3` (默认), `dall-e-2` |
-| GPT Image | `gpt-image-2-plus`, `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5` |
+| GPT Image | `gpt-image-2-plus`, `gpt-image-2`, `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5` |
 
 ## 开发与构建
 

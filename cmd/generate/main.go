@@ -335,6 +335,7 @@ func printModels() {
 	fmt.Println("   └─ dall-e-2 (DALL·E 2)")
 	fmt.Println("  Provider: gpt-image")
 	fmt.Println("   ├─ gpt-image-2-plus (默认)")
+	fmt.Println("   ├─ gpt-image-2")
 	fmt.Println("   ├─ gpt-image-1")
 	fmt.Println("   ├─ gpt-image-1-mini")
 	fmt.Println("   └─ gpt-image-1.5")
