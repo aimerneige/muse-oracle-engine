@@ -15,14 +15,14 @@
 # 填入你拥有的对应平台的 API Key
 GEMINI_API_KEY="your-gemini-key"
 DEEPSEEK_API_KEY="your-deepseek-key"
-OPENROUTER_API_KEY="..."
 
-# 指定当前使用的 LLM 供应商 (gemini, deepseek, openrouter, 302ai)
+
+# 指定当前使用的 LLM 供应商 (gemini, deepseek)
 LLM_PROVIDER=gemini
 # 对应的模型名字 (例如 gemini-3.1-pro-preview, deepseek-chat)
 LLM_MODEL=gemini-3.1-pro-preview
 
-# 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai, gpt-image)
+# 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai)
 IMAGE_PROVIDER=gemini
 IMAGE_MODEL=gemini-3.1-flash-image-preview
 ```

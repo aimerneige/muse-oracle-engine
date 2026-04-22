@@ -482,10 +482,7 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 			model = llm.DeepSeekReasoner
 		}
 		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
-	case "openrouter":
-		return llm.NewOpenRouterAdapter(cfg.OpenRouterKey, cfg.LLMModel), nil
-	case "302ai":
-		return llm.NewThreeOTwoAdapter(cfg.ThreeOTwoKey, cfg.LLMModel), nil
+
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %s", cfg.LLMProvider)
 	}
@@ -517,8 +514,7 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.DALLE3
 		}
 		return image.NewOpenAIImageAdapter(cfg.OpenAIAPIKey, model), nil
-	case "gpt-image":
-		return image.NewGPT2ImageAdapter(cfg), nil
+
 	default:
 		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
 	}

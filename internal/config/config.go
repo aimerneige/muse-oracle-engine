@@ -10,15 +10,12 @@ type Config struct {
 	// API Keys
 	GeminiAPIKey   string `json:"gemini_api_key"`
 	DeepSeekAPIKey string `json:"deepseek_api_key"`
-	OpenRouterKey  string `json:"openrouter_api_key"`
-	ThreeOTwoKey   string `json:"threeotwo_api_key"`
 	OpenAIAPIKey   string `json:"openai_api_key"`
 
 	// Model selection
-	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai", "mock"
+	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "mock"
 	LLMModel      string `json:"llm_model"`      // model identifier
-	ImageProvider    string `json:"image_provider"`     // "gemini", "openai", "gpt-image", "mock"
-	GPTImageEndpoint string `json:"gpt_image_endpoint"` // custom endpoint for GPT-Image (defaults to 302.ai)
+	ImageProvider    string `json:"image_provider"`     // "gemini", "openai", "mock"
 	ImageModel       string `json:"image_model"`        // model identifier
 
 	// Mock mode: when true, LLM and image providers return fake data for frontend testing
@@ -43,15 +40,12 @@ func LoadFromEnv() *Config {
 	cfg := &Config{
 		GeminiAPIKey:   os.Getenv("GEMINI_API_KEY"),
 		DeepSeekAPIKey: os.Getenv("DEEPSEEK_API_KEY"),
-		OpenRouterKey:  os.Getenv("OPENROUTER_API_KEY"),
-		ThreeOTwoKey:   os.Getenv("THREEOTWO_API_KEY"),
 		OpenAIAPIKey:   os.Getenv("OPENAI_API_KEY"),
 
 		LLMProvider:   getEnvDefault("LLM_PROVIDER", "gemini"),
 		LLMModel:      getEnvDefault("LLM_MODEL", "gemini-3.1-pro-preview"),
 		ImageProvider: getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:    getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
-		GPTImageEndpoint: getEnvDefault("GPT_IMAGE_ENDPOINT", ""),
 
 		MockMode: mockMode,
 
@@ -86,14 +80,7 @@ func (c *Config) Validate() error {
 		if c.DeepSeekAPIKey == "" {
 			return fmt.Errorf("DEEPSEEK_API_KEY is required when LLM_PROVIDER is 'deepseek'")
 		}
-	case "openrouter":
-		if c.OpenRouterKey == "" {
-			return fmt.Errorf("OPENROUTER_API_KEY is required when LLM_PROVIDER is 'openrouter'")
-		}
-	case "302ai":
-		if c.ThreeOTwoKey == "" {
-			return fmt.Errorf("THREEOTWO_API_KEY is required when LLM_PROVIDER is '302ai'")
-		}
+
 	case "mock":
 		// mock mode: no API key needed
 	default:
@@ -109,10 +96,7 @@ func (c *Config) Validate() error {
 		if c.OpenAIAPIKey == "" {
 			return fmt.Errorf("OPENAI_API_KEY is required when IMAGE_PROVIDER is 'openai'")
 		}
-	case "gpt-image":
-		if c.ThreeOTwoKey == "" {
-			return fmt.Errorf("THREEOTWO_API_KEY is required when IMAGE_PROVIDER is 'gpt-image'")
-		}
+
 	case "prompt", "mock":
 		// prompt/mock mode: no API key needed for image generation
 	default:

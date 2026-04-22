@@ -20,7 +20,7 @@
   - 内置 Chibi Figure（Q版粘土人风格）、Figma Figure（手办风格）、WaterColor（水彩风格）
   - 支持通过 `STYLES_DIR` 外部加载自定义画风模板（Go `text/template` 格式）
 - **多模型服务商接入**：
-  - **LLM**：Google Gemini、DeepSeek、OpenRouter、302.ai，均支持自定义模型名称
+  - **LLM**：Google Gemini、DeepSeek，均支持自定义模型名称
   - **图像生成**：Google Gemini（原生图像生成）、OpenAI DALL-E 3 / DALL-E 2
   - 支持 `--prompt-only` 模式仅输出提示词不调用 API，以及 Mock 模式用于无 Key 测试
 - **三步流水线引擎**：剧本生成 → 分镜审阅 → 图像批量生成，每步自动保存检查点（Checkpoint），支持从任意步骤恢复。
@@ -42,7 +42,7 @@
 │   │   ├── templates/storyboard/    # 剧本生成系统提示词模板
 │   │   └── templates/comic_draw/    # 各画风图像生成提示词模板
 │   ├── provider/
-│   │   ├── llm/           # LLM 文本适配层 (Gemini / DeepSeek / OpenRouter / 302.ai / Mock)
+│   │   ├── llm/           # LLM 文本适配层 (Gemini / DeepSeek / Mock)
 │   │   └── image/         # 图像生成适配层 (Gemini Image / DALL-E / DryRun / Mock)
 │   ├── service/           # 业务服务层 (StoryService + ComicService)
 │   └── storage/           # 文件持久化层 (JSON 检查点 + 图片/提示词存储)
@@ -54,7 +54,7 @@
 ## 环境要求
 
 - Go 1.26+
-- 大语言模型 API Key（至少配置一个）：`GEMINI_API_KEY` / `DEEPSEEK_API_KEY` / `OPENROUTER_API_KEY` / `THREEOTWO_API_KEY`
+- 大语言模型 API Key（至少配置一个）：`GEMINI_API_KEY` / `DEEPSEEK_API_KEY`
 - 图像生成 API Key：`GEMINI_API_KEY`（原生支持）或 `OPENAI_API_KEY`（DALL-E）
 - （可选）前端构建依赖：Node.js + npm（如需修改 UI）
 
@@ -64,11 +64,10 @@
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `openrouter` / `302ai` / `mock` |
+| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
-| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` / `gpt-image` |
+| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
-| `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
 | `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |
 | `STYLES_DIR` | (空) | 自定义画风模板目录 |
@@ -133,8 +132,6 @@
 |--------|-------------|
 | Gemini | `gemini-3.1-pro-preview`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-2.5-pro`, `gemini-2.5-flash` 等 |
 | DeepSeek | `deepseek-chat`, `deepseek-reasoner` |
-| OpenRouter | 自定义任意模型名称 |
-| 302.ai | 自定义任意模型名称 |
 
 **图像生成模型:**
 
@@ -142,7 +139,6 @@
 |--------|-------------|
 | Gemini Image | `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
 | OpenAI DALL-E | `dall-e-3` (默认), `dall-e-2` |
-| GPT Image | `gpt-image-2-plus`, `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5` |
 
 ## 开发与构建
 

@@ -15,8 +15,7 @@ services:
       # API Keys (Provide at least one)
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - THREEOTWO_API_KEY=${THREEOTWO_API_KEY}
+
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       
       # Model Configuration

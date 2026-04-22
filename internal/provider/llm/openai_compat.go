@@ -9,7 +9,7 @@ import (
 )
 
 // OpenAICompatAdapter implements Provider for any OpenAI-compatible API.
-// This works with OpenRouter, 302.ai, and any other service that exposes
+// This works with any service that exposes
 // an OpenAI-compatible chat completion endpoint.
 type OpenAICompatAdapter struct {
 	client       *openai.Client
@@ -20,8 +20,8 @@ type OpenAICompatAdapter struct {
 // NewOpenAICompatAdapter creates a generic OpenAI-compatible LLM provider.
 //
 // Parameters:
-//   - providerName: human-readable name for logging (e.g. "openrouter", "302ai")
-//   - baseURL: the API base URL (e.g. "https://openrouter.ai/api/v1")
+//   - providerName: human-readable name for logging (e.g. "openai-proxy")
+//   - baseURL: the API base URL
 //   - apiKey: the API key
 //   - model: the model identifier string (e.g. "google/gemini-2.5-pro")
 func NewOpenAICompatAdapter(providerName, baseURL, apiKey, model string) *OpenAICompatAdapter {
@@ -34,26 +34,6 @@ func NewOpenAICompatAdapter(providerName, baseURL, apiKey, model string) *OpenAI
 		model:        model,
 		providerName: providerName,
 	}
-}
-
-// NewOpenRouterAdapter creates an LLM provider for OpenRouter.
-func NewOpenRouterAdapter(apiKey, model string) *OpenAICompatAdapter {
-	return NewOpenAICompatAdapter(
-		"openrouter",
-		"https://openrouter.ai/api/v1",
-		apiKey,
-		model,
-	)
-}
-
-// NewThreeOTwoAdapter creates an LLM provider for 302.ai.
-func NewThreeOTwoAdapter(apiKey, model string) *OpenAICompatAdapter {
-	return NewOpenAICompatAdapter(
-		"302ai",
-		"https://api.302.ai/v1",
-		apiKey,
-		model,
-	)
 }
 
 func (a *OpenAICompatAdapter) Name() string {

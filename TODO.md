@@ -32,8 +32,7 @@
 - [x] 迁移 Gemini 适配器到新结构
 - [x] 迁移 DeepSeek 适配器到新结构
 - [x] 实现 `OpenAICompatAdapter` 通用适配器（OpenAI 兼容 API 格式）
-- [x] 基于通用适配器实现 OpenRouter 接入
-- [x] 基于通用适配器实现 302.ai 接入
+
 - [x] 重构 Image Provider 接口
 - [x] 迁移 Gemini 图像生成适配器到新结构
 
