@@ -517,6 +517,8 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.DALLE3
 		}
 		return image.NewOpenAIImageAdapter(cfg.OpenAIAPIKey, model), nil
+	case "gpt2":
+		return image.NewGPT2ImageAdapter(cfg), nil
 	default:
 		return nil, fmt.Errorf("unknown image provider: %s", cfg.ImageProvider)
 	}

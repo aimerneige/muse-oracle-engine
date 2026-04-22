@@ -17,7 +17,8 @@ type Config struct {
 	// Model selection
 	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai", "mock"
 	LLMModel      string `json:"llm_model"`      // model identifier
-	ImageProvider string `json:"image_provider"` // "gemini", "mock"
+	ImageProvider string `json:"image_provider"` // "gemini", "openai", "gpt2", "mock"
+	GPT2Endpoint  string `json:"gpt2_endpoint"`  // custom endpoint for GPT-Image-2 (defaults to 302.ai)
 	ImageModel    string `json:"image_model"`    // model identifier
 
 	// Mock mode: when true, LLM and image providers return fake data for frontend testing
@@ -106,6 +107,10 @@ func (c *Config) Validate() error {
 	case "openai":
 		if c.OpenAIAPIKey == "" {
 			return fmt.Errorf("OPENAI_API_KEY is required when IMAGE_PROVIDER is 'openai'")
+		}
+	case "gpt2":
+		if c.ThreeOTwoKey == "" {
+			return fmt.Errorf("THREEOTWO_API_KEY is required when IMAGE_PROVIDER is 'gpt2'")
 		}
 	case "prompt", "mock":
 		// prompt/mock mode: no API key needed for image generation
