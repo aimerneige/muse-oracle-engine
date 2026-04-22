@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"sync"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 	"github.com/aimerneige/muse-oracle-engine/internal/prompt"
@@ -48,19 +50,40 @@ func (s *ComicService) GenerateAllImages(ctx context.Context, project *domain.Pr
 		}
 	}
 
+	maxConcurrency := 3
+	sem := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+
+	log.Printf("Starting concurrent image generation for project %s with %d panels", project.ID, len(project.Storyboard.Panels))
+
 	for i, panel := range project.Storyboard.Panels {
 		// Skip already completed images
 		if project.Images[i].Status == "done" {
+			log.Printf("Panel %d already generated, skipping", panel.Index)
 			continue
 		}
 
-		if err := s.GenerateSingleImage(ctx, project, panel.Index); err != nil {
-			project.Images[i].Status = "failed"
-			project.Images[i].Error = err.Error()
-			// Continue to next panel instead of aborting
-			continue
-		}
+		wg.Add(1)
+		sem <- struct{}{} // Acquire concurrency token
+
+		go func(i int, panel domain.StoryboardPanel) {
+			defer wg.Done()
+			defer func() { <-sem }() // Release concurrency token
+
+			log.Printf("Generating image for panel %d...", panel.Index)
+
+			if err := s.GenerateSingleImage(ctx, project, panel.Index); err != nil {
+				log.Printf("Failed to generate image for panel %d: %v", panel.Index, err)
+				project.Images[i].Status = "failed"
+				project.Images[i].Error = err.Error()
+			} else {
+				log.Printf("Successfully generated image for panel %d", panel.Index)
+			}
+		}(i, panel)
 	}
+
+	wg.Wait()
+	log.Printf("Finished concurrent image generation for project %s", project.ID)
 
 	project.Status = domain.StatusImagesDone
 	return nil
