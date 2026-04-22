@@ -17,9 +17,9 @@ type Config struct {
 	// Model selection
 	LLMProvider   string `json:"llm_provider"`   // "gemini", "deepseek", "openrouter", "302ai", "mock"
 	LLMModel      string `json:"llm_model"`      // model identifier
-	ImageProvider string `json:"image_provider"` // "gemini", "openai", "gpt2", "mock"
-	GPT2Endpoint  string `json:"gpt2_endpoint"`  // custom endpoint for GPT-Image-2 (defaults to 302.ai)
-	ImageModel    string `json:"image_model"`    // model identifier
+	ImageProvider    string `json:"image_provider"`     // "gemini", "openai", "gpt-image", "mock"
+	GPTImageEndpoint string `json:"gpt_image_endpoint"` // custom endpoint for GPT-Image (defaults to 302.ai)
+	ImageModel       string `json:"image_model"`        // model identifier
 
 	// Mock mode: when true, LLM and image providers return fake data for frontend testing
 	MockMode bool `json:"mock_mode"`
@@ -51,6 +51,7 @@ func LoadFromEnv() *Config {
 		LLMModel:      getEnvDefault("LLM_MODEL", "gemini-3.1-pro-preview"),
 		ImageProvider: getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:    getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
+		GPTImageEndpoint: getEnvDefault("GPT_IMAGE_ENDPOINT", ""),
 
 		MockMode: mockMode,
 
@@ -108,9 +109,9 @@ func (c *Config) Validate() error {
 		if c.OpenAIAPIKey == "" {
 			return fmt.Errorf("OPENAI_API_KEY is required when IMAGE_PROVIDER is 'openai'")
 		}
-	case "gpt2":
+	case "gpt-image":
 		if c.ThreeOTwoKey == "" {
-			return fmt.Errorf("THREEOTWO_API_KEY is required when IMAGE_PROVIDER is 'gpt2'")
+			return fmt.Errorf("THREEOTWO_API_KEY is required when IMAGE_PROVIDER is 'gpt-image'")
 		}
 	case "prompt", "mock":
 		// prompt/mock mode: no API key needed for image generation

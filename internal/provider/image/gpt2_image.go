@@ -90,7 +90,7 @@ type GPT2ImageAdapter struct {
 // NewGPT2ImageAdapter creates a new GPT-2 image generation provider.
 // If cfg.GPT2Endpoint is empty, it defaults to the 302.ai service.
 func NewGPT2ImageAdapter(cfg *config.Config) *GPT2ImageAdapter {
-	endpoint := cfg.GPT2Endpoint
+	endpoint := cfg.GPTImageEndpoint
 	if endpoint == "" {
 		endpoint = defaultGPT2Endpoint
 	}
@@ -103,7 +103,7 @@ func NewGPT2ImageAdapter(cfg *config.Config) *GPT2ImageAdapter {
 }
 
 func (g *GPT2ImageAdapter) Name() string {
-	return fmt.Sprintf("gpt2-image/%s", g.model.String())
+	return fmt.Sprintf("gpt-image/%s", g.model.String())
 }
 
 func (g *GPT2ImageAdapter) GenerateImage(ctx context.Context, prompt string) ([]byte, error) {
@@ -120,43 +120,43 @@ func (g *GPT2ImageAdapter) GenerateImage(ctx context.Context, prompt string) ([]
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("gpt2: failed to marshal request: %w", err)
+		return nil, fmt.Errorf("gpt-image: failed to marshal request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, g.endpoint, bytes.NewReader(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("gpt2: failed to create request: %w", err)
+		return nil, fmt.Errorf("gpt-image: failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", g.apiKey))
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("gpt2: request failed: %w", err)
+		return nil, fmt.Errorf("gpt-image: request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("gpt2: failed to read response body: %w", err)
+		return nil, fmt.Errorf("gpt-image: failed to read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gpt2: API returned status %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("gpt-image: API returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	var apiResp gpt2GenerateResponse
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
-		return nil, fmt.Errorf("gpt2: failed to parse response: %w", err)
+		return nil, fmt.Errorf("gpt-image: failed to parse response: %w", err)
 	}
 
 	if len(apiResp.Data) == 0 {
-		return nil, fmt.Errorf("gpt2: no image data in response")
+		return nil, fmt.Errorf("gpt-image: no image data in response")
 	}
 
 	b64Data := apiResp.Data[0].B64JSON
 	if b64Data == "" {
-		return nil, fmt.Errorf("gpt2: empty base64 data in response")
+		return nil, fmt.Errorf("gpt-image: empty base64 data in response")
 	}
 
 	return []byte(b64Data), nil

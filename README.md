@@ -66,8 +66,9 @@
 |------|--------|------|
 | `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `openrouter` / `302ai` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
-| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` |
+| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
+| `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
 | `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |
 | `STYLES_DIR` | (空) | 自定义画风模板目录 |
@@ -141,6 +142,7 @@
 |--------|-------------|
 | Gemini Image | `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
 | OpenAI DALL-E | `dall-e-3` (默认), `dall-e-2` |
+| GPT Image | `gpt-image-2-plus`, `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5` |
 
 ## 开发与构建
 
