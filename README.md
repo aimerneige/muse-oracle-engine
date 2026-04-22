@@ -21,7 +21,7 @@
   - 支持通过 `STYLES_DIR` 外部加载自定义画风模板（Go `text/template` 格式）
 - **多模型服务商接入**：
   - **LLM**：Google Gemini、DeepSeek、OpenRouter、302.ai，均支持自定义模型名称
-  - **图像生成**：Google Gemini（原生图像生成）、OpenAI DALL-E 3 / DALL-E 2
+  - **图像生成**：Google Gemini（原生图像生成）、OpenAI DALL-E 3 / DALL-E 2、**浏览器代理 (Browser Agent)**
   - 支持 `--prompt-only` 模式仅输出提示词不调用 API，以及 Mock 模式用于无 Key 测试
 - **三步流水线引擎**：剧本生成 → 分镜审阅 → 图像批量生成，每步自动保存检查点（Checkpoint），支持从任意步骤恢复。
 - **CLI 命令行模式**：通过 `cmd/generate` 提供交互式命令行体验，包含角色/画风/模型列表查看、断点续跑、单张重试等功能。
@@ -66,7 +66,7 @@
 |------|--------|------|
 | `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `openrouter` / `302ai` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
-| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` |
+| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` / `browser` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
 | `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |
@@ -109,6 +109,79 @@
      ```
    - 仅输出提示词不调用图像 API（用于调试）：`go run cmd/generate/main.go --prompt-only ...`
 
+## 浏览器代理模式 (Browser Agent)
+
+> **Browser Agent** 是一种特殊的图像生成后端，通过油猴脚本 (Tampermonkey) 控制真实浏览器访问 Gemini 网页版，自动输入提示词、等待图片生成、下载并回传结果。适用于需要绕过 API 限制或利用网页版免费额量的场景。
+
+### 工作原理
+
+```
+CLI / Server                    Browser Agent (油猴脚本)              Gemini 网页
+    │                                  │                                 │
+    │  1. Enqueue(prompt)              │                                 │
+    │ ──────────────────────────────►  │                                 │
+    │                                  │  2. Poll 获取任务               │
+    │                                  │ ◄──────────────────────────────│
+    │                                  │                                 │
+    │                                  │  3. 在 Gemini 输入框填入 prompt │
+    │                                  │ ──────────────────────────────►│
+    │                                  │  4. 点击发送，等待图片生成       │
+    │                                  │ ◄── (等待下载按钮出现) ────────│
+    │                                  │  5. 截图并上传                  │
+    │                                  │ ──────────────────────────────►│
+    │  6. 返回图片数据                 │                                 │
+    │ ◄────────────────────────────── │                                 │
+```
+
+### 使用方式
+
+#### 方式一：CLI 模式（推荐）
+
+CLI 模式内置了 HTTP 任务队列，可以直接与浏览器代理通信：
+
+```bash
+# 终端 1：启动 CLI 生成（会自动创建任务队列并监听）
+IMAGE_PROVIDER=browser go run cmd/generate/main.go \
+    --characters 'lovelive/honoka,lovelive/umi' \
+    --plot '校园温馨日常' \
+    --style chibi_figure
+```
+
+CLI 启动后会：
+1. 自动初始化 browser task queue（持久化到 `data/projects/browser_tasks.json`）
+2. 正常执行 LLM 生成分镜流程
+3. 进入图像生成阶段时，将每个 panel 的提示词入队
+4. **阻塞等待**浏览器代理完成图片生成并上传
+5. 收到图片后继续下一个 panel
+
+#### 方式二：Server 模式
+
+```bash
+# 终端 1：启动 HTTP 服务器（含 browser agent API）
+go run cmd/server/main.go
+
+# 终端 2：通过 API 创建项目并触发生成
+# 或使用前端 UI 操作
+```
+
+### 安装浏览器代理
+
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
+2. 打开 `scripts/browser-agent.user.js`，复制全部内容
+3. 在 Tampermonkey 中新建脚本，粘贴并保存
+4. 访问 <https://gemini.google.com/>，确认页面右侧出现 **"Muse Agent"** 悬浮按钮
+
+### 配置说明
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `IMAGE_PROVIDER` | `gemini` | 设为 `browser` 启用浏览器代理模式 |
+| `DATA_DIR` | `data/projects` | 数据目录（browser_tasks.json 存放位置） |
+
+浏览器代理无需配置任何 API Key。
+
+> **注意**：使用浏览器代理时仍需配置 LLM Provider（用于生成分镜），只有图像生成环节走浏览器代理。
+
 ## 内置角色库
 
 | 系列 | 角色数 | 角色示例 |
@@ -141,6 +214,7 @@
 |--------|-------------|
 | Gemini Image | `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
 | OpenAI DALL-E | `dall-e-3` (默认), `dall-e-2` |
+| Browser Agent | 通过浏览器代理访问 Gemini 网页版生成（需配合油猴脚本，详见上方 **Browser Agent** 章节） |
 
 ## 开发与构建
 

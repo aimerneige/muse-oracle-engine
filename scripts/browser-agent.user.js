@@ -77,33 +77,72 @@
     _request(method, path, body) {
       return new Promise((resolve, reject) => {
         const url = SERVER_BASE + path;
+        const ts = Date.now();
+        log(`[HTTP] ${method} ${url}${body ? ` body=${JSON.stringify(body).substring(0, 100)}` : ""}`);
         const options = {
           method,
           headers: body ? { "Content-Type": "application/json" } : undefined,
           data: body ? JSON.stringify(body) : undefined,
           responseType: "json",
+          timeout: 30000,
           onload(res) {
+            const elapsed = Date.now() - ts;
+            log(`[HTTP] ${method} ${path} → status=${res.status} (${elapsed}ms)`);
+            // Log raw response text for debugging
+            if (res.status === 204) {
+              log(`[HTTP]   → 204 No Content (no tasks)`);
+              resolve(null);
+              return;
+            }
             if (res.status >= 200 && res.status < 300) {
-              resolve(res.response);
+              let data = res.response;
+              if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (e) {}
+              }
+              log(`[HTTP]   → OK: ${typeof data === 'object' ? JSON.stringify(data).substring(0, 200) : data}`);
+              resolve(data);
             } else {
-              reject(new Error(`HTTP ${res.status}: ${(res.response && res.response.error) || res.statusText}`));
+              const errMsg = `HTTP ${res.status}: ${(res.response && res.response.error) || res.statusText}`;
+              logError(`[HTTP]   → ERROR: ${errMsg}`);
+              reject(new Error(errMsg));
             }
           },
           onerror(err) {
+            const elapsed = Date.now() - ts;
+            logError(`[HTTP] ${method} ${path} → NETWORK ERROR after ${elapsed}ms: ${err?.message || err}`);
             reject(new Error(`Network error: ${err}`));
           },
+          ontimeout() {
+            logError(`[HTTP] ${method} ${path} → TIMEOUT`);
+            reject(new Error("Request timeout"));
+          },
         };
-        try { GM_xmlhttpRequest(options); } catch (e) { reject(e); }
+        try {
+          GM_xmlhttpRequest(options);
+        } catch (e) {
+          logError(`[HTTP] GM_xmlhttpRequest threw: ${e.message}`);
+          reject(e);
+        }
       });
     },
 
     /** Poll for next pending task (acquires atomically) */
     async poll() {
       try {
+        log("[Poll] Checking for tasks...");
         const resp = await this._request("GET", "/api/v1/browser/tasks/poll");
+        if (!resp) {
+          log("[Poll] Server returned no tasks (null/empty)");
+          return null;
+        }
+        log(`[Poll] Got task! id=${resp.id}, status=${resp.status}`);
         return resp;
       } catch (err) {
-        if (err.message.includes("204") || err.message.includes("No Content")) return null;
+        if (err.message.includes("204") || err.message.includes("No Content")) {
+          log("[Poll] No tasks available (204/No Content)");
+          return null;
+        }
+        logError(`[Poll] Error polling: ${err.message}`);
         throw err;
       }
     },
@@ -112,6 +151,7 @@
     async uploadImage(taskId, imageDataBlob) {
       return new Promise((resolve, reject) => {
         const url = `${SERVER_BASE}/api/v1/browser/tasks/${taskId}/image`;
+        log(`[Upload] POST ${url} size=${(imageDataBlob.size / 1024).toFixed(1)}KB`);
         const fd = new FormData();
         fd.append("image", imageDataBlob, `${taskId}.png`);
         GM_xmlhttpRequest({
@@ -119,17 +159,27 @@
           url,
           data: fd,
           responseType: "json",
+          timeout: 120000,
           onload(res) {
-            if (res.status >= 200 && res.status < 300) resolve(res.response);
-            else reject(new Error(`Upload HTTP ${res.status}: ${(res.response && res.response.error) || ""}`));
+            log(`[Upload] → status=${res.status}`);
+            if (res.status >= 200 && res.status < 300) {
+              log(`[Upload] → OK: ${JSON.stringify(res.response).substring(0, 200)}`);
+              resolve(res.response);
+            } else {
+              reject(new Error(`Upload HTTP ${res.status}: ${(res.response && res.response.error) || ""}`));
+            }
           },
-          onerror(err) { reject(new Error(`Upload network error: ${err}`)); },
+          onerror(err) {
+            logError(`[Upload] → Network error: ${err}`);
+            reject(new Error(`Upload network error: ${err}`));
+          },
         });
       });
     },
 
     /** Report task failure */
     async reportFail(taskId, errorMsg) {
+      log(`[Fail] Reporting failure for task=${taskId}: ${errorMsg.substring(0, 100)}`);
       return this._request("POST", `/api/v1/browser/tasks/${taskId}/fail`, { error: errorMsg });
     },
   };
@@ -139,73 +189,188 @@
   // (adapted from demo.js with improvements)
   // ========================
 
-  function findPromptEditor() {
-    const selectors = [
-      'div[contenteditable="true"]',
-      "textarea",
-      "rich-textarea textarea",
-      'div.ql-editor[contenteditable="true"]',
-    ];
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
+  function deepQuerySelector(selector, root = document) {
+    const queue = [root];
+    while (queue.length > 0) {
+      const node = queue.shift();
+      const el = node.querySelector(selector);
       if (el) return el;
+      const elements = node.querySelectorAll('*');
+      for (const element of elements) {
+        if (element.shadowRoot) queue.push(element.shadowRoot);
+      }
+    }
+    return null;
+  }
+
+  function deepQuerySelectorAll(selector, root = document) {
+    let results = [];
+    const queue = [root];
+    while (queue.length > 0) {
+      const node = queue.shift();
+      results = results.concat(Array.from(node.querySelectorAll(selector)));
+      const elements = node.querySelectorAll('*');
+      for (const element of elements) {
+        if (element.shadowRoot) queue.push(element.shadowRoot);
+      }
+    }
+    return results;
+  }
+  function findPromptEditor() {
+    // Gemini-specific selectors first (most likely)
+    const selectors = [
+      // Gemini's main prompt input — rich text editor
+      '.ql-editor[contenteditable="true"]',
+      'rich-textarea [contenteditable="true"]',
+      'rich-textarea',
+      '[data-testid="prompt-input"]',
+      '[data-placeholder*="Enter a prompt" i]',
+      // Generic contenteditable
+      '[contenteditable="true"][role="textbox"]',
+      'div[contenteditable="true"]',
+      'p[contenteditable="true"]',
+      // Fallback textarea
+      'textarea[placeholder*="Enter" i]',
+      'textarea[aria-label*="prompt" i]',
+      'textarea[aria-label*="message" i]',
+      'textarea[aria-label*="Ask" i]',
+      "textarea",
+    ];
+    const found = [];
+    for (const sel of selectors) {
+      const el = deepQuerySelector(sel);
+      if (el) found.push({ el, sel });
+    }
+    if (found.length > 0) {
+      const best = found[0];
+      log(`[Editor] Found via "${best.sel}" tag=${best.el.tagName} class=${String(best.el.className).substring(0, 60)} id=${best.el.id}`);
+      return best.el;
     }
     return null;
   }
 
   function setEditorValue(editor, text) {
-    if (!editor) return false;
+    if (!editor) { logError("[Editor] setEditorValue called with null!"); return false; }
+    log(`[Editor] Setting value (${text.length} chars), tag=${editor.tagName}, ce=${editor.contentEditable}`);
 
     editor.focus();
+    // Small delay after focus to ensure Angular processes the event
+    editor.dispatchEvent(new Event("focus", { bubbles: true, composed: true }));
+    editor.dispatchEvent(new FocusEvent("focusin", { bubbles: true, composed: true }));
 
+    // Strategy 1: For textarea elements
     if (editor.tagName === "TEXTAREA") {
-      editor.value = text;
-      editor.dispatchEvent(new Event("input", { bubbles: true }));
-      editor.dispatchEvent(new Event("change", { bubbles: true }));
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(editor, text);
+      } else {
+        editor.value = text;
+      }
+      editor.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: text, inputType: "insertText" }));
+      editor.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+      log(`[Editor] Textarea set OK`);
       return true;
     }
 
-    // contenteditable div
+    // Strategy 2: For contenteditable divs — try multiple approaches
+    // 2a: Use native setter for innerText if available
     try {
       document.execCommand("selectAll", false, null);
+      document.execCommand("delete", false, null);
+
+      // Insert text char-by-char simulation via insertText command
       document.execCommand("insertText", false, text);
-    } catch {
-      editor.innerText = text;
+
+      // Fire comprehensive event chain for Angular detection
+      editor.dispatchEvent(new InputEvent("input", {
+        bubbles: true, composed: true, cancelable: true,
+        data: text, inputType: "insertText"
+      }));
+      editor.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+
+      // Also try keyboard-style events
+      editor.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, composed: true, key: text[text.length - 1] || "" }));
+      editor.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, composed: true, key: text[text.length - 1] || "" }));
+
+      log(`[Editor] ContentEditable set via execCommand(insertText), current text length=${editor.textContent?.length || editor.innerText?.length}`);
+      return true;
+    } catch (e) {
+      logError(`[Editor] execCommand approach failed: ${e.message}`);
     }
-    editor.dispatchEvent(new InputEvent("input", { bubbles: true }));
-    return true;
+
+    // Strategy 3: Direct innerText + manual events
+    try {
+      editor.innerText = text;
+      editor.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: text, inputType: "insertText" }));
+      editor.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+      log(`[Editor] ContentEditable set via innerText fallback`);
+      return true;
+    } catch (e2) {
+      logError(`[Editor] All strategies failed: ${e2.message}`);
+      return false;
+    }
   }
 
   async function clickSendButton() {
     const selectors = [
-      'button[aria-label*="Send"]',
+      'button[aria-label*="Send" i]',
       'button[aria-label*="\u53d1\u9001"]',     // 发送
       'button[aria-label*="\u63d0\u4ea4"]',     // 提交
       'button[type="submit"]',
+      // Gemini-specific send button patterns
+      'button.mat-icon-button[aria-label*="send" i]',
+      'button[aria-label*="Submit" i]',
+      'button[aria-label*="Create" i]',
+      'button[aria-label*="Generate" i]',
+      '.send-button',
+      '[data-testid="send-button"]'
     ];
 
+    log("[Send] Looking for send button...");
     for (let i = 0; i < 60; i++) {
       for (const sel of selectors) {
-        const btn = document.querySelector(sel);
+        const btn = deepQuerySelector(sel);
         if (btn && !btn.disabled) {
           btn.click();
-          log("Send button clicked");
+          log(`[Send] Clicked! selector="${sel}" tag=${btn.tagName} ariaLabel="${btn.getAttribute('aria-label') || ''}" disabled=${btn.disabled}`);
           return true;
         }
       }
+
+      // Log what buttons we CAN see (diagnostic)
+      if (i === 0) {
+        const allBtns = deepQuerySelectorAll('button, [role="button"]');
+        const visibleBtns = [];
+        allBtns.forEach(b => {
+          if (b.offsetParent !== null) visibleBtns.push(`tag=${b.tagName} role=${b.getAttribute('role')} ariaLabel="${b.getAttribute('aria-label') || ''}" class="${String(b.className).substring(0, 40)}"`);
+        });
+        log(`[Send] Visible buttons on page (${visibleBtns.length}): ${visibleBtns.slice(0, 8).join(" | ")}`);
+      }
+
       await sleep(250);
     }
-    logError("Could not find/click send button after 15s");
+    logError("[Send] Could not find/click send button after 15s");
     return false;
   }
 
   async function waitForEditor(timeoutMs = 45000) {
     const start = Date.now();
+    log(`[Editor] Waiting up to ${timeoutMs / 1000}s for editor...`);
+    let attempts = 0;
     while (Date.now() - start < timeoutMs) {
+      attempts++;
       const ed = findPromptEditor();
-      if (ed) return ed;
+      if (ed) {
+        log(`[Editor] Found after ${attempts} attempts (${Math.round((Date.now() - start) / 1000)}s)`);
+        return ed;
+      }
+      // Log progress every 10s
+      if (attempts % 40 === 0 && attempts > 0) {
+        log(`[Editor] Still searching... (${Math.round((Date.now() - start) / 1000)}s elapsed, ${attempts} attempts)`);
+      }
       await sleep(250);
     }
+    logError(`[Editor] Not found after ${attempts} attempts / ${timeoutMs / 1000}s`);
     return null;
   }
 
@@ -222,15 +387,15 @@
    */
   function findDownloadButton() {
     // Primary selector: mat-icon with fonticon="download"
-    const downloadIcons = document.querySelectorAll('mat-icon[data-mat-icon-name="download"], mat-icon[fonticon="download"]');
+    const downloadIcons = deepQuerySelectorAll('mat-icon[data-mat-icon-name="download"], mat-icon[fonticon="download"]');
     for (const icon of downloadIcons) {
       // Walk up to find the clickable ancestor (button / [role=button])
-      let el = icon.parentElement;
+      let el = icon.parentElement || (icon.getRootNode && icon.getRootNode().host);
       while (el) {
         const tag = el.tagName?.toLowerCase();
         if (tag === "button" || el.getAttribute("role") === "button") return el;
         if (el.tagName === "BODY") break;
-        el = el.parentElement;
+        el = el.parentElement || (el.getRootNode && el.getRootNode().host);
       }
     }
 
@@ -243,7 +408,7 @@
       'button .mat-icon-download',
     ];
     for (const sel of ariaSelectors) {
-      const btn = document.querySelector(sel);
+      const btn = deepQuerySelector(sel);
       if (btn) return btn;
     }
 
@@ -270,13 +435,13 @@
 
     // Strategy 1: Find the closest common container (usually a response/message block)
     // and look for images within it
-    let container = downloadBtn.parentElement;
+    let container = downloadBtn.parentElement || (downloadBtn.getRootNode && downloadBtn.getRootNode().host);
     for (let depth = 0; depth < 15 && container; depth++) {
       const tag = container.tagName;
       if (tag === "BODY") break;
 
       // Look for images inside this container
-      const imgs = container.querySelectorAll("img");
+      const imgs = deepQuerySelectorAll("img", container);
       let bestImg = null;
       let bestSize = 0;
 
@@ -300,13 +465,13 @@
       }
 
       if (bestImg) return bestImg;
-      container = container.parentElement;
+      container = container.parentElement || (container.getRootNode && container.getRootNode().host);
     }
 
     // Strategy 2: Sibling-based search — look at nearby elements
-    const parent = downloadBtn.closest(".response-container, .message-content, [class*=response], [class*=message], .model-response");
+    const parent = downloadBtn.closest ? downloadBtn.closest(".response-container, .message-content, [class*=response], [class*=message], .model-response") : null;
     if (parent) {
-      const imgs = parent.querySelectorAll("img");
+      const imgs = deepQuerySelectorAll("img", parent);
       for (const img of imgs) {
         const w = img.naturalWidth || img.width || 0;
         const h = img.naturalHeight || img.height || 0;
@@ -316,7 +481,7 @@
 
     // Strategy 3: Last resort — scan entire page for the largest image not previously seen
     log("Falling back to global image scan...");
-    const allImgs = document.querySelectorAll("img");
+    const allImgs = deepQuerySelectorAll("img");
     let bestGlobalImg = null;
     let bestGlobalSize = 0;
     for (const img of allImgs) {
@@ -461,25 +626,56 @@
 
   /** Current execution state */
   let isProcessing = false;
+  /** Timestamp when current processing started (ms) */
+  let processStartTime = 0;
+  /** Max time a single task can take before force-reset (10 min) */
+  const PROCESS_TIMEOUT_MS = 600_000;
+
+  /** Safety watchdog: if stuck in isProcessing for too long, force release */
+  function checkProcessingStuck() {
+    if (isProcessing && processStartTime > 0) {
+      const elapsed = Date.now() - processStartTime;
+      if (elapsed > PROCESS_TIMEOUT_MS) {
+        logError(`[WATCHDOG] Task stuck for ${Math.round(elapsed / 1000)}s — FORCE RESETTING isProcessing!`);
+        isProcessing = false;
+        processStartTime = 0;
+      }
+    }
+  }
 
   /**
    * Main task processing loop.
    * This is the core logic: poll → execute → download → upload → report.
    */
   async function processNextTask() {
-    if (isProcessing) return;
+    if (isProcessing) {
+      log("[Loop] Skipping — previous task still in progress.");
+      return;
+    }
     isProcessing = true;
+    processStartTime = Date.now();
+    const taskStartStr = new Date().toLocaleTimeString();
+    log(`[Task] === STARTED at ${taskStartStr} ===`);
 
     try {
       log("Polling for tasks...");
-      const task = await api.poll();
+      let task = await api.poll();
 
       if (!task) {
         log("No pending tasks.");
         return;
       }
+      
+      if (typeof task === "string") {
+        try { task = JSON.parse(task); } catch(e) {}
+      }
 
-      log(`\n========== NEW TASK ==========\n  ID: ${task.id}\n  Prompt length: ${task.prompt.length}\n  Status: ${task.status}\n===============================`);
+      if (!task || !task.id || !task.prompt) {
+        logError("Invalid task format received");
+        return;
+      }
+
+      log(`\n========== NEW TASK ==========\n  ID: ${task.id}\n  Prompt length: ${task.prompt.length}\n  Status: ${task.status}\n  Preview: ${task.prompt.substring(0, 100)}...\n===============================`);
 
       // --- Step 1: Wait for editor ready ---
       log("Waiting for Gemini UI to be ready...");
@@ -503,7 +699,9 @@
         await randomDelay();
         return;
       }
-      log("Prompt typed.");
+      log(`Prompt typed. Verifying editor content...`);
+      const verifyText = editor.textContent || editor.innerText || editor.value || "";
+      log(`[Verify] Editor now contains ${verifyText.length} chars (first 80: "${verifyText.substring(0, 80)}")`);
 
       await randomDelay();
 
@@ -551,7 +749,10 @@
       logError(`Unexpected error during task processing: ${err.message}`);
       console.error(err);
     } finally {
+      const elapsed = Math.round((Date.now() - processStartTime) / 1000);
+      log(`[Task] === FINISHED in ${elapsed}s ===`);
       isProcessing = false;
+      processStartTime = 0;
     }
   }
 
@@ -629,44 +830,51 @@
     document.head.appendChild(style);
   }
 
+  function $(tag, attrs = {}, children = []) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "textContent" || k === "innerHTML") el[k] = v;
+      else el.setAttribute(k, v);
+    }
+    for (const c of children) {
+      if (typeof c === "string") el.appendChild(document.createTextNode(c));
+      else if (c) el.appendChild(c);
+    }
+    return el;
+  }
+
   function createControlPanel() {
     injectCSS();
 
     // Floating toggle button
-    const btn = document.createElement("div");
-    btn.id = "mo-agent-btn";
-    btn.innerHTML = '<span id="mo-agent-dot"></span><span>Muse Agent</span>';
+    const btn = $("div", { id: "mo-agent-btn" }, [
+      $("span", { id: "mo-agent-dot" }),
+      document.createTextNode("Muse Agent"),
+    ]);
 
     // Panel
-    const panel = document.createElement("div");
-    panel.id = "mo-agent-panel";
-
-    panel.innerHTML = `
-<div class="mo-panel-header">
-  <span class="mo-panel-title">Muse Oracle Browser Agent</span>
-  <button class="mo-panel-close">&times;</button>
-</div>
-
-<div class="mo-panel-row">
-  <label class="mo-label">Server URL</label>
-  <input id="mo-server-url" class="mo-input" value="${SERVER_BASE}" placeholder="http://localhost:8080">
-</div>
-
-<div class="mo-panel-row">
-  <label class="mo-label">Task Statistics</label>
-  <div id="mo-stats" class="mo-stats">Loading...</div>
-</div>
-
-<div class="mo-panel-row">
-  <label class="mo-label">Activity Log</label>
-  <div id="mo-log" class="mo-status-box">Agent initialized.\nWaiting for tasks...</div>
-</div>
-
-<div class="mo-btn-row">
-  <button id="mo-btn-save" class="mo-btn">Save Config</button>
-  <button id="mo-btn-poll" class="mo-btn mo-btn-primary">Poll Now</button>
-</div>
-`;
+    const panel = $("div", { id: "mo-agent-panel" }, [
+      $("div", { class: "mo-panel-header" }, [
+        $("span", { class: "mo-panel-title", textContent: "Muse Oracle Browser Agent" }),
+        $("button", { class: "mo-panel-close", textContent: "\u00d7" }),
+      ]),
+      $("div", { class: "mo-panel-row" }, [
+        $("label", { class: "mo-label", textContent: "Server URL" }),
+        $("input", { id: "mo-server-url", class: "mo-input", value: SERVER_BASE, placeholder: "http://localhost:8080" }),
+      ]),
+      $("div", { class: "mo-panel-row" }, [
+        $("label", { class: "mo-label", textContent: "Task Statistics" }),
+        $("div", { id: "mo-stats", class: "mo-stats", textContent: "Loading..." }),
+      ]),
+      $("div", { class: "mo-panel-row" }, [
+        $("label", { class: "mo-label", textContent: "Activity Log" }),
+        $("div", { id: "mo-log", class: "mo-status-box", textContent: "Agent initialized.\nWaiting for tasks..." }),
+      ]),
+      $("div", { class: "mo-btn-row" }, [
+        $("button", { id: "mo-btn-save", class: "mo-btn", textContent: "Save Config" }),
+        $("button", { id: "mo-btn-poll", class: "mo-btn mo-btn-primary", textContent: "Poll Now" }),
+      ]),
+    ]);
 
     // Event wiring
     btn.addEventListener("click", () => {
@@ -723,24 +931,43 @@
       const statsEl = document.getElementById("mo-stats");
       if (!statsEl) return;
 
+      log("[Stats] Fetching /api/v1/browser/stats...");
       const resp = await new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
           method: "GET",
           url: `${SERVER_BASE}/api/v1/browser/stats`,
           responseType: "json",
-          onload(res) { resolve(res.response); },
-          onerror(err) { reject(err); },
+          timeout: 10000,
+          onload(res) {
+            log(`[Stats] → status=${res.status} data=${JSON.stringify(res.response).substring(0, 200)}`);
+            resolve(res.response);
+          },
+          onerror: (err) => {
+            logError(`[Stats] → Error: ${err?.message || err}`);
+            reject(err);
+          },
         });
       });
 
-      statsEl.innerHTML =
-        `<span class="mo-stat-chip pending">Pending: ${resp["pending"] || 0}</span>` +
-        `<span class="mo-stat-chip running">Running: ${resp["running"] || 0}</span>` +
-        `<span class="mo-stat-chip done">Done: ${resp["completed"] || 0}</span>` +
-        `<span class="mo-stat-chip fail">Failed: ${resp["failed"] || 0}</span>`;
+      statsEl.textContent = "";
+      const chips = [
+        { cls: "pending", label: "Pending", val: resp["pending"] || 0 },
+        { cls: "running", label: "Running", val: resp["running"] || 0 },
+        { cls: "done", label: "Done", val: resp["completed"] || 0 },
+        { cls: "fail", label: "Failed", val: resp["failed"] || 0 },
+      ];
+      for (const c of chips) {
+        const span = document.createElement("span");
+        span.className = `mo-stat-chip ${c.cls}`;
+        span.textContent = `${c.label}: ${c.val}`;
+        statsEl.appendChild(span);
+      }
     } catch (e) {
       const statsEl = document.getElementById("mo-stats");
-      if (statsEl) statsEl.innerHTML = `<span style="color:var(--mo-danger)">Server unreachable</span>`;
+      if (statsEl) {
+        statsEl.textContent = "Server unreachable";
+        statsEl.style.color = "var(--mo-danger)";
+      }
     }
   }
 
@@ -759,6 +986,27 @@
     // Inject control panel
     createControlPanel();
 
+    // Test server connectivity
+    log(`[Init] Testing connectivity to ${SERVER_BASE}...`);
+    try {
+      const testResp = await new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: "GET",
+          url: `${SERVER_BASE}/api/v1/browser/stats`,
+          responseType: "json",
+          timeout: 5000,
+          onload(res) { resolve({ status: res.status, data: res.response }); },
+          onerror(err) { reject(err); },
+          ontimeout() { reject(new Error("Timeout")); },
+        });
+      });
+      log(`[Init] Server reachable! status=${testResp.status} data=${JSON.stringify(testResp.data || {}).substring(0, 200)}`);
+    } catch (e) {
+      logError(`[Init] Server UNREACHABLE at ${SERVER_BASE}: ${e?.message || e}`);
+      logError("[Init] Check that CLI/server is running and port is correct.");
+      logError("[Init] The agent will continue polling but will not be able to fetch tasks.");
+    }
+
     // Initial stats
     await refreshStats();
 
@@ -767,7 +1015,17 @@
     log(`Poll interval: ${POLL_INTERVAL_MS / 1000}s`);
 
     // Start polling loop
+    log("[Loop] Starting poll timer, interval=" + POLL_INTERVAL_MS + "ms");
+    let tick = 0;
     setInterval(async () => {
+      tick++;
+      log(`[Loop] Tick #${tick} — checking for tasks...`);
+      // Safety watchdog: detect stuck processing
+      if (isProcessing) {
+        const stuckFor = Math.round((Date.now() - processStartTime) / 1000);
+        log(`[Loop] Task in progress for ${stuckFor}s (timeout=${PROCESS_TIMEOUT_MS / 1000}s)`);
+        checkProcessingStuck();
+      }
       updateDot(true);
       try {
         await processNextTask();

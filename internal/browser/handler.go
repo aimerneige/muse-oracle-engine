@@ -73,13 +73,15 @@ func (h *Handler) handleEnqueue(w http.ResponseWriter, r *http.Request) {
 
 // handlePoll returns the first pending task and atomically marks it as running.
 // The browser agent calls this endpoint periodically to pick up work.
-func (h *Handler) handlePoll(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handlePoll(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[Browser] Poll received from %s", r.RemoteAddr)
 	task := h.queue.Acquire()
 	if task == nil {
+		log.Printf("[Browser] Poll: no pending tasks")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	log.Printf("[Browser] Task acquired: id=%s", task.ID)
+	log.Printf("[Browser] Task acquired: id=%s prompt_len=%d", task.ID, len(task.Prompt))
 	writeJSON(w, http.StatusOK, task)
 }
 
