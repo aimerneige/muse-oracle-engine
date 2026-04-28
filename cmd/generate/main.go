@@ -26,7 +26,7 @@ func main() {
 	// Define flags
 	characters := flag.String("characters", "", "Comma-separated character IDs, e.g. 'lovelive/honoka,lovelive/umi'")
 	plotHint := flag.String("plot", "", "Story direction / plot hint")
-	style := flag.String("style", "chibi_figure", "Comic style: chibi_figure, figma_figure, watercolor")
+	style := flag.String("style", "chibi_figure", "Comic style: chibi_figure, figma_figure, watercolor, crayon_doodle, papercraft_cutout, pixel_art, plush_photography, retro_pop_comic")
 	resumeID := flag.String("resume", "", "Resume an existing project by ID")
 	retryImage := flag.Int("retry-image", 0, "Retry generating a specific image by 1-based index (requires --resume)")
 	listChars := flag.Bool("list-characters", false, "List all available characters")
