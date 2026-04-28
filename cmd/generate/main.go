@@ -251,8 +251,13 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
 	case "deepseek":
 		model := llm.DeepSeekChat
-		if cfg.LLMModel == "deepseek-reasoner" {
+		switch cfg.LLMModel {
+		case "deepseek-reasoner":
 			model = llm.DeepSeekReasoner
+		case "deepseek-v4-flash":
+			model = llm.DeepSeekV4Flash
+		case "deepseek-v4-pro":
+			model = llm.DeepSeekV4Pro
 		}
 		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
 
@@ -323,7 +328,9 @@ func printModels() {
 	fmt.Println("   └─ gemini-2.5-flash-lite        (Gemini 2.5 Flash Lite)")
 	fmt.Println("  Provider: deepseek")
 	fmt.Println("   ├─ deepseek-chat                (DeepSeek Chat)")
-	fmt.Println("   └─ deepseek-reasoner            (DeepSeek Reasoner)")
+	fmt.Println("   ├─ deepseek-reasoner            (DeepSeek Reasoner)")
+	fmt.Println("   ├─ deepseek-v4-flash            (DeepSeek V4 Flash)")
+	fmt.Println("   └─ deepseek-v4-pro              (DeepSeek V4 Pro)")
 
 	fmt.Println("\n🖼️  图像生成模型:")
 	fmt.Println("  Provider: gemini")

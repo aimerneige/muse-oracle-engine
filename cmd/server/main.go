@@ -478,8 +478,13 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
 	case "deepseek":
 		model := llm.DeepSeekChat
-		if cfg.LLMModel == "deepseek-reasoner" {
+		switch cfg.LLMModel {
+		case "deepseek-reasoner":
 			model = llm.DeepSeekReasoner
+		case "deepseek-v4-flash":
+			model = llm.DeepSeekV4Flash
+		case "deepseek-v4-pro":
+			model = llm.DeepSeekV4Pro
 		}
 		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
 
