@@ -33,10 +33,16 @@ func NewStoryService(provider llm.Provider, engine *prompt.Engine) *StoryService
 // and parses the code blocks as storyboard panels.
 // CharacterSetting is generated programmatically from the character data for downstream use.
 func (s *StoryService) GenerateStoryboard(ctx context.Context, project *domain.Project) error {
+	styleDescription, err := storyboardStyleDescription(project.Style)
+	if err != nil {
+		return err
+	}
+
 	// Render the storybook prompt with character data
 	promptText, err := s.promptEngine.RenderStorybook(prompt.StorybookData{
-		Characters: project.Characters,
-		PlotHint:   project.PlotHint,
+		Characters:       project.Characters,
+		PlotHint:         project.PlotHint,
+		StyleDescription: styleDescription,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to render storybook prompt: %w", err)
@@ -86,6 +92,22 @@ func (s *StoryService) GenerateStoryboard(ctx context.Context, project *domain.P
 
 	project.Status = domain.StatusStoryboardDone
 	return nil
+}
+
+func storyboardStyleDescription(style domain.ComicStyle) (string, error) {
+	meta, ok := domain.StyleRegistry[style]
+	if !ok {
+		return "", fmt.Errorf("unknown comic style: %s", style)
+	}
+
+	description := strings.TrimSpace(meta.Description)
+	if description == "" {
+		return "", fmt.Errorf("comic style %s missing description", style)
+	}
+	if len([]rune(description)) > 100 {
+		return "", fmt.Errorf("comic style %s description must be 100 characters or fewer", style)
+	}
+	return description, nil
 }
 
 // buildCharacterSetting generates a markdown character setting string from character data.

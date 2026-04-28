@@ -26,7 +26,7 @@ func main() {
 	// Define flags
 	characters := flag.String("characters", "", "Comma-separated character IDs, e.g. 'lovelive/honoka,lovelive/umi'")
 	plotHint := flag.String("plot", "", "Story direction / plot hint")
-	style := flag.String("style", "chibi_figure", "Comic style: anime_3d_engine, chibi_figure, figma_figure, watercolor, crayon_doodle, papercraft_cutout, pixel_art, plush_photography, retro_pop_comic")
+	style := flag.String("style", "", "Required comic style: anime_3d_engine, chibi_figure, figma_figure, watercolor, crayon_doodle, papercraft_cutout, pixel_art, plush_photography, retro_pop_comic")
 	resumeID := flag.String("resume", "", "Resume an existing project by ID")
 	retryImage := flag.Int("retry-image", 0, "Retry generating a specific image by 1-based index (requires --resume)")
 	listChars := flag.Bool("list-characters", false, "List all available characters")
@@ -134,8 +134,8 @@ func main() {
 		log.Printf("✓ Resumed project: %s (status: %s)", project.ID, project.Status)
 	} else {
 		// Validate required inputs
-		if *characters == "" || *plotHint == "" {
-			fmt.Println("Usage: generate --characters <ids> --plot <hint> [--style <style>]")
+		if *characters == "" || *plotHint == "" || *style == "" {
+			fmt.Println("Usage: generate --characters <ids> --plot <hint> --style <style>")
 			fmt.Println()
 			fmt.Println("Example:")
 			fmt.Println("  generate --characters 'lovelive/honoka,lovelive/umi' \\")

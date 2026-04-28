@@ -38,8 +38,9 @@ func NewEngine() (*Engine, error) {
 
 // StorybookData contains the data needed to render the storybook generation prompt.
 type StorybookData struct {
-	Characters []domain.Character
-	PlotHint   string
+	Characters       []domain.Character
+	PlotHint         string
+	StyleDescription string
 }
 
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.
@@ -122,8 +123,13 @@ func (e *Engine) LoadExternalDir(dir string) error {
 		if err := yaml.Unmarshal(yamlData, &def); err != nil {
 			return fmt.Errorf("failed to parse %s: %w", yamlPath, err)
 		}
+		def.Name = strings.TrimSpace(def.Name)
+		def.Description = strings.TrimSpace(def.Description)
 		if def.Name == "" || def.Description == "" {
 			return fmt.Errorf("invalid style.yaml for %s: name and description required", styleID)
+		}
+		if len([]rune(def.Description)) > 100 {
+			return fmt.Errorf("invalid style.yaml for %s: description must be 100 characters or fewer", styleID)
 		}
 
 		// 2. Read template draw.md.tmpl
