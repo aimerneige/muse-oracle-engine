@@ -4,6 +4,7 @@ package domain
 type ComicStyle string
 
 const (
+	StyleAnime3DEngine    ComicStyle = "anime_3d_engine"
 	StyleChibiFigure      ComicStyle = "chibi_figure"
 	StyleFigmaFigure      ComicStyle = "figma_figure"
 	StyleWaterColor       ComicStyle = "watercolor"
@@ -33,6 +34,12 @@ type StyleMeta struct {
 
 // StyleRegistry maps style IDs to their metadata.
 var StyleRegistry = map[ComicStyle]StyleMeta{
+	StyleAnime3DEngine: {
+		ID:          StyleAnime3DEngine,
+		Name:        "动漫 3D 引擎风格",
+		Description: "MMD / Unity / Toon Shader 风格，3D 动漫渲染与赛璐璐质感",
+		TemplateKey: "anime_3d_engine",
+	},
 	StyleChibiFigure: {
 		ID:          StyleChibiFigure,
 		Name:        "Q版粘土人风格",
