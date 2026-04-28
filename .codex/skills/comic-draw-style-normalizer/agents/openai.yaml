@@ -1,0 +1,4 @@
+interface:
+  display_name: "Comic Draw Style Normalizer"
+  short_description: "Normalize existing comic_draw style templates."
+  default_prompt: "Use $comic-draw-style-normalizer to review and normalize the existing comic_draw style templates."
