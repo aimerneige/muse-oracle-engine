@@ -12,7 +12,6 @@ type DeepSeekModel int
 
 const (
 	DeepSeekChat DeepSeekModel = iota
-	DeepSeekReasoner
 	DeepSeekV4Flash
 	DeepSeekV4Pro
 )
@@ -21,8 +20,6 @@ func (m DeepSeekModel) String() string {
 	switch m {
 	case DeepSeekChat:
 		return "deepseek-chat"
-	case DeepSeekReasoner:
-		return "deepseek-reasoner"
 	case DeepSeekV4Flash:
 		return "deepseek-v4-flash"
 	case DeepSeekV4Pro:

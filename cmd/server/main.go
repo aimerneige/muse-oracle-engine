@@ -479,8 +479,6 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 	case "deepseek":
 		model := llm.DeepSeekChat
 		switch cfg.LLMModel {
-		case "deepseek-reasoner":
-			model = llm.DeepSeekReasoner
 		case "deepseek-v4-flash":
 			model = llm.DeepSeekV4Flash
 		case "deepseek-v4-pro":
