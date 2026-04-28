@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"google.golang.org/genai"
 )
@@ -38,9 +39,14 @@ type GeminiImageAdapter struct {
 
 // NewGeminiImageAdapter creates a new Gemini image generation provider.
 func NewGeminiImageAdapter(apiKey string, model GeminiImageModel) (*GeminiImageAdapter, error) {
-	client, err := genai.NewClient(context.Background(), &genai.ClientConfig{
+	config := &genai.ClientConfig{
 		APIKey: apiKey,
-	})
+	}
+	if baseURL := os.Getenv("GEMINI_BASE_URL"); baseURL != "" {
+		config.HTTPOptions = genai.HTTPOptions{BaseURL: baseURL}
+	}
+
+	client, err := genai.NewClient(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}

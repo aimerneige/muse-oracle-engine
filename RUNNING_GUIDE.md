@@ -14,6 +14,8 @@
 ```env
 # 填入你拥有的对应平台的 API Key
 GEMINI_API_KEY="your-gemini-key"
+# 可选：Gemini 兼容代理地址，同时用于 Gemini 文本和图片生成
+GEMINI_BASE_URL=
 DEEPSEEK_API_KEY="your-deepseek-key"
 
 

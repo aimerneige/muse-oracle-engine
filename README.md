@@ -66,6 +66,7 @@
 |------|--------|------|
 | `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
+| `GEMINI_BASE_URL` | (空) | (可选) 自定义 Gemini API Base URL，同时用于 Gemini 文本和图片生成 |
 | `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
 | `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |

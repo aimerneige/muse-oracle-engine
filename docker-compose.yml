@@ -14,6 +14,7 @@ services:
     environment:
       # API Keys (Provide at least one)
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_BASE_URL=${GEMINI_BASE_URL}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
 
       - OPENAI_API_KEY=${OPENAI_API_KEY}
