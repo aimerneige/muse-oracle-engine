@@ -1,0 +1,4 @@
+interface:
+  display_name: "Comic Draw Style Template"
+  short_description: "Generate comic_draw templates from reference markdown."
+  default_prompt: "Create a comic_draw style template from a reference markdown file."
