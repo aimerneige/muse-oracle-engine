@@ -269,13 +269,11 @@ func ApplyLongMangaStateToProject(project *domain.Project, state *domain.LongMan
 
 	panels := make([]domain.StoryboardPanel, 0)
 	for _, episode := range state.Episodes {
-		for _, panel := range episode.Panels {
-			panels = append(panels, domain.StoryboardPanel{
-				Index:        len(panels) + 1,
-				Content:      longMangaPanelContent(episode, panel),
-				CharacterIDs: panel.CharacterIDs,
-			})
-		}
+		panels = append(panels, domain.StoryboardPanel{
+			Index:        len(panels) + 1,
+			Content:      longMangaEpisodeContent(episode),
+			CharacterIDs: episode.CharacterIDs,
+		})
 	}
 
 	project.StoryResult = &domain.StoryResult{
@@ -285,7 +283,9 @@ func ApplyLongMangaStateToProject(project *domain.Project, state *domain.LongMan
 	project.Storyboard = &domain.Storyboard{
 		Panels: panels,
 	}
+	project.Images = nil
 	project.Status = domain.StatusStoryboardDone
+	project.ReviewFeedback = ""
 	project.UpdatedAt = time.Now()
 	return nil
 }
@@ -505,10 +505,18 @@ func combineLongMangaEpisodeFailures(failures []longMangaEpisodeFailure) error {
 	return fmt.Errorf("%d long manga episode(s) failed: %s", len(failures), strings.Join(parts, "; "))
 }
 
-func longMangaPanelContent(episode domain.LongMangaEpisodeScript, panel domain.LongMangaPanelScript) string {
+func longMangaEpisodeContent(episode domain.LongMangaEpisodeScript) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("#### 【第 %d 话】%s\n\n", episode.Episode, episode.Title))
-	sb.WriteString(panel.Content)
+	if episode.Summary != "" {
+		sb.WriteString(fmt.Sprintf("**梗概**：%s\n\n", episode.Summary))
+	}
+	for i, panel := range episode.Panels {
+		if i > 0 {
+			sb.WriteString("\n\n")
+		}
+		sb.WriteString(panel.Content)
+	}
 	return sb.String()
 }
 

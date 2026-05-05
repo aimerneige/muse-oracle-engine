@@ -76,10 +76,15 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 		},
 		Episodes: []domain.LongMangaEpisodeScript{
 			{
-				Episode: 1,
-				Title:   "晨间约定",
+				Episode:      1,
+				Title:        "晨间约定",
+				Summary:      "确认计划",
+				CharacterIDs: []string{"lovelive/honoka"},
 				Panels: []domain.LongMangaPanelScript{
 					{Index: 1, CharacterIDs: []string{"lovelive/honoka"}, Content: "##### 第1格"},
+					{Index: 2, CharacterIDs: []string{"lovelive/honoka"}, Content: "##### 第2格"},
+					{Index: 3, CharacterIDs: []string{"lovelive/honoka"}, Content: "##### 第3格"},
+					{Index: 4, CharacterIDs: []string{"lovelive/honoka"}, Content: "##### 第4格"},
 				},
 			},
 		},
@@ -95,6 +100,9 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	panel := project.Storyboard.Panels[0]
 	if len(panel.CharacterIDs) != 1 || panel.CharacterIDs[0] != "lovelive/honoka" {
 		t.Fatalf("expected panel character IDs copied, got %+v", panel.CharacterIDs)
+	}
+	if !strings.Contains(panel.Content, "##### 第1格") || !strings.Contains(panel.Content, "##### 第4格") {
+		t.Fatalf("expected one storyboard panel to contain the full four-panel episode, got %s", panel.Content)
 	}
 	if project.Status != domain.StatusStoryboardDone {
 		t.Fatalf("expected storyboard_done status, got %s", project.Status)

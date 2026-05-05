@@ -201,7 +201,14 @@ func main() {
 			os.Exit(1)
 		}
 		log.Println("=== Long manga storyboards completed ===")
-		log.Printf("Output directory: %s", store.ProjectDir(project.ID))
+		log.Println("=== Continuing to image generation ===")
+		if err := p.Run(ctx, project); err != nil {
+			log.Printf("Pipeline error: %v", err)
+			log.Printf("Project saved. Resume with: generate --resume %s", project.ID)
+			os.Exit(1)
+		}
+		log.Println("=== 全部任务完成 ===")
+		log.Printf("输出目录: %s", store.ProjectDir(project.ID))
 		return
 	}
 
