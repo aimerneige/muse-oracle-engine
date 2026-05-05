@@ -168,4 +168,7 @@ docker compose up -d
 
 ## License
 
-MIT License
+This project uses different licenses for source code and built-in prompt templates:
+
+- Source code and documentation are licensed under the MIT License. See [LICENSE](./LICENSE).
+- Prompt templates under `internal/prompt/templates` are licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). See [internal/prompt/templates/LICENSE](./internal/prompt/templates/LICENSE).

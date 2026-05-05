@@ -2,6 +2,10 @@ MIT LICENSE
 
 Copyright (c) 2026 Aimer Neige
 
+Except for prompt templates under internal/prompt/templates, this project's source code and documentation are licensed under the MIT License below.
+
+Prompt templates under internal/prompt/templates are licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). See internal/prompt/templates/LICENSE for details.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation
 the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
