@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -34,6 +35,7 @@ func main() {
 	listStyles := flag.Bool("list-styles", false, "List all available comic styles")
 	listModels := flag.Bool("list-models", false, "List all available models")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
+	longManga := flag.Bool("long-manga", false, "Use multi-round long manga flow: outline, human confirmation, then all episode storyboards")
 	flag.Parse()
 
 	// Load .env file
@@ -109,9 +111,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
+	longMangaStore, err := storage.NewLongMangaStore(cfg.DataDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize long manga storage: %v", err)
+	}
 
 	// Initialize services
 	storySvc := service.NewStoryService(llmProvider, promptEngine)
+	longMangaSvc := service.NewLongMangaService(llmProvider, promptEngine)
 	comicSvc := service.NewComicService(imgProvider, promptEngine, store)
 
 	// Build pipeline steps
@@ -187,6 +194,17 @@ func main() {
 		return
 	}
 
+	if *longManga {
+		if err := runLongMangaFlow(ctx, project, store, longMangaStore, longMangaSvc); err != nil {
+			log.Printf("Long manga flow error: %v", err)
+			log.Printf("Project saved. Resume with: generate --resume %s --long-manga", project.ID)
+			os.Exit(1)
+		}
+		log.Println("=== Long manga storyboards completed ===")
+		log.Printf("Output directory: %s", store.ProjectDir(project.ID))
+		return
+	}
+
 	// Run pipeline
 	log.Println("=== 开始生成漫画 ===")
 	if err := p.Run(ctx, project); err != nil {
@@ -228,6 +246,93 @@ func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, lang
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}, nil
+}
+
+func runLongMangaFlow(ctx context.Context, project *domain.Project, store storage.Store, longStore *storage.LongMangaStore, svc *service.LongMangaService) error {
+	if err := store.Save(project); err != nil {
+		return fmt.Errorf("failed to save project: %w", err)
+	}
+
+	state, err := longStore.Load(project.ID)
+	if err != nil {
+		if !strings.Contains(err.Error(), "not found") {
+			return err
+		}
+		log.Println("=== Generating long manga outline ===")
+		state, err = svc.GenerateOutline(ctx, project)
+		if err != nil {
+			return err
+		}
+		if err := longStore.Save(state); err != nil {
+			return err
+		}
+	}
+
+	printLongMangaOutline(state)
+	if state.ConfirmedOutline == nil {
+		if err := confirmLongMangaOutline(project.ID, longStore, svc); err != nil {
+			return err
+		}
+		state, err = longStore.Load(project.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Println("=== Generating all confirmed long manga episode storyboards ===")
+	if err := svc.GenerateAllEpisodes(ctx, project, state); err != nil {
+		_ = longStore.Save(state)
+		return err
+	}
+	if err := service.ApplyLongMangaStateToProject(project, state); err != nil {
+		return err
+	}
+	if err := longStore.Save(state); err != nil {
+		return err
+	}
+	if err := store.Save(project); err != nil {
+		return err
+	}
+	return nil
+}
+
+func confirmLongMangaOutline(projectID string, longStore *storage.LongMangaStore, svc *service.LongMangaService) error {
+	fmt.Printf("\nOutline saved to: %s\n", longStore.StatePath(projectID))
+	fmt.Print("Review or edit the outline JSON, then type y to confirm and generate all episode storyboards: ")
+
+	answer, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read confirmation: %w", err)
+	}
+	if strings.ToLower(strings.TrimSpace(answer)) != "y" {
+		return fmt.Errorf("outline confirmation was not accepted")
+	}
+
+	state, err := longStore.Load(projectID)
+	if err != nil {
+		return err
+	}
+	if state.Outline == nil {
+		return fmt.Errorf("outline is required before confirmation")
+	}
+	if err := svc.ConfirmOutline(state, *state.Outline); err != nil {
+		return err
+	}
+	return longStore.Save(state)
+}
+
+func printLongMangaOutline(state *domain.LongMangaState) {
+	if state.Outline == nil {
+		return
+	}
+
+	fmt.Printf("\n=== Long Manga Outline (%d episodes) ===\n", state.Outline.TotalEpisodes)
+	for _, episode := range state.Outline.Episodes {
+		fmt.Printf("第 %d 话《%s》: %s\n", episode.Episode, episode.Title, episode.Summary)
+		if len(episode.CharacterIDs) > 0 {
+			fmt.Printf("  Characters: %s\n", strings.Join(episode.CharacterIDs, ", "))
+		}
+	}
 }
 
 func createLLMProvider(cfg *config.Config) (llm.Provider, error) {

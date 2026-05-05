@@ -3,6 +3,8 @@ package llm
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 // MockProvider is an LLM provider that returns pre-defined mock data
@@ -54,7 +56,12 @@ const mockStoryboardResponse = "# LoveLive! 漫画分镜脚本 - Mock 数据\n\n
 // real LLM output. The response contains multiple fenced code blocks,
 // each representing a storyboard panel.
 func (m *MockProvider) GenerateText(_ context.Context, prompt string) (string, error) {
-	_ = prompt
+	if strings.Contains(prompt, "自动化长篇漫画剧情梗概引擎") {
+		return mockLongMangaOutlineResponse(prompt), nil
+	}
+	if strings.Contains(prompt, "自动化长篇漫画单话分镜脚本引擎") {
+		return mockLongMangaEpisodeResponse(prompt), nil
+	}
 	return mockStoryboardResponse, nil
 }
 
@@ -67,6 +74,87 @@ func (m *MockProvider) GenerateTextWithHistory(_ context.Context, history Histor
 // Name returns the provider name.
 func (m *MockProvider) Name() string {
 	return "mock (test mode)"
+}
+
+func mockLongMangaOutlineResponse(prompt string) string {
+	ids := mockCandidateIDs(prompt)
+	if len(ids) == 0 {
+		ids = []string{"lovelive/honoka"}
+	}
+	characterIDs := mockJSONStringArray(ids)
+	return "```json\n" +
+		"{\n" +
+		"  \"total_episodes\": 2,\n" +
+		"  \"episodes\": [\n" +
+		"    {\"episode\": 1, \"title\": \"晨间约定\", \"summary\": \"主角们在清晨集合，发现今天的计划出现了意外阻碍。\", \"character_ids\": " + characterIDs + "},\n" +
+		"    {\"episode\": 2, \"title\": \"黄昏回应\", \"summary\": \"众人把意外转化为新的舞台灵感，并在黄昏完成一次小小的约定。\", \"character_ids\": " + characterIDs + "}\n" +
+		"  ]\n" +
+		"}\n" +
+		"```"
+}
+
+func mockLongMangaEpisodeResponse(prompt string) string {
+	ids := mockAvailableCharacterIDs(prompt)
+	if len(ids) == 0 {
+		ids = []string{"lovelive/honoka"}
+	}
+	episode := mockRequestedEpisode(prompt)
+	characterIDs := mockJSONStringArray(ids)
+	return "```json\n" +
+		"{\n" +
+		fmt.Sprintf("  \"episode\": %d,\n", episode) +
+		"  \"title\": \"晨间约定\",\n" +
+		"  \"summary\": \"主角们在清晨集合，发现今天的计划出现了意外阻碍。\",\n" +
+		"  \"character_ids\": " + characterIDs + ",\n" +
+		"  \"panels\": [\n" +
+		"    {\"index\": 1, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第1格\\n* **【构图与景别】**：中景 / 平视 / 稳定构图\\n* **【可见场景与光影】**：清晨校门口，柔和阳光从画面左侧照入。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：整洁校服与书包] + [抬手打招呼] + [明亮笑容]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (普通圆形气泡)：\\\"早上好！\\\"\\n* **【漫符与特效】**：キラキラ\"},\n" +
+		"    {\"index\": 2, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第2格\\n* **【构图与景别】**：近景 / 平视 / 轻微推近\\n* **【可见场景与光影】**：公告栏前，纸张边缘被晨光照亮。\\n* **【动态视觉与定格姿势】**：\\n  - [画面左侧] 角色：[**当前完整穿搭**：整洁校服与书包] + [指向公告] + [惊讶表情]\\n* **【对白与气泡】**：\\n  - [画面左侧] 角色 (尖角气泡)：\\\"咦？计划变了？\\\"\\n* **【漫符与特效】**：ガーン\"},\n" +
+		"    {\"index\": 3, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第3格\\n* **【构图与景别】**：全景 / 平视 / 横向构图\\n* **【可见场景与光影】**：走廊延伸到远处，窗外光线形成明亮条纹。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：整洁校服与书包] + [快步向前] + [认真表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (普通圆形气泡)：\\\"那就换个办法。\\\"\\n* **【漫符与特效】**：タッタッ\"},\n" +
+		"    {\"index\": 4, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第4格\\n* **【构图与景别】**：中景 / 逆光 / 收束构图\\n* **【可见场景与光影】**：活动室门口，门缝透出温暖光线。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：整洁校服与书包] + [推开门] + [期待表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (小圆形气泡)：\\\"开始吧。\\\"\\n* **【漫符与特效】**：カチャ\"}\n" +
+		"  ]\n" +
+		"}\n" +
+		"```"
+}
+
+func mockRequestedEpisode(prompt string) int {
+	re := regexp.MustCompile(`"episode": ([0-9]+)`)
+	matches := re.FindStringSubmatch(prompt)
+	if len(matches) != 2 {
+		return 1
+	}
+	if matches[1] == "2" {
+		return 2
+	}
+	return 1
+}
+
+func mockCandidateIDs(prompt string) []string {
+	re := regexp.MustCompile("(?m)^- `([^`]+)`：")
+	return mockRegexpMatches(re, prompt)
+}
+
+func mockAvailableCharacterIDs(prompt string) []string {
+	re := regexp.MustCompile("(?m)^### `([^`]+)` ")
+	return mockRegexpMatches(re, prompt)
+}
+
+func mockRegexpMatches(re *regexp.Regexp, prompt string) []string {
+	matches := re.FindAllStringSubmatch(prompt, -1)
+	ids := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if len(match) == 2 {
+			ids = append(ids, match[1])
+		}
+	}
+	return ids
+}
+
+func mockJSONStringArray(values []string) string {
+	quoted := make([]string, 0, len(values))
+	for _, value := range values {
+		quoted = append(quoted, fmt.Sprintf("%q", value))
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
 }
 
 var _ = fmt.Sprintf("%T implements Provider", (*MockProvider)(nil))

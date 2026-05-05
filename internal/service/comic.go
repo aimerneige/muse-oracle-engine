@@ -176,9 +176,13 @@ func (s *ComicService) runImageJobs(ctx context.Context, project *domain.Project
 func (s *ComicService) runImageJob(ctx context.Context, project *domain.Project, job imageJob) imageJobResult {
 	log.Printf("Generating image for panel %d...", job.panel.Index)
 
+	characters, err := charactersForPanel(project.Characters, job.panel.CharacterIDs)
+	if err != nil {
+		return failedImageJobResult(job, err)
+	}
 	promptText, err := s.promptEngine.RenderComicDraw(project.Style, prompt.ComicDrawData{
-		Characters:       project.Characters,
-		CharacterSetting: project.StoryResult.CharacterSetting,
+		Characters:       characters,
+		CharacterSetting: buildCharacterSetting(characters),
 		PanelContent:     job.panel.Content,
 		Language:         domain.NormalizeLanguage(project.Language),
 	})
@@ -212,6 +216,27 @@ func (s *ComicService) runImageJob(ctx context.Context, project *domain.Project,
 	result.FilePath = relPath
 	log.Printf("Successfully generated image for panel %d", job.panel.Index)
 	return imageJobResult{slot: job.slot, image: result}
+}
+
+func charactersForPanel(characters []domain.Character, panelCharacterIDs []string) ([]domain.Character, error) {
+	if len(panelCharacterIDs) == 0 {
+		return characters, nil
+	}
+
+	byID := make(map[string]domain.Character, len(characters))
+	for _, c := range characters {
+		byID[c.Series+"/"+c.ID] = c
+	}
+
+	selected := make([]domain.Character, 0, len(panelCharacterIDs))
+	for _, id := range panelCharacterIDs {
+		c, ok := byID[id]
+		if !ok {
+			return nil, fmt.Errorf("panel references unknown character id %s", id)
+		}
+		selected = append(selected, c)
+	}
+	return selected, nil
 }
 
 func failedImageJobResult(job imageJob, err error) imageJobResult {

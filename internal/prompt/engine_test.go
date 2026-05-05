@@ -3,6 +3,8 @@ package prompt
 import (
 	"strings"
 	"testing"
+
+	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
 
 func TestRenderStorybookIncludesStyleDescription(t *testing.T) {
@@ -94,5 +96,65 @@ func TestRenderComicDrawIncludesDialogueLanguage(t *testing.T) {
 	}
 	if !strings.Contains(got, "拟声词 (SFX) 保持为日语片假名") {
 		t.Fatal("expected comic draw prompt to keep SFX as Japanese katakana")
+	}
+}
+
+func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	character := domain.Character{
+		ID:          "honoka",
+		Name:        "高坂穗乃果",
+		NameEN:      "Kousaka Honoka",
+		Series:      "lovelive",
+		Personality: "开朗元气",
+	}
+
+	outline, err := engine.RenderLongMangaOutline(LongMangaOutlineData{
+		Characters: []domain.Character{character},
+		PlotHint:   "长篇连续剧情",
+	})
+	if err != nil {
+		t.Fatalf("RenderLongMangaOutline returned error: %v", err)
+	}
+	if !strings.Contains(outline, "自动化长篇漫画剧情梗概引擎") {
+		t.Fatal("expected long manga outline prompt role")
+	}
+	if !strings.Contains(outline, "`lovelive/honoka`") {
+		t.Fatal("expected long manga outline prompt to expose stable character ID")
+	}
+	if !strings.Contains(outline, "只输出 JSON 代码块") {
+		t.Fatal("expected long manga outline prompt to require JSON output")
+	}
+
+	episode, err := engine.RenderLongMangaEpisode(LongMangaEpisodeData{
+		Characters: []domain.Character{character},
+		FullOutline: domain.LongMangaOutline{
+			TotalEpisodes: 1,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "晨间约定", Summary: "确认计划", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
+		Episode: domain.LongMangaEpisodeOutline{
+			Episode:      1,
+			Title:        "晨间约定",
+			Summary:      "确认计划",
+			CharacterIDs: []string{"lovelive/honoka"},
+		},
+		StyleDescription: "水彩画风格",
+	})
+	if err != nil {
+		t.Fatalf("RenderLongMangaEpisode returned error: %v", err)
+	}
+	if !strings.Contains(episode, "自动化长篇漫画单话分镜脚本引擎") {
+		t.Fatal("expected long manga episode prompt role")
+	}
+	if !strings.Contains(episode, "每一格返回实际出现或明确需要引用的角色 ID") {
+		t.Fatal("expected long manga episode prompt to require per-panel character IDs")
 	}
 }

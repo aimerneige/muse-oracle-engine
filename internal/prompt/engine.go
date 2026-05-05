@@ -44,10 +44,38 @@ type StorybookData struct {
 	StyleDescription string
 }
 
+// LongMangaOutlineData contains data for the first multi-round outline prompt.
+type LongMangaOutlineData struct {
+	Characters []domain.Character
+	PlotHint   string
+	Language   string
+}
+
+// LongMangaEpisodeData contains data for one confirmed-outline episode prompt.
+type LongMangaEpisodeData struct {
+	Characters       []domain.Character
+	FullOutline      domain.LongMangaOutline
+	Episode          domain.LongMangaEpisodeOutline
+	Language         string
+	StyleDescription string
+}
+
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.
 func (e *Engine) RenderStorybook(data StorybookData) (string, error) {
 	data.Language = domain.NormalizeLanguage(data.Language)
 	return e.render("generate.md.tmpl", data)
+}
+
+// RenderLongMangaOutline renders the multi-round outline generation prompt.
+func (e *Engine) RenderLongMangaOutline(data LongMangaOutlineData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
+	return e.render("long_outline.md.tmpl", data)
+}
+
+// RenderLongMangaEpisode renders the multi-round single-episode storyboard prompt.
+func (e *Engine) RenderLongMangaEpisode(data LongMangaEpisodeData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
+	return e.render("long_episode.md.tmpl", data)
 }
 
 // ComicDrawData contains the data needed to render a comic drawing prompt.

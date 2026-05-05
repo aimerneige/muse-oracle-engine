@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/chardb"
 	"github.com/aimerneige/muse-oracle-engine/internal/config"
@@ -22,10 +24,12 @@ import (
 
 // App holds the server dependencies.
 type App struct {
-	charRegistry *chardb.Registry
-	storySvc     *service.StoryService
-	comicSvc     *service.ComicService
-	store        storage.Store
+	charRegistry   *chardb.Registry
+	storySvc       *service.StoryService
+	longMangaSvc   *service.LongMangaService
+	comicSvc       *service.ComicService
+	store          storage.Store
+	longMangaStore *storage.LongMangaStore
 }
 
 func main() {
@@ -79,12 +83,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
+	longMangaStore, err := storage.NewLongMangaStore(cfg.DataDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize long manga storage: %v", err)
+	}
 
 	app := &App{
-		charRegistry: charRegistry,
-		storySvc:     service.NewStoryService(llmProvider, promptEngine),
-		comicSvc:     service.NewComicService(imgProvider, promptEngine, store),
-		store:        store,
+		charRegistry:   charRegistry,
+		storySvc:       service.NewStoryService(llmProvider, promptEngine),
+		longMangaSvc:   service.NewLongMangaService(llmProvider, promptEngine),
+		comicSvc:       service.NewComicService(imgProvider, promptEngine, store),
+		store:          store,
+		longMangaStore: longMangaStore,
 	}
 
 	// Register routes
@@ -104,6 +114,11 @@ func main() {
 	// Generation flow
 	mux.HandleFunc("POST /api/v1/projects/{id}/generate/story", app.handleGenerateStory)
 	mux.HandleFunc("POST /api/v1/projects/{id}/generate/storyboard", app.handleGenerateStoryboard)
+	mux.HandleFunc("GET /api/v1/projects/{id}/long-manga", app.handleGetLongManga)
+	mux.HandleFunc("POST /api/v1/projects/{id}/generate/long-manga/outline", app.handleGenerateLongMangaOutline)
+	mux.HandleFunc("POST /api/v1/projects/{id}/long-manga/confirm-outline", app.handleConfirmLongMangaOutline)
+	mux.HandleFunc("POST /api/v1/projects/{id}/generate/long-manga/episodes/{episode}", app.handleGenerateLongMangaEpisode)
+	mux.HandleFunc("POST /api/v1/projects/{id}/generate/long-manga/episodes", app.handleGenerateLongMangaEpisodes)
 	mux.HandleFunc("POST /api/v1/projects/{id}/review", app.handleReview)
 	mux.HandleFunc("POST /api/v1/projects/{id}/generate/images", app.handleGenerateImages)
 
@@ -272,6 +287,147 @@ func (app *App) handleGenerateStoryboard(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusOK, project)
+}
+
+func (app *App) handleGetLongManga(w http.ResponseWriter, r *http.Request) {
+	state, err := app.longMangaStore.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, state)
+}
+
+func (app *App) handleGenerateLongMangaOutline(w http.ResponseWriter, r *http.Request) {
+	project, err := app.store.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	state, err := app.longMangaSvc.GenerateOutline(r.Context(), project)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := app.longMangaStore.Save(state); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, state)
+}
+
+func (app *App) handleConfirmLongMangaOutline(w http.ResponseWriter, r *http.Request) {
+	state, err := app.longMangaStore.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	var req struct {
+		Outline *domain.LongMangaOutline `json:"outline"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	outline := state.Outline
+	if req.Outline != nil {
+		outline = req.Outline
+	}
+	if outline == nil {
+		writeError(w, http.StatusBadRequest, "outline is required")
+		return
+	}
+
+	if err := app.longMangaSvc.ConfirmOutline(state, *outline); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := app.longMangaStore.Save(state); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, state)
+}
+
+func (app *App) handleGenerateLongMangaEpisode(w http.ResponseWriter, r *http.Request) {
+	project, err := app.store.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	state, err := app.longMangaStore.Load(project.ID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	episodeNumber, err := strconv.Atoi(r.PathValue("episode"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid episode number")
+		return
+	}
+
+	if err := app.longMangaSvc.GenerateEpisode(r.Context(), project, state, episodeNumber); err != nil {
+		_ = app.longMangaStore.Save(state)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := app.longMangaStore.Save(state); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if state.Status == domain.LongMangaStatusStoryboardDone {
+		if err := service.ApplyLongMangaStateToProject(project, state); err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if err := app.store.Save(project); err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+
+	writeJSON(w, http.StatusOK, state)
+}
+
+func (app *App) handleGenerateLongMangaEpisodes(w http.ResponseWriter, r *http.Request) {
+	project, err := app.store.Load(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	state, err := app.longMangaStore.Load(project.ID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	if err := app.longMangaSvc.GenerateAllEpisodes(r.Context(), project, state); err != nil {
+		_ = app.longMangaStore.Save(state)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := service.ApplyLongMangaStateToProject(project, state); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := app.longMangaStore.Save(state); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := app.store.Save(project); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, state)
 }
 
 func (app *App) handleReview(w http.ResponseWriter, r *http.Request) {
