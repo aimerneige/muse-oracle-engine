@@ -56,7 +56,8 @@ STYLES_DIR=
 go run cmd/generate/main.go \
     --characters "lovelive/honoka,lovelive/umi" \
     --plot "穗乃果和海未的温馨下课后日常，想要吃面包的穗乃果。轻松发糖向" \
-    --style chibi_figure
+    --style chibi_figure \
+    --language 中文
 ```
 
 一旦开始执行：
@@ -69,6 +70,7 @@ go run cmd/generate/main.go \
 - `--characters`: 逗号分隔的角色 ID（格式: `剧集代号/角色名`，可以跨区关公战秦琼！）。
 - `--plot`: 漫画大纲与走向的指引词。
 - `--style`: 期望使用的画风ID（默认为 `chibi_figure`）。
+- `--language`: 台词气泡中的对白语言，默认为 `中文`。该参数只影响对白气泡里的台词文字，不影响分镜标题、画面描述、角色动作等内容；漫符与 SFX 始终固定使用日语片假名。
 - `--no-review`: 自动化模式专用。如果加上该参数，程序将不会停下来等待你审阅分镜，直接往下生成图片。
 - `--resume <uuid>`: 当你不小心关掉终端或想从中断的特定项目恢复进度，使用该参数即可。
 - `--list-characters`: 查看当前已装载的所有角色名录 (自带库+你外挂的库)。
@@ -108,10 +110,13 @@ curl -X POST http://localhost:8080/api/v1/projects \
     -d '{
         "characters": ["bocchi/hitori", "kon/yui"],
         "plot_hint": "跨番剧音乐女孩碰头，波奇酱的社恐爆发",
-        "style": "watercolor"
+        "style": "watercolor",
+        "language": "中文"
     }'
 ```
 *响应返回带有 `id` 字段的 Project 对象。*
+
+`language` 字段可省略，省略时默认为 `中文`。它只控制台词气泡中的对白语言；漫符与 SFX 固定为日语片假名，不会随 `language` 改变。
 
 **2. 生成剧本大纲 (Story)**
 ```bash

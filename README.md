@@ -16,6 +16,7 @@
 
 - **多 IP 角色支持**：内置 **8 大系列、143+ 角色**（LoveLive 全系列、孤独摇滚、轻音少女、间谍过家家、原神等），支持通过 `CHARDB_DIR` 外部配置动态导入自定义角色。
 - **智能故事与分镜生成**：根据用户一句简单的提示词，经 AI 自动发掘角色设定，输出分镜视觉描述和符合角色 OOC（Out Of Character）限制的标准对白。支持多集连续剧情输出，每集固定 4 格漫画结构。
+- **对白语言可配置**：支持通过 `language` / `--language` 设置台词气泡中的对白语言，默认 `中文`；漫符与 SFX 始终固定使用日语片假名。
 - **多画风扩展**：
   - 内置 Chibi Figure（Q版粘土人风格）、Figma Figure（手办风格）、WaterColor（水彩风格）
   - 支持通过 `STYLES_DIR` 外部加载自定义画风模板（Go `text/template` 格式）
@@ -95,8 +96,11 @@
    go run cmd/generate/main.go \
        --characters 'lovelive/honoka,lovelive/umi' \
        --plot '穗乃果和海未在社团室里的温馨日常，发糖向' \
-       --style chibi_figure
+       --style chibi_figure \
+       --language 中文
    ```
+
+   `--language` 只影响台词气泡中的对白文字，未设置时默认为 `中文`；漫符与 SFX 不受该参数影响，仍固定使用日语片假名。
 
 3. 可用的其他查看命令：
    - 查看所有角色（按系列分组）：`go run cmd/generate/main.go --list-characters`
