@@ -314,6 +314,10 @@ func (app *App) handleGenerateLongMangaOutline(w http.ResponseWriter, r *http.Re
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	if _, err := app.longMangaStore.SaveOutline(project.ID, state.Outline); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	writeJSON(w, http.StatusOK, state)
 }
@@ -373,7 +377,7 @@ func (app *App) handleGenerateLongMangaEpisode(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := app.longMangaSvc.GenerateEpisode(r.Context(), project, state, episodeNumber); err != nil {
+	if err := app.longMangaSvc.GenerateEpisode(r.Context(), project, state, episodeNumber, app.longMangaStore); err != nil {
 		_ = app.longMangaStore.Save(state)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -409,7 +413,7 @@ func (app *App) handleGenerateLongMangaEpisodes(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := app.longMangaSvc.GenerateAllEpisodes(r.Context(), project, state); err != nil {
+	if err := app.longMangaSvc.GenerateAllEpisodes(r.Context(), project, state, app.longMangaStore); err != nil {
 		_ = app.longMangaStore.Save(state)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

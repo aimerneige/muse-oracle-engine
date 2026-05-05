@@ -266,6 +266,9 @@ func runLongMangaFlow(ctx context.Context, project *domain.Project, store storag
 		if err := longStore.Save(state); err != nil {
 			return err
 		}
+		if _, err := longStore.SaveOutline(project.ID, state.Outline); err != nil {
+			return err
+		}
 	}
 
 	printLongMangaOutline(state)
@@ -280,7 +283,7 @@ func runLongMangaFlow(ctx context.Context, project *domain.Project, store storag
 	}
 
 	log.Println("=== Generating all confirmed long manga episode storyboards ===")
-	if err := svc.GenerateAllEpisodes(ctx, project, state); err != nil {
+	if err := svc.GenerateAllEpisodes(ctx, project, state, longStore); err != nil {
 		_ = longStore.Save(state)
 		return err
 	}
@@ -297,7 +300,8 @@ func runLongMangaFlow(ctx context.Context, project *domain.Project, store storag
 }
 
 func confirmLongMangaOutline(projectID string, longStore *storage.LongMangaStore, svc *service.LongMangaService) error {
-	fmt.Printf("\nOutline saved to: %s\n", longStore.StatePath(projectID))
+	fmt.Printf("\nOutline state saved to: %s\n", longStore.StatePath(projectID))
+	fmt.Printf("Outline result saved to: %s\n", longStore.OutlinePath(projectID))
 	fmt.Print("Review or edit the outline JSON, then type y to confirm and generate all episode storyboards: ")
 
 	answer, err := bufio.NewReader(os.Stdin).ReadString('\n')

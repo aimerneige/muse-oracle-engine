@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
@@ -99,6 +101,41 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	}
 }
 
+func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	project := testLongMangaProject()
+	state := testConfirmedLongMangaState()
+	store := &stubLongMangaProgressStore{}
+	svc := NewLongMangaService(&episodeStubLLMProvider{}, engine)
+
+	err = svc.GenerateAllEpisodes(context.Background(), project, state, store)
+	if err == nil {
+		t.Fatal("expected failed episode summary")
+	}
+	if !strings.Contains(err.Error(), "episode 2") {
+		t.Fatalf("expected episode 2 in summary, got %v", err)
+	}
+
+	if len(state.Episodes) != 2 {
+		t.Fatalf("expected successful episodes to be retained, got %+v", state.Episodes)
+	}
+	if state.Status != domain.LongMangaStatusFailed {
+		t.Fatalf("expected failed status after partial failure, got %s", state.Status)
+	}
+	if len(store.scripts) != 2 {
+		t.Fatalf("expected successful episode scripts to be saved, got %d", len(store.scripts))
+	}
+	if store.saveCount < 3 {
+		t.Fatalf("expected state saved after successes and final failure, got %d saves", store.saveCount)
+	}
+}
+
 type stubLLMProvider struct {
 	response string
 }
@@ -113,6 +150,50 @@ func (s *stubLLMProvider) GenerateTextWithHistory(context.Context, llm.History) 
 
 func (s *stubLLMProvider) Name() string {
 	return "stub"
+}
+
+type episodeStubLLMProvider struct{}
+
+func (s *episodeStubLLMProvider) GenerateText(_ context.Context, prompt string) (string, error) {
+	if strings.Contains(prompt, `"episode": 2`) {
+		return "```json\n{\"not\":\"an episode\"}\n```", nil
+	}
+	episode := 1
+	if strings.Contains(prompt, `"episode": 3`) {
+		episode = 3
+	}
+	return fmt.Sprintf("```json\n{\"episode\":%d,\"title\":\"第%d话\",\"summary\":\"确认计划\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}]}\n```", episode, episode), nil
+}
+
+func (s *episodeStubLLMProvider) GenerateTextWithHistory(context.Context, llm.History) (string, error) {
+	return "", nil
+}
+
+func (s *episodeStubLLMProvider) Name() string {
+	return "episode-stub"
+}
+
+type stubLongMangaProgressStore struct {
+	mu        sync.Mutex
+	scripts   map[int]domain.LongMangaEpisodeScript
+	saveCount int
+}
+
+func (s *stubLongMangaProgressStore) Save(*domain.LongMangaState) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.saveCount++
+	return nil
+}
+
+func (s *stubLongMangaProgressStore) SaveEpisodeScript(_ string, script domain.LongMangaEpisodeScript) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.scripts == nil {
+		s.scripts = make(map[int]domain.LongMangaEpisodeScript)
+	}
+	s.scripts[script.Episode] = script
+	return fmt.Sprintf("storyboards/long_episode_%03d.md", script.Episode), nil
 }
 
 func testLongMangaProject() *domain.Project {
@@ -139,5 +220,24 @@ func testLongMangaProject() *domain.Project {
 				Personality: "开朗元气",
 			},
 		},
+	}
+}
+
+func testConfirmedLongMangaState() *domain.LongMangaState {
+	outline := &domain.LongMangaOutline{
+		TotalEpisodes: 3,
+		Episodes: []domain.LongMangaEpisodeOutline{
+			{Episode: 1, Title: "第1话", Summary: "确认计划", CharacterIDs: []string{"lovelive/honoka"}},
+			{Episode: 2, Title: "第2话", Summary: "出现阻碍", CharacterIDs: []string{"lovelive/honoka"}},
+			{Episode: 3, Title: "第3话", Summary: "重新出发", CharacterIDs: []string{"lovelive/honoka"}},
+		},
+	}
+	return &domain.LongMangaState{
+		ProjectID: "project-1",
+		Status:    domain.LongMangaStatusOutlineConfirmed,
+		CandidateCharacters: []domain.LongMangaCharacterRef{
+			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
+		},
+		ConfirmedOutline: outline,
 	}
 }
