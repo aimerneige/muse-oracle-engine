@@ -42,6 +42,7 @@ func (s *StoryService) GenerateStoryboard(ctx context.Context, project *domain.P
 	promptText, err := s.promptEngine.RenderStorybook(prompt.StorybookData{
 		Characters:       project.Characters,
 		PlotHint:         project.PlotHint,
+		Language:         domain.NormalizeLanguage(project.Language),
 		StyleDescription: styleDescription,
 	})
 	if err != nil {

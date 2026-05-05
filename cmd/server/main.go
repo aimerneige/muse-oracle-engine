@@ -164,6 +164,7 @@ func (app *App) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		Characters []string          `json:"characters"` // e.g. ["lovelive/honoka", "lovelive/umi"]
 		PlotHint   string            `json:"plot_hint"`
 		Style      domain.ComicStyle `json:"style"`
+		Language   string            `json:"language"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -192,6 +193,7 @@ func (app *App) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		Characters: chars,
 		PlotHint:   req.PlotHint,
 		Style:      req.Style,
+		Language:   domain.NormalizeLanguage(req.Language),
 	}
 
 	if err := app.store.Save(project); err != nil {

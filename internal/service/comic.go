@@ -180,6 +180,7 @@ func (s *ComicService) runImageJob(ctx context.Context, project *domain.Project,
 		Characters:       project.Characters,
 		CharacterSetting: project.StoryResult.CharacterSetting,
 		PanelContent:     job.panel.Content,
+		Language:         domain.NormalizeLanguage(project.Language),
 	})
 	if err != nil {
 		return failedImageJobResult(job, fmt.Errorf("failed to render comic draw prompt: %w", err))

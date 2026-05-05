@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // ProjectStatus represents the current state of a project in the pipeline.
 type ProjectStatus string
@@ -14,6 +17,8 @@ const (
 	StatusFailed         ProjectStatus = "failed"
 )
 
+const DefaultLanguage = "中文"
+
 // Project represents a manga generation session with all intermediate state.
 type Project struct {
 	ID         string        `json:"id"`
@@ -21,6 +26,7 @@ type Project struct {
 	Characters []Character   `json:"characters"`  // selected characters with full profiles
 	PlotHint   string        `json:"plot_hint"`   // user-provided story direction
 	Style      ComicStyle    `json:"style"`       // selected comic style
+	Language   string        `json:"language"`    // speech bubble dialogue language
 	LLMModel   string        `json:"llm_model"`   // model used for text generation
 	ImageModel string        `json:"image_model"` // model used for image generation
 
@@ -37,6 +43,14 @@ type Project struct {
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func NormalizeLanguage(language string) string {
+	language = strings.TrimSpace(language)
+	if language == "" {
+		return DefaultLanguage
+	}
+	return language
 }
 
 // HistoryMessage represents a single message in the LLM conversation history.

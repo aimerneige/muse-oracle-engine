@@ -40,11 +40,13 @@ func NewEngine() (*Engine, error) {
 type StorybookData struct {
 	Characters       []domain.Character
 	PlotHint         string
+	Language         string
 	StyleDescription string
 }
 
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.
 func (e *Engine) RenderStorybook(data StorybookData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
 	return e.render("generate.md.tmpl", data)
 }
 
@@ -53,10 +55,12 @@ type ComicDrawData struct {
 	Characters       []domain.Character
 	CharacterSetting string // global character appearance setting from step 1
 	PanelContent     string // single panel's visual description from storyboard
+	Language         string // speech bubble dialogue language
 }
 
 // RenderComicDraw renders a comic drawing prompt for the given style.
 func (e *Engine) RenderComicDraw(style domain.ComicStyle, data ComicDrawData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
 	meta, ok := domain.StyleRegistry[style]
 	if !ok {
 		return "", fmt.Errorf("unknown comic style: %s", style)

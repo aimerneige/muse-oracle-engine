@@ -82,6 +82,11 @@ function renderCreateForm() {
       </div>
 
       <div class="input-group">
+        <label>Dialogue Language</label>
+        <input id="language-input" type="text" value="中文" required />
+      </div>
+
+      <div class="input-group">
         <label>Plot Hint / Scenario</label>
         <textarea id="plot-hint" placeholder="e.g. Honoka visits a haunted house..." required></textarea>
       </div>
@@ -116,6 +121,7 @@ function renderCreateForm() {
     }
 
     const style = (document.getElementById('style-select') as HTMLSelectElement).value;
+    const language = (document.getElementById('language-input') as HTMLInputElement).value;
     const plot = (document.getElementById('plot-hint') as HTMLTextAreaElement).value;
 
     const btn = form.querySelector('button')!;
@@ -129,6 +135,7 @@ function renderCreateForm() {
         body: JSON.stringify({
           characters: selectedChars,
           style: style,
+          language: language,
           plot_hint: plot
         })
       });

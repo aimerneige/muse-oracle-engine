@@ -27,6 +27,7 @@ func main() {
 	characters := flag.String("characters", "", "Comma-separated character IDs, e.g. 'lovelive/honoka,lovelive/umi'")
 	plotHint := flag.String("plot", "", "Story direction / plot hint")
 	style := flag.String("style", "", "Required comic style: anime_3d_engine, chibi_figure, figma_figure, watercolor, crayon_doodle, papercraft_cutout, pixel_art, plush_photography, retro_pop_comic")
+	language := flag.String("language", domain.DefaultLanguage, "Speech bubble dialogue language")
 	resumeID := flag.String("resume", "", "Resume an existing project by ID")
 	retryImage := flag.Int("retry-image", 0, "Retry generating a specific image by 1-based index (requires --resume)")
 	listChars := flag.Bool("list-characters", false, "List all available characters")
@@ -140,13 +141,14 @@ func main() {
 			fmt.Println("Example:")
 			fmt.Println("  generate --characters 'lovelive/honoka,lovelive/umi' \\")
 			fmt.Println("           --plot '二人在学校里的温馨日常，发糖向，轻百合向' \\")
-			fmt.Println("           --style chibi_figure")
+			fmt.Println("           --style chibi_figure \\")
+			fmt.Println("           --language 中文")
 			fmt.Println()
 			fmt.Println("Run with --list-characters or --list-styles to see available options.")
 			os.Exit(1)
 		}
 
-		project, err = createProject(charRegistry, *characters, *plotHint, *style)
+		project, err = createProject(charRegistry, *characters, *plotHint, *style, *language)
 		if err != nil {
 			log.Fatalf("Failed to create project: %v", err)
 		}
@@ -197,7 +199,7 @@ func main() {
 	log.Printf("输出目录: %s", store.ProjectDir(project.ID))
 }
 
-func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName string) (*domain.Project, error) {
+func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, language string) (*domain.Project, error) {
 	// Parse character IDs
 	ids := strings.Split(characterIDs, ",")
 	var chars []domain.Character
@@ -222,6 +224,7 @@ func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName strin
 		Characters: chars,
 		PlotHint:   plotHint,
 		Style:      comicStyle,
+		Language:   domain.NormalizeLanguage(language),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}, nil
