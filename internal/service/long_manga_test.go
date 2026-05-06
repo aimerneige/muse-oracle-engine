@@ -101,6 +101,12 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	if len(panel.CharacterIDs) != 1 || panel.CharacterIDs[0] != "lovelive/honoka" {
 		t.Fatalf("expected panel character IDs copied, got %+v", panel.CharacterIDs)
 	}
+	if strings.Contains(panel.Content, "晨间约定") {
+		t.Fatalf("expected episode title to be omitted from storyboard panel content, got %s", panel.Content)
+	}
+	if !strings.Contains(panel.Content, "#### 【第 1 话】") {
+		t.Fatalf("expected episode marker to be kept in storyboard panel content, got %s", panel.Content)
+	}
 	if !strings.Contains(panel.Content, "##### 第1格") || !strings.Contains(panel.Content, "##### 第4格") {
 		t.Fatalf("expected one storyboard panel to contain the full four-panel episode, got %s", panel.Content)
 	}

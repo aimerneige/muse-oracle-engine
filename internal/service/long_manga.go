@@ -507,7 +507,7 @@ func combineLongMangaEpisodeFailures(failures []longMangaEpisodeFailure) error {
 
 func longMangaEpisodeContent(episode domain.LongMangaEpisodeScript) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("#### 【第 %d 话】%s\n\n", episode.Episode, episode.Title))
+	sb.WriteString(fmt.Sprintf("#### 【第 %d 话】\n\n", episode.Episode))
 	if episode.Summary != "" {
 		sb.WriteString(fmt.Sprintf("**梗概**：%s\n\n", episode.Summary))
 	}
