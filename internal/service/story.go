@@ -115,7 +115,7 @@ func storyboardStyleDescription(style domain.ComicStyle) (string, error) {
 // This replaces the previous approach of extracting it from LLM output.
 func buildCharacterSetting(characters []domain.Character) string {
 	var sb strings.Builder
-	sb.WriteString("### 全局固有生理特征设定：(注：此处设定不可变的生理特征，后续分镜中不再赘述)\n")
+	sb.WriteString("> 注：此处设定不可变的生理特征，后续分镜中不再赘述\n")
 	for _, c := range characters {
 		sb.WriteString(fmt.Sprintf("\n- **%s**：\n", c.Name))
 		sb.WriteString(fmt.Sprintf("  - **发型与发色**：%s / %s\n", c.Appearance.HairStyle, c.Appearance.HairColor))
