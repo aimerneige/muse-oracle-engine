@@ -53,11 +53,12 @@ type LongMangaOutlineData struct {
 
 // LongMangaEpisodeData contains data for one confirmed-outline episode prompt.
 type LongMangaEpisodeData struct {
-	Characters       []domain.Character
-	FullOutline      domain.LongMangaOutline
-	Episode          domain.LongMangaEpisodeOutline
-	Language         string
-	StyleDescription string
+	Characters        []domain.Character
+	CharacterCostumes []domain.LongMangaCostumeState
+	FullOutline       domain.LongMangaOutline
+	Episode           domain.LongMangaEpisodeOutline
+	Language          string
+	StyleDescription  string
 }
 
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.

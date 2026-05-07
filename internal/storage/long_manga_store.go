@@ -117,6 +117,17 @@ func formatLongMangaEpisodeScript(script domain.LongMangaEpisodeScript) string {
 	if len(script.CharacterIDs) > 0 {
 		out += fmt.Sprintf("**角色引用**：%s\n\n", strings.Join(script.CharacterIDs, ", "))
 	}
+	if len(script.CostumeStates) > 0 {
+		out += "**本话结束服饰状态**：\n"
+		for _, state := range script.CostumeStates {
+			out += fmt.Sprintf("- `%s`：%s", state.CharacterID, state.Outfit)
+			if state.UpdateReason != "" {
+				out += fmt.Sprintf("（%s）", state.UpdateReason)
+			}
+			out += "\n"
+		}
+		out += "\n"
+	}
 	for i, panel := range script.Panels {
 		if i > 0 {
 			out += "\n\n"

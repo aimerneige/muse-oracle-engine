@@ -134,6 +134,9 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 
 	episode, err := engine.RenderLongMangaEpisode(LongMangaEpisodeData{
 		Characters: []domain.Character{character},
+		CharacterCostumes: []domain.LongMangaCostumeState{
+			{CharacterID: "lovelive/honoka", Outfit: "深蓝校服外套、白衬衫、红色领结、格子裙、书包", UpdateReason: "延续上一话"},
+		},
 		FullOutline: domain.LongMangaOutline{
 			TotalEpisodes: 1,
 			Episodes: []domain.LongMangaEpisodeOutline{
@@ -156,5 +159,14 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 	}
 	if !strings.Contains(episode, "每一格返回实际出现或明确需要引用的角色 ID") {
 		t.Fatal("expected long manga episode prompt to require per-panel character IDs")
+	}
+	if !strings.Contains(episode, "角色服饰连续性状态") {
+		t.Fatal("expected long manga episode prompt to include costume continuity section")
+	}
+	if !strings.Contains(episode, "深蓝校服外套、白衬衫、红色领结、格子裙、书包") {
+		t.Fatal("expected long manga episode prompt to include current costume state")
+	}
+	if !strings.Contains(episode, `"costume_states"`) {
+		t.Fatal("expected long manga episode prompt to require costume state output")
 	}
 }

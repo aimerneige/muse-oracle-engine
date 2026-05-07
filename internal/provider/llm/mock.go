@@ -100,6 +100,7 @@ func mockLongMangaEpisodeResponse(prompt string) string {
 	}
 	episode := mockRequestedEpisode(prompt)
 	characterIDs := mockJSONStringArray(ids)
+	costumeStates := mockCostumeStatesJSON(ids, "整洁校服与书包", "延续上一话")
 	return "```json\n" +
 		"{\n" +
 		fmt.Sprintf("  \"episode\": %d,\n", episode) +
@@ -111,7 +112,8 @@ func mockLongMangaEpisodeResponse(prompt string) string {
 		"    {\"index\": 2, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第2格\\n* **【构图与景别】**：近景 / 平视 / 轻微推近\\n* **【可见场景与光影】**：公告栏前，纸张边缘被晨光照亮。\\n* **【动态视觉与定格姿势】**：\\n  - [画面左侧] 角色：[**当前完整穿搭**：整洁校服与书包] + [指向公告] + [惊讶表情]\\n* **【对白与气泡】**：\\n  - [画面左侧] 角色 (尖角气泡)：\\\"咦？计划变了？\\\"\\n* **【漫符与特效】**：ガーン\"},\n" +
 		"    {\"index\": 3, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第3格\\n* **【构图与景别】**：全景 / 平视 / 横向构图\\n* **【可见场景与光影】**：走廊延伸到远处，窗外光线形成明亮条纹。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：整洁校服与书包] + [快步向前] + [认真表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (普通圆形气泡)：\\\"那就换个办法。\\\"\\n* **【漫符与特效】**：タッタッ\"},\n" +
 		"    {\"index\": 4, \"character_ids\": " + characterIDs + ", \"content\": \"##### 第4格\\n* **【构图与景别】**：中景 / 逆光 / 收束构图\\n* **【可见场景与光影】**：活动室门口，门缝透出温暖光线。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：整洁校服与书包] + [推开门] + [期待表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (小圆形气泡)：\\\"开始吧。\\\"\\n* **【漫符与特效】**：カチャ\"}\n" +
-		"  ]\n" +
+		"  ],\n" +
+		"  \"costume_states\": " + costumeStates + "\n" +
 		"}\n" +
 		"```"
 }
@@ -155,6 +157,14 @@ func mockJSONStringArray(values []string) string {
 		quoted = append(quoted, fmt.Sprintf("%q", value))
 	}
 	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+func mockCostumeStatesJSON(ids []string, outfit string, reason string) string {
+	states := make([]string, 0, len(ids))
+	for _, id := range ids {
+		states = append(states, fmt.Sprintf("{\"character_id\":%q,\"outfit\":%q,\"update_reason\":%q}", id, outfit, reason))
+	}
+	return "[" + strings.Join(states, ", ") + "]"
 }
 
 var _ = fmt.Sprintf("%T implements Provider", (*MockProvider)(nil))

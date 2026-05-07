@@ -115,7 +115,7 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	}
 }
 
-func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *testing.T) {
+func TestGenerateAllLongMangaEpisodesStopsAfterFailureAndSavesProgress(t *testing.T) {
 	t.Parallel()
 
 	engine, err := prompt.NewEngine()
@@ -136,17 +136,58 @@ func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *te
 		t.Fatalf("expected episode 2 in summary, got %v", err)
 	}
 
-	if len(state.Episodes) != 2 {
-		t.Fatalf("expected successful episodes to be retained, got %+v", state.Episodes)
+	if len(state.Episodes) != 1 {
+		t.Fatalf("expected only prior successful episodes to be retained, got %+v", state.Episodes)
 	}
 	if state.Status != domain.LongMangaStatusFailed {
 		t.Fatalf("expected failed status after partial failure, got %s", state.Status)
 	}
-	if len(store.scripts) != 2 {
-		t.Fatalf("expected successful episode scripts to be saved, got %d", len(store.scripts))
+	if len(store.scripts) != 1 {
+		t.Fatalf("expected prior successful episode scripts to be saved, got %d", len(store.scripts))
 	}
-	if store.saveCount < 3 {
-		t.Fatalf("expected state saved after successes and final failure, got %d saves", store.saveCount)
+	if store.saveCount < 2 {
+		t.Fatalf("expected state saved after success and final failure, got %d saves", store.saveCount)
+	}
+}
+
+func TestGenerateAllLongMangaEpisodesCarriesCostumeStateForward(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	project := testLongMangaProject()
+	state := &domain.LongMangaState{
+		ProjectID: "project-1",
+		Status:    domain.LongMangaStatusOutlineConfirmed,
+		CandidateCharacters: []domain.LongMangaCharacterRef{
+			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
+		},
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 2,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "第1话", Summary: "雨中集合", CharacterIDs: []string{"lovelive/honoka"}},
+				{Episode: 2, Title: "第2话", Summary: "继续前进", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
+	}
+	provider := &costumeContinuityStubLLMProvider{}
+	svc := NewLongMangaService(provider, engine)
+
+	if err := svc.GenerateAllEpisodes(context.Background(), project, state, nil); err != nil {
+		t.Fatalf("GenerateAllEpisodes returned error: %v", err)
+	}
+
+	if provider.calls != 2 {
+		t.Fatalf("expected two sequential LLM calls, got %d", provider.calls)
+	}
+	if len(state.CharacterCostumes) != 1 {
+		t.Fatalf("expected one carried costume state, got %+v", state.CharacterCostumes)
+	}
+	if state.CharacterCostumes[0].Outfit != "雨水打湿的深蓝校服外套、白衬衫、红色领结、格子裙、书包" {
+		t.Fatalf("expected latest costume state to be retained, got %+v", state.CharacterCostumes[0])
 	}
 }
 
@@ -176,7 +217,7 @@ func (s *episodeStubLLMProvider) GenerateText(_ context.Context, prompt string) 
 	if strings.Contains(prompt, `"episode": 3`) {
 		episode = 3
 	}
-	return fmt.Sprintf("```json\n{\"episode\":%d,\"title\":\"第%d话\",\"summary\":\"确认计划\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}]}\n```", episode, episode), nil
+	return fmt.Sprintf("```json\n{\"episode\":%d,\"title\":\"第%d话\",\"summary\":\"确认计划\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}],\"costume_states\":[{\"character_id\":\"lovelive/honoka\",\"outfit\":\"整洁校服与书包\",\"update_reason\":\"延续上一话\"}]}\n```", episode, episode), nil
 }
 
 func (s *episodeStubLLMProvider) GenerateTextWithHistory(context.Context, llm.History) (string, error) {
@@ -185,6 +226,26 @@ func (s *episodeStubLLMProvider) GenerateTextWithHistory(context.Context, llm.Hi
 
 func (s *episodeStubLLMProvider) Name() string {
 	return "episode-stub"
+}
+
+type costumeContinuityStubLLMProvider struct {
+	calls int
+}
+
+func (s *costumeContinuityStubLLMProvider) GenerateText(_ context.Context, prompt string) (string, error) {
+	s.calls++
+	if s.calls == 2 && !strings.Contains(prompt, "雨水打湿的深蓝校服外套") {
+		return "", fmt.Errorf("second episode prompt did not include previous costume state")
+	}
+	return fmt.Sprintf("```json\n{\"episode\":%d,\"title\":\"第%d话\",\"summary\":\"确认计划\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}],\"costume_states\":[{\"character_id\":\"lovelive/honoka\",\"outfit\":\"雨水打湿的深蓝校服外套、白衬衫、红色领结、格子裙、书包\",\"update_reason\":\"第1格剧情触发\"}]}\n```", s.calls, s.calls), nil
+}
+
+func (s *costumeContinuityStubLLMProvider) GenerateTextWithHistory(context.Context, llm.History) (string, error) {
+	return "", nil
+}
+
+func (s *costumeContinuityStubLLMProvider) Name() string {
+	return "costume-continuity-stub"
 }
 
 type stubLongMangaProgressStore struct {

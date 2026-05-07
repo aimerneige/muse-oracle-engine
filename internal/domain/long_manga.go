@@ -21,6 +21,7 @@ type LongMangaState struct {
 	Style               ComicStyle               `json:"style"`
 	Language            string                   `json:"language"`
 	CandidateCharacters []LongMangaCharacterRef  `json:"candidate_characters"`
+	CharacterCostumes   []LongMangaCostumeState  `json:"character_costumes,omitempty"`
 	Outline             *LongMangaOutline        `json:"outline,omitempty"`
 	ConfirmedOutline    *LongMangaOutline        `json:"confirmed_outline,omitempty"`
 	Episodes            []LongMangaEpisodeScript `json:"episodes,omitempty"`
@@ -36,6 +37,13 @@ type LongMangaCharacterRef struct {
 	Name   string `json:"name"`
 	NameEN string `json:"name_en"`
 	Series string `json:"series"`
+}
+
+// LongMangaCostumeState is the current outfit continuity state for one character.
+type LongMangaCostumeState struct {
+	CharacterID  string `json:"character_id"`
+	Outfit       string `json:"outfit"`
+	UpdateReason string `json:"update_reason,omitempty"`
 }
 
 // LongMangaOutline is the human-confirmable episode outline.
@@ -54,12 +62,13 @@ type LongMangaEpisodeOutline struct {
 
 // LongMangaEpisodeScript is one generated episode storyboard.
 type LongMangaEpisodeScript struct {
-	Episode      int                    `json:"episode"`
-	Title        string                 `json:"title"`
-	Summary      string                 `json:"summary"`
-	CharacterIDs []string               `json:"character_ids"`
-	Panels       []LongMangaPanelScript `json:"panels"`
-	RawResponse  string                 `json:"raw_response,omitempty"`
+	Episode       int                     `json:"episode"`
+	Title         string                  `json:"title"`
+	Summary       string                  `json:"summary"`
+	CharacterIDs  []string                `json:"character_ids"`
+	Panels        []LongMangaPanelScript  `json:"panels"`
+	CostumeStates []LongMangaCostumeState `json:"costume_states,omitempty"`
+	RawResponse   string                  `json:"raw_response,omitempty"`
 }
 
 // LongMangaPanelScript is one panel in a generated long manga episode.
