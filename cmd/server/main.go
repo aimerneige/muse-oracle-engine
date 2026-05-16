@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/chardb"
 	"github.com/aimerneige/muse-oracle-engine/internal/config"
@@ -638,6 +639,9 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 			model = llm.Gemini2FlashLite
 		}
 		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
+	case "gemini-bridge":
+		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
+		return llm.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.LLMModel, timeout), nil
 	case "deepseek":
 		model := llm.DeepSeekChat
 		switch cfg.LLMModel {
@@ -670,6 +674,9 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.GeminiImage25Flash
 		}
 		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+	case "gemini-bridge":
+		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
+		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.ImageModel, timeout), nil
 	case "openai":
 		model := image.DALLE3
 		switch cfg.ImageModel {

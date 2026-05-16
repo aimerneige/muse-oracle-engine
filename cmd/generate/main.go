@@ -368,6 +368,9 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 			model = llm.Gemini2FlashLite
 		}
 		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
+	case "gemini-bridge":
+		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
+		return llm.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.LLMModel, timeout), nil
 	case "deepseek":
 		model := llm.DeepSeekChat
 		switch cfg.LLMModel {
@@ -400,6 +403,9 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 			model = image.GeminiImage25Flash
 		}
 		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+	case "gemini-bridge":
+		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
+		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.ImageModel, timeout), nil
 	case "openai":
 		model := image.DALLE3
 		switch cfg.ImageModel {
@@ -447,12 +453,16 @@ func printModels() {
 	fmt.Println("   ├─ deepseek-chat                (DeepSeek Chat)")
 	fmt.Println("   ├─ deepseek-v4-flash            (DeepSeek V4 Flash)")
 	fmt.Println("   └─ deepseek-v4-pro              (DeepSeek V4 Pro)")
+	fmt.Println("  Provider: gemini-bridge")
+	fmt.Println("   └─ fast / thinking / pro / Gemini UI model name fragment")
 
 	fmt.Println("\n🖼️  图像生成模型:")
 	fmt.Println("  Provider: gemini")
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
+	fmt.Println("  Provider: gemini-bridge")
+	fmt.Println("   └─ fast / thinking / pro / Gemini UI model name fragment")
 	fmt.Println("  Provider: openai")
 	fmt.Println("   ├─ dall-e-3 (DALL·E 3, 默认)")
 	fmt.Println("   └─ dall-e-2 (DALL·E 2)")

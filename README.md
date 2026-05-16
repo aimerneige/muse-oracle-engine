@@ -65,12 +65,14 @@
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `mock` |
+| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `gemini-bridge` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
 | `GEMINI_BASE_URL` | (空) | (可选) 自定义 Gemini API Base URL，同时用于 Gemini 文本和图片生成 |
-| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `openai` / `prompt` / `mock` / `gpt-image` |
+| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `gemini-bridge` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
 | `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
+| `GEMINI_BRIDGE_ENDPOINT` | `http://127.0.0.1:8765` | gemini_bridge 本地服务地址 |
+| `GEMINI_BRIDGE_TIMEOUT_SECONDS` | `600` | 等待单个 gemini_bridge 任务完成的最长秒数 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
 | `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |
 | `STYLES_DIR` | (空) | 自定义画风模板目录 |
