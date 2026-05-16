@@ -266,7 +266,7 @@ func runLongMangaFlow(ctx context.Context, project *domain.Project, store storag
 			return err
 		}
 		log.Println("=== Generating long manga outline ===")
-		state, err = svc.GenerateOutline(ctx, project)
+		state, err = svc.GenerateOutlineWithStore(ctx, project, longStore)
 		if err != nil {
 			return err
 		}

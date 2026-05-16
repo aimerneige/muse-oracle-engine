@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 const (
 	defaultEndpoint     = "http://127.0.0.1:8765"
 	defaultPollInterval = 2 * time.Second
+	maxTaskAttempts     = 3
 )
 
 // Client talks to a local gemini_bridge server.
@@ -62,6 +64,21 @@ func NewClient(endpoint string, model string, timeout time.Duration) *Client {
 
 // RunTask enqueues a prompt and waits until gemini_bridge marks it done or failed.
 func (c *Client) RunTask(ctx context.Context, prompt string, tag string) (*Task, error) {
+	var lastErr error
+	for attempt := 1; attempt <= maxTaskAttempts; attempt++ {
+		task, err := c.runTaskOnce(ctx, prompt, tag)
+		if err == nil {
+			return task, nil
+		}
+		lastErr = err
+		if attempt < maxTaskAttempts {
+			log.Printf("Gemini Bridge task attempt %d/%d failed: %v; retrying", attempt, maxTaskAttempts, err)
+		}
+	}
+	return nil, fmt.Errorf("gemini-bridge: task failed after %d attempts: %w", maxTaskAttempts, lastErr)
+}
+
+func (c *Client) runTaskOnce(ctx context.Context, prompt string, tag string) (*Task, error) {
 	task, err := c.createTask(ctx, prompt, tag)
 	if err != nil {
 		return nil, err

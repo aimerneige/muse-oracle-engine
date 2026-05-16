@@ -72,6 +72,20 @@ func (s *LongMangaStore) SaveEpisodeScript(projectID string, script domain.LongM
 	return filepath.Join("storyboards", filename), nil
 }
 
+func (s *LongMangaStore) SaveLongMangaPrompt(projectID string, name string, prompt string) (string, error) {
+	promptsDir := filepath.Join(s.projectDir(projectID), "prompts")
+	if err := os.MkdirAll(promptsDir, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create prompts directory: %w", err)
+	}
+
+	filename := name + ".md"
+	path := filepath.Join(promptsDir, filename)
+	if err := os.WriteFile(path, []byte(prompt), 0o644); err != nil {
+		return "", fmt.Errorf("failed to write long manga prompt: %w", err)
+	}
+	return filepath.Join("prompts", filename), nil
+}
+
 func (s *LongMangaStore) Load(projectID string) (*domain.LongMangaState, error) {
 	data, err := os.ReadFile(s.stateFile(projectID))
 	if err != nil {

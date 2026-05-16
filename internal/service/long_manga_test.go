@@ -25,7 +25,8 @@ func TestGenerateLongMangaOutlineParsesAndStoresCandidateRefs(t *testing.T) {
 	}
 	svc := NewLongMangaService(provider, engine)
 
-	state, err := svc.GenerateOutline(context.Background(), testLongMangaProject())
+	store := &stubLongMangaProgressStore{}
+	state, err := svc.GenerateOutlineWithStore(context.Background(), testLongMangaProject(), store)
 	if err != nil {
 		t.Fatalf("GenerateOutline returned error: %v", err)
 	}
@@ -38,6 +39,9 @@ func TestGenerateLongMangaOutlineParsesAndStoresCandidateRefs(t *testing.T) {
 	}
 	if len(state.CandidateCharacters) != 1 || state.CandidateCharacters[0].ID != "lovelive/honoka" {
 		t.Fatalf("expected stable candidate character refs, got %+v", state.CandidateCharacters)
+	}
+	if _, ok := store.prompts["long_outline_prompt"]; !ok {
+		t.Fatalf("expected outline prompt to be saved, got %+v", store.prompts)
 	}
 }
 
@@ -115,7 +119,7 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	}
 }
 
-func TestGenerateAllLongMangaEpisodesStopsAfterFailureAndSavesProgress(t *testing.T) {
+func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *testing.T) {
 	t.Parallel()
 
 	engine, err := prompt.NewEngine()
@@ -129,24 +133,30 @@ func TestGenerateAllLongMangaEpisodesStopsAfterFailureAndSavesProgress(t *testin
 	svc := NewLongMangaService(&episodeStubLLMProvider{}, engine)
 
 	err = svc.GenerateAllEpisodes(context.Background(), project, state, store)
-	if err == nil {
-		t.Fatal("expected failed episode summary")
-	}
-	if !strings.Contains(err.Error(), "episode 2") {
-		t.Fatalf("expected episode 2 in summary, got %v", err)
+	if err != nil {
+		t.Fatalf("GenerateAllEpisodes returned error: %v", err)
 	}
 
-	if len(state.Episodes) != 1 {
-		t.Fatalf("expected only prior successful episodes to be retained, got %+v", state.Episodes)
+	if len(state.Episodes) != 2 {
+		t.Fatalf("expected successful episodes to be retained, got %+v", state.Episodes)
 	}
-	if state.Status != domain.LongMangaStatusFailed {
-		t.Fatalf("expected failed status after partial failure, got %s", state.Status)
+	if state.Episodes[0].Episode != 1 || state.Episodes[1].Episode != 3 {
+		t.Fatalf("expected episodes 1 and 3 to be retained, got %+v", state.Episodes)
 	}
-	if len(store.scripts) != 1 {
-		t.Fatalf("expected prior successful episode scripts to be saved, got %d", len(store.scripts))
+	if state.Status != domain.LongMangaStatusStoryboardPartial {
+		t.Fatalf("expected partial status after episode failure, got %s", state.Status)
+	}
+	if !strings.Contains(state.Error, "episode 2") {
+		t.Fatalf("expected episode 2 in state error, got %q", state.Error)
+	}
+	if len(store.scripts) != 2 {
+		t.Fatalf("expected successful episode scripts to be saved, got %d", len(store.scripts))
 	}
 	if store.saveCount < 2 {
-		t.Fatalf("expected state saved after success and final failure, got %d saves", store.saveCount)
+		t.Fatalf("expected state saved after progress and failure, got %d saves", store.saveCount)
+	}
+	if len(store.prompts) != 3 {
+		t.Fatalf("expected all episode prompts to be saved, got %+v", store.prompts)
 	}
 }
 
@@ -251,6 +261,7 @@ func (s *costumeContinuityStubLLMProvider) Name() string {
 type stubLongMangaProgressStore struct {
 	mu        sync.Mutex
 	scripts   map[int]domain.LongMangaEpisodeScript
+	prompts   map[string]string
 	saveCount int
 }
 
@@ -269,6 +280,16 @@ func (s *stubLongMangaProgressStore) SaveEpisodeScript(_ string, script domain.L
 	}
 	s.scripts[script.Episode] = script
 	return fmt.Sprintf("storyboards/long_episode_%03d.md", script.Episode), nil
+}
+
+func (s *stubLongMangaProgressStore) SaveLongMangaPrompt(_ string, name string, prompt string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.prompts == nil {
+		s.prompts = make(map[string]string)
+	}
+	s.prompts[name] = prompt
+	return fmt.Sprintf("prompts/%s.md", name), nil
 }
 
 func testLongMangaProject() *domain.Project {

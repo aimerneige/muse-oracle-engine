@@ -306,7 +306,7 @@ func (app *App) handleGenerateLongMangaOutline(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	state, err := app.longMangaSvc.GenerateOutline(r.Context(), project)
+	state, err := app.longMangaSvc.GenerateOutlineWithStore(r.Context(), project, app.longMangaStore)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
