@@ -19,6 +19,7 @@ type Config struct {
 	ImageProvider              string `json:"image_provider"`                // "gemini", "gemini-bridge", "openai", "gpt-image", "mock"
 	GPTImageEndpoint           string `json:"gpt_image_endpoint"`            // custom endpoint for GPT-Image
 	GeminiBridgeEndpoint       string `json:"gemini_bridge_endpoint"`        // local gemini_bridge server endpoint
+	GeminiBridgeModel          string `json:"gemini_bridge_model"`           // "fast", "thinking", or "pro"
 	GeminiBridgeTimeoutSeconds int    `json:"gemini_bridge_timeout_seconds"` // max wait time per bridge task
 	ImageModel                 string `json:"image_model"`                   // model identifier
 
@@ -52,6 +53,7 @@ func LoadFromEnv() *Config {
 		ImageModel:                 getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
 		GPTImageEndpoint:           getEnvDefault("GPT_IMAGE_ENDPOINT", ""),
 		GeminiBridgeEndpoint:       getEnvDefault("GEMINI_BRIDGE_ENDPOINT", "http://127.0.0.1:8765"),
+		GeminiBridgeModel:          getEnvDefault("GEMINI_BRIDGE_MODEL", "pro"),
 		GeminiBridgeTimeoutSeconds: getEnvIntDefault("GEMINI_BRIDGE_TIMEOUT_SECONDS", 600),
 
 		MockMode: mockMode,

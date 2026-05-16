@@ -72,6 +72,7 @@
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
 | `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
 | `GEMINI_BRIDGE_ENDPOINT` | `http://127.0.0.1:8765` | gemini_bridge 本地服务地址 |
+| `GEMINI_BRIDGE_MODEL` | `pro` | gemini_bridge 模型档位：`fast` / `thinking` / `pro` |
 | `GEMINI_BRIDGE_TIMEOUT_SECONDS` | `600` | 等待单个 gemini_bridge 任务完成的最长秒数 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
 | `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |

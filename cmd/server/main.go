@@ -641,7 +641,7 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 		return llm.NewGeminiAdapter(cfg.GeminiAPIKey, model)
 	case "gemini-bridge":
 		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
-		return llm.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.LLMModel, timeout), nil
+		return llm.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.GeminiBridgeModel, timeout), nil
 	case "deepseek":
 		model := llm.DeepSeekChat
 		switch cfg.LLMModel {
@@ -676,7 +676,7 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
 	case "gemini-bridge":
 		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
-		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.ImageModel, timeout), nil
+		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.GeminiBridgeModel, timeout), nil
 	case "openai":
 		model := image.DALLE3
 		switch cfg.ImageModel {
