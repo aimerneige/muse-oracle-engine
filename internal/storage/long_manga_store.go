@@ -72,6 +72,20 @@ func (s *LongMangaStore) SaveEpisodeScript(projectID string, script domain.LongM
 	return filepath.Join("storyboards", filename), nil
 }
 
+func (s *LongMangaStore) SaveEpisodeFailure(projectID string, episode domain.LongMangaEpisodeOutline, generationErr error) (string, error) {
+	storyboardsDir := filepath.Join(s.projectDir(projectID), "storyboards")
+	if err := os.MkdirAll(storyboardsDir, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create storyboards directory: %w", err)
+	}
+
+	filename := fmt.Sprintf("long_episode_%03d.md", episode.Episode)
+	path := filepath.Join(storyboardsDir, filename)
+	if err := os.WriteFile(path, []byte(formatLongMangaEpisodeFailure(episode, generationErr)), 0o644); err != nil {
+		return "", fmt.Errorf("failed to write long manga episode failure: %w", err)
+	}
+	return filepath.Join("storyboards", filename), nil
+}
+
 func (s *LongMangaStore) SaveLongMangaPrompt(projectID string, name string, prompt string) (string, error) {
 	promptsDir := filepath.Join(s.projectDir(projectID), "prompts")
 	if err := os.MkdirAll(promptsDir, 0o755); err != nil {
@@ -149,5 +163,19 @@ func formatLongMangaEpisodeScript(script domain.LongMangaEpisodeScript) string {
 		out += panel.Content
 	}
 	out += "\n"
+	return out
+}
+
+func formatLongMangaEpisodeFailure(episode domain.LongMangaEpisodeOutline, generationErr error) string {
+	var out string
+	out += fmt.Sprintf("#### 【第 %d 话】%s\n\n", episode.Episode, episode.Title)
+	if episode.Summary != "" {
+		out += fmt.Sprintf("**梗概**：%s\n\n", episode.Summary)
+	}
+	if len(episode.CharacterIDs) > 0 {
+		out += fmt.Sprintf("**角色引用**：%s\n\n", strings.Join(episode.CharacterIDs, ", "))
+	}
+	out += fmt.Sprintf("**生成失败**：%v\n\n", generationErr)
+	out += "请根据本话梗概和对应 prompt 手动补全本话分镜内容。\n"
 	return out
 }

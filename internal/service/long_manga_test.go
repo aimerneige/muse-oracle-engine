@@ -152,6 +152,9 @@ func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *te
 	if len(store.scripts) != 2 {
 		t.Fatalf("expected successful episode scripts to be saved, got %d", len(store.scripts))
 	}
+	if _, ok := store.failures[2]; !ok {
+		t.Fatalf("expected failed episode placeholder to be saved, got %+v", store.failures)
+	}
 	if store.saveCount < 2 {
 		t.Fatalf("expected state saved after progress and failure, got %d saves", store.saveCount)
 	}
@@ -261,6 +264,7 @@ func (s *costumeContinuityStubLLMProvider) Name() string {
 type stubLongMangaProgressStore struct {
 	mu        sync.Mutex
 	scripts   map[int]domain.LongMangaEpisodeScript
+	failures  map[int]domain.LongMangaEpisodeOutline
 	prompts   map[string]string
 	saveCount int
 }
@@ -280,6 +284,16 @@ func (s *stubLongMangaProgressStore) SaveEpisodeScript(_ string, script domain.L
 	}
 	s.scripts[script.Episode] = script
 	return fmt.Sprintf("storyboards/long_episode_%03d.md", script.Episode), nil
+}
+
+func (s *stubLongMangaProgressStore) SaveEpisodeFailure(_ string, episode domain.LongMangaEpisodeOutline, _ error) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.failures == nil {
+		s.failures = make(map[int]domain.LongMangaEpisodeOutline)
+	}
+	s.failures[episode.Episode] = episode
+	return fmt.Sprintf("storyboards/long_episode_%03d.md", episode.Episode), nil
 }
 
 func (s *stubLongMangaProgressStore) SaveLongMangaPrompt(_ string, name string, prompt string) (string, error) {

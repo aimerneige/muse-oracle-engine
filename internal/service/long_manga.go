@@ -25,6 +25,7 @@ type LongMangaService struct {
 type LongMangaProgressStore interface {
 	Save(state *domain.LongMangaState) error
 	SaveEpisodeScript(projectID string, script domain.LongMangaEpisodeScript) (string, error)
+	SaveEpisodeFailure(projectID string, episode domain.LongMangaEpisodeOutline, generationErr error) (string, error)
 	SaveLongMangaPrompt(projectID string, name string, prompt string) (string, error)
 }
 
@@ -105,6 +106,13 @@ func (s *LongMangaService) GenerateEpisode(ctx context.Context, project *domain.
 	script, err := s.generateEpisodeScript(ctx, project, state, episodeNumber, store)
 	if err != nil {
 		log.Printf("Long manga episode %d failed: %v", episodeNumber, err)
+		if store != nil {
+			if episode, ok := findEpisodeOutline(*state.ConfirmedOutline, episodeNumber); ok {
+				if _, saveErr := store.SaveEpisodeFailure(project.ID, episode, err); saveErr != nil {
+					return saveErr
+				}
+			}
+		}
 		return err
 	}
 
@@ -198,6 +206,9 @@ func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *dom
 			state.Error = strings.Join(failedEpisodes, "; ")
 			state.UpdatedAt = time.Now()
 			if store != nil {
+				if _, saveErr := store.SaveEpisodeFailure(project.ID, episode, err); saveErr != nil {
+					return fmt.Errorf("failed to save long manga episode %d failure: %w", episode.Episode, saveErr)
+				}
 				if saveErr := store.Save(state); saveErr != nil {
 					return fmt.Errorf("%w; additionally failed to save failed long manga state: %v", err, saveErr)
 				}
