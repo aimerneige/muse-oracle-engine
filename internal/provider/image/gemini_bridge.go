@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/provider/geminibridge"
@@ -13,6 +14,7 @@ import (
 type GeminiBridgeAdapter struct {
 	client *geminibridge.Client
 	model  string
+	mu     sync.Mutex
 }
 
 // NewGeminiBridgeAdapter creates a new Gemini Bridge image provider.
@@ -31,6 +33,9 @@ func (g *GeminiBridgeAdapter) Name() string {
 }
 
 func (g *GeminiBridgeAdapter) GenerateImage(ctx context.Context, prompt string) ([]byte, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	task, err := g.client.RunTask(ctx, prompt, "image")
 	if err != nil {
 		return nil, err
