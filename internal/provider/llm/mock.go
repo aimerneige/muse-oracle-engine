@@ -8,7 +8,7 @@ import (
 )
 
 // MockProvider is an LLM provider that returns pre-defined mock data
-// for testing the frontend flow without calling any AI API.
+// for local testing without calling any AI API.
 type MockProvider struct{}
 
 // NewMockProvider creates a new mock LLM provider.
@@ -49,7 +49,7 @@ const mockStoryboardResponse = "# LoveLive! 漫画分镜脚本 - Mock 数据\n\n
 	"- **构图**: 剪影式背影构图，强调\"在一起\"的主题。冷色调夜景与远处暖色灯光形成对比，余韵悠长。\n" +
 	"```\n\n" +
 	"---\n" +
-	"*以上为 Mock 模式生成的示例数据，用于前端流程测试。*\n\n" +
+	"*以上为 Mock 模式生成的示例数据，用于本地流程测试。*\n\n" +
 	"<!-- MOCK_MODE: true -->\n"
 
 // GenerateText returns mock storyboard data with code blocks that mimic

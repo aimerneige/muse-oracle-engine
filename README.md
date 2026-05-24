@@ -1,180 +1,125 @@
 # 圣谕自演机
 
-> **⚠️ 重要提示**
+> **重要提示**
 >
-> 1. **本项目大量代码由 AI 辅助完成**，包含但不限于代码生成、架构设计、文档撰写等环节。
-> 2. **项目前端功能不完善，不建议使用 `cmd/server`**，推荐通过 CLI 模式（`cmd/generate`）进行交互。
-> 3. **项目还在开发过程中**，会出现各种奇奇怪怪的 bug / 没有测试的函数。
+> 1. 本项目大量代码由 AI 辅助完成，包含但不限于代码生成、架构设计、文档撰写等环节。
+> 2. 项目已收缩为 CLI-only 工具，只维护 `cmd/generate` 命令行能力。
+> 3. 项目还在开发过程中，可能出现未覆盖测试的行为。
 
-一个多 IP 综合二次元漫画自动生成器 —— 基于各大 AI 大语言模型与图像生成模型的创作工作流工具。
-
-## 简介
-
-圣谕自演机是一款自动生成动漫主题漫画的工具。最初专为 LoveLive 打造，现已通过架构重构，支持任意 IP 系列。系统通过大语言模型生成故事剧本与分镜描述，再利用图像生成模型创作各类画风的精美漫画。
+一个多 IP 综合二次元漫画自动生成器，基于大语言模型与图像生成模型提供本地命令行创作工作流。
 
 ## 功能特性
 
-- **多 IP 角色支持**：内置 **8 大系列、143+ 角色**（LoveLive 全系列、孤独摇滚、轻音少女、间谍过家家、原神等），支持通过 `CHARDB_DIR` 外部配置动态导入自定义角色。
-- **智能故事与分镜生成**：根据用户一句简单的提示词，经 AI 自动发掘角色设定，输出分镜视觉描述和符合角色 OOC（Out Of Character）限制的标准对白。支持多集连续剧情输出，每集固定 4 格漫画结构。
-- **对白语言可配置**：支持通过 `language` / `--language` 设置台词气泡中的对白语言，默认 `中文`；漫符与 SFX 始终固定使用日语片假名。
-- **多画风扩展**：
-  - 内置 Chibi Figure（Q版粘土人风格）、Figma Figure（手办风格）、WaterColor（水彩风格）
-  - 支持通过 `STYLES_DIR` 外部加载自定义画风模板（Go `text/template` 格式）
-- **多模型服务商接入**：
-  - **LLM**：Google Gemini、DeepSeek，均支持自定义模型名称
-  - **图像生成**：Google Gemini（原生图像生成）、OpenAI DALL-E 3 / DALL-E 2
-  - 支持 `--prompt-only` 模式仅输出提示词不调用 API，以及 Mock 模式用于无 Key 测试
-- **三步流水线引擎**：剧本生成 → 分镜审阅 → 图像批量生成，每步自动保存检查点（Checkpoint），支持从任意步骤恢复。
-- **CLI 命令行模式**：通过 `cmd/generate` 提供交互式命令行体验，包含角色/画风/模型列表查看、断点续跑、单张重试等功能。
+- **多 IP 角色支持**：内置 LoveLive 全系列、孤独摇滚、轻音少女、间谍过家家、原神等角色库，支持通过 `CHARDB_DIR` 外部导入自定义角色。
+- **故事与分镜生成**：根据角色和剧情提示生成标准对白、画面描述和分镜结构。
+- **长篇漫画流程**：支持多集连续剧情输出，每集固定 4 格漫画结构。
+- **对白语言可配置**：通过 `--language` 设置台词气泡语言，默认 `中文`；漫符与 SFX 固定使用日语片假名。
+- **多画风扩展**：内置多种画风模板，并支持通过 `STYLES_DIR` 外部加载自定义 Go `text/template` 画风模板。
+- **多模型服务商接入**：支持 Gemini、DeepSeek、OpenAI-compatible、gemini-bridge，以及 Gemini Image、OpenAI DALL-E、GPT Image、prompt-only、Mock 模式。
+- **命令行检查点**：生成过程会保存项目状态，支持断点续跑和单张图片重试。
 
-## 技术架构
+## 项目结构
 
 ```text
 .
 ├── cmd/
-│   ├── generate/          # CLI 主程序入口 (交互式命令行，推荐使用)
-│   └── server/            # HTTP API 服务入口 (含内嵌前端 UI，功能不完善)
+│   └── generate/          # CLI 主程序入口
 ├── internal/
-│   ├── chardb/            # 角色数据库 (YAML 解析 + 内嵌/外部双源加载)
-│   ├── config/            # 环境变量驱动配置系统
-│   ├── domain/            # 领域实体 (Character, Project, Storyboard, Style 等)
-│   ├── pipeline/          # 三步流水线引擎 + 审阅门控 + 状态机管理
-│   ├── prompt/            # 提示词模板编译引擎 (Go text/template + goldmark 解析)
-│   │   ├── templates/storyboard/    # 剧本生成系统提示词模板
-│   │   └── templates/comic_draw/    # 各画风图像生成提示词模板
-│   ├── provider/
-│   │   ├── llm/           # LLM 文本适配层 (Gemini / DeepSeek / Mock)
-│   │   └── image/         # 图像生成适配层 (Gemini Image / DALL-E / DryRun / Mock)
-│   ├── service/           # 业务服务层 (StoryService + ComicService)
-│   └── storage/           # 文件持久化层 (JSON 检查点 + 图片/提示词存储)
-├── pkg/mdutil/            # Markdown 代码块提取工具 (goldmark 解析器)
-├── ui/                    # 前端 SPA (TypeScript + Vite, 编译后 embed 进 Go 二进制)
-└── data/                  # (运行时生成) 项目状态、图片与提示词存储
+│   ├── chardb/            # 角色数据库
+│   ├── config/            # 环境变量配置
+│   ├── domain/            # 领域实体
+│   ├── pipeline/          # CLI 生成流水线
+│   ├── prompt/            # 提示词模板引擎
+│   ├── provider/          # LLM 与图像生成适配层
+│   ├── service/           # 业务服务层
+│   └── storage/           # 文件持久化层
+├── pkg/mdutil/            # Markdown 代码块提取工具
+└── data/                  # 运行时生成的项目状态、图片与提示词
 ```
 
 ## 环境要求
 
 - Go 1.26+
-- 大语言模型 API Key（至少配置一个）：`GEMINI_API_KEY` / `DEEPSEEK_API_KEY` / `OPENAI_API_KEY`
-- 图像生成 API Key：`GEMINI_API_KEY`（原生支持）或 `OPENAI_API_KEY`（DALL-E）
-- （可选）前端构建依赖：Node.js + npm（如需修改 UI）
+- 大语言模型 API Key：按所选 `LLM_PROVIDER` 配置 `GEMINI_API_KEY`、`DEEPSEEK_API_KEY` 或 `OPENAI_API_KEY`
+- 图像生成 API Key：按所选 `IMAGE_PROVIDER` 配置 `GEMINI_API_KEY` 或 `OPENAI_API_KEY`
 
-### 配置说明
+## 配置
 
-通过项目根目录 `.env` 文件或环境变量进行配置，核心变量如下：
+通过项目根目录 `.env` 文件或环境变量配置：
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `openai` / `gemini-bridge` / `mock` |
+| `LLM_PROVIDER` | `gemini` | `gemini` / `deepseek` / `openai` / `gemini-bridge` / `mock` |
 | `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称；`LLM_PROVIDER=openai` 时默认 `gpt-5.5` |
-| `GEMINI_BASE_URL` | (空) | (可选) 自定义 Gemini API Base URL，同时用于 Gemini 文本和图片生成 |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1/` | (可选) 自定义 OpenAI-compatible API Base URL；302.ai 可填写 `https://api.302.ai` |
-| `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `gemini-bridge` / `openai` / `prompt` / `mock` / `gpt-image` |
+| `GEMINI_BASE_URL` | 空 | 自定义 Gemini API Base URL |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1/` | 自定义 OpenAI-compatible API Base URL |
+| `IMAGE_PROVIDER` | `gemini` | `gemini` / `gemini-bridge` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
-| `GEMINI_IMAGE_SIZE` | `1K` | Gemini 图片分辨率：`1K` / `2K` / `4K`，非法值会回退到 `1K` 并输出警告日志 |
-| `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
+| `GEMINI_IMAGE_SIZE` | `1K` | Gemini 图片分辨率：`1K` / `2K` / `4K` |
+| `GPT_IMAGE_ENDPOINT` | 空 | 自定义 GPT Image API 地址 |
 | `GEMINI_BRIDGE_ENDPOINT` | `http://127.0.0.1:8765` | gemini_bridge 本地服务地址 |
 | `GEMINI_BRIDGE_MODEL` | `pro` | gemini_bridge 模型档位：`fast` / `thinking` / `pro` |
 | `GEMINI_BRIDGE_TIMEOUT_SECONDS` | `600` | 等待单个 gemini_bridge 任务完成的最长秒数 |
 | `DATA_DIR` | `data/projects` | 项目数据持久化目录 |
-| `CHARDB_DIR` | (空) | 自定义角色 YAML 目录 |
-| `STYLES_DIR` | (空) | 自定义画风模板目录 |
-| `MOCK_MODE` | (空) | 设为任意非空值启用 Mock 模式（无需 API Key） |
+| `CHARDB_DIR` | 空 | 自定义角色 YAML 目录 |
+| `STYLES_DIR` | 空 | 自定义画风模板目录 |
+| `MOCK_MODE` | 空 | 设为任意非空值启用 Mock 模式 |
 
-完整 `.env.example` 参见项目根目录。
+## 快速开始
 
-## 快速指南
+创建 `.env`：
 
-更多部署、执行与高级自定义指引，请详阅 **[👉 运行指南 (RUNNING_GUIDE.md)](./RUNNING_GUIDE.md)**。
+```env
+GEMINI_API_KEY="your_gemini_api_key"
+LLM_PROVIDER=gemini
+IMAGE_PROVIDER=gemini
+```
 
-### 极速体验 (CLI 模式)
+运行 CLI：
 
-1. 克隆代码并在根目录创建 `.env` 文件，填入所需 Key：
-   ```env
-   GEMINI_API_KEY="your_gemini_api_key"
-   LLM_PROVIDER=gemini
-   IMAGE_PROVIDER=gemini
-   ```
+```bash
+go run cmd/generate/main.go \
+    --characters 'lovelive/honoka,lovelive/umi' \
+    --plot '穗乃果和海未在社团室里的温馨日常，发糖向' \
+    --style chibi_figure \
+    --language 中文
+```
 
-2. 运行命令行快速生成漫画：
-   ```bash
-   go run cmd/generate/main.go \
-       --characters 'lovelive/honoka,lovelive/umi' \
-       --plot '穗乃果和海未在社团室里的温馨日常，发糖向' \
-       --style chibi_figure \
-       --language 中文
-   ```
+常用命令：
 
-   `--language` 只影响台词气泡中的对白文字，未设置时默认为 `中文`；漫符与 SFX 不受该参数影响，仍固定使用日语片假名。
+```bash
+go run cmd/generate/main.go --list-characters
+go run cmd/generate/main.go --list-styles
+go run cmd/generate/main.go --list-models
+go run cmd/generate/main.go --resume <project-id>
+go run cmd/generate/main.go --resume <project-id> --retry-image 3
+go run cmd/generate/main.go --prompt-only --characters 'lovelive/honoka' --plot '练习后的点心时间' --style chibi_figure
+```
 
-3. 可用的其他查看命令：
-   - 查看所有角色（按系列分组）：`go run cmd/generate/main.go --list-characters`
-   - 查看所有画风：`go run cmd/generate/main.go --list-styles`
-   - 查看可用模型：`go run cmd/generate/main.go --list-models`
+长篇漫画流程：
 
-4. 断点续跑与单张重试：
-   - 从已有项目恢复并重新生成全部图片：`go run cmd/generate/main.go --resume <project-id>`
-   - 仅重试某一张图片（不覆盖旧图，新图以 `001_2.png` 格式保存）：
-     ```bash
-     go run cmd/generate/main.go --resume <project-id> --retry-image 3
-     ```
-   - 仅输出提示词不调用图像 API（用于调试）：`go run cmd/generate/main.go --prompt-only ...`
+```bash
+go run cmd/generate/main.go \
+    --characters 'lovelive/honoka,lovelive/umi' \
+    --plot '二人围绕校园祭准备展开的连续剧情' \
+    --style chibi_figure \
+    --long-manga
+```
 
-## 内置角色库
+## 开发
 
-| 系列 | 角色数 | 角色示例 |
-|------|--------|----------|
-| LoveLive! μ's | 9 | 穗乃果、海未、鸟希、真姬、妮可、花阳、凛、绘里、希 |
-| LoveLive!! Sunshine!! Aqours | 9 | 千歌、曜、梨子、善子、丸、鞠亚、果南、露比、未央 |
-| LoveLive! Nijigasaki | 12 | 步梦、咲恋、香音、爱、霞、静留、爱玛、彼方、莉那、魅亚、钟岚、栞 |
-| LoveLive! Superstar!! Liella! | 8 | 岚、可可、叶月、莲、千寿、木维芽、惠、志季 |
-| 孤独摇滚！ | 4 | 后藤一里 (波奇)、伊地知虹、山田凉、喜多郁代 |
-| 轻音少女！ | 6 | 平沢忧、秋山澪、田井中律、琴吹紬、中野梓 |
-| 间谍过家家 | 5 | 洛德·福杰、约尔·福杰、阿尼亚·福杰、彭德·福杰、菲奥娜·弗罗斯特 |
-| 原神 | 80+ | 蒙德(14) / 璃月(17) / 稻妻(14) / 须弥(11) / 枫丹(13) / 至冬(2) |
-
-> 自定义角色：创建 YAML 文件放置于指定目录，通过 `CHARDB_DIR` 环境变量加载。格式参考 `internal/chardb/data/` 下的现有角色文件。
-
-## 支持的模型列表
-
-**文本大模型 (LLM):**
-
-| 提供商 | 模型列表举例 |
-|--------|-------------|
-| Gemini | `gemini-3.1-pro-preview`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-2.5-pro`, `gemini-2.5-flash` 等 |
-| DeepSeek | `deepseek-chat`, `deepseek-reasoner` |
-| OpenAI-compatible | `gpt-5.5`，或通过 `LLM_MODEL` 指定 302.ai/官方兼容模型 |
-
-**图像生成模型:**
-
-| 提供商 | 模型列表举例 |
-|--------|-------------|
-| Gemini Image | `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
-| OpenAI DALL-E | `dall-e-3` (默认), `dall-e-2` |
-| GPT Image | `gpt-image-2-plus`, `gpt-image-2`, `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5` |
-
-## 开发与构建
-
-项目使用 [Just](https://github.com/casey/just) 命令运行器管理常用操作：
+项目使用 [Just](https://github.com/casey/just) 管理常用任务：
 
 | 命令 | 说明 |
 |------|------|
-| `just build` | 构建 server + generate 二进制 |
-| `just build_prod` | 生产构建（静态链接、Linux、strip） |
-| `just run_generate <args>` | 构建并运行 CLI 模式 |
-| `just test` / `just test_verbose` | 运行 Go 测试（含详细输出） |
+| `just build` | 构建 CLI 二进制 |
+| `just build_prod` | 生产构建 CLI（静态链接、Linux、strip） |
+| `just run_generate <args>` | 构建并运行 CLI |
+| `just test` / `just test_verbose` | 运行 Go 测试 |
 | `just fmt` / `just lint` | 代码格式化与静态检查 |
 | `just ci` | 完整 CI 流程：fmt + lint + test + build |
-| `just docker_build` / `just docker_up` / `just docker_down` | Docker 构建与容器管理 |
 
-### Docker 部署
-
-```bash
-# 使用 docker-compose 一键部署
-docker compose up -d
-
-# 服务将监听 :8080，数据持久化到 ./data/projects
-```
+更多运行和自定义说明见 [RUNNING_GUIDE.md](./RUNNING_GUIDE.md)。
 
 ## License
 

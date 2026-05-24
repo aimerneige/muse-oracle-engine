@@ -1,62 +1,53 @@
 # 圣谕自演机 - 运行指南
 
-本文档将指导您如何配置、启动和高度自定义“圣谕自演机”。由于项目重构，目前支持 **CLI（命令行脚本）** 与 **Server（API服务）** 两套独立的工作模式。
+本文档说明如何配置和运行 CLI-only 版本的“圣谕自演机”。项目只维护 `cmd/generate` 命令行入口，不再提供 Server、Web UI 或 Docker 部署方式。
 
----
+## 1. 环境变量配置
 
-## 1. 环境变量配置 (`.env`)
+在项目根目录创建 `.env` 文件，或直接通过环境变量传入配置。
 
-在项目根目录复制 `.env.example` 为 `.env` 并进行编辑。主要的配置部分如下：
-
-### API 秘钥与模型配置
-你可以自由选择生成故事文案 (`LLM_PROVIDER`) 以及生成绘图 (`IMAGE_PROVIDER`) 所用的服务供应商。
+### API Key 与模型
 
 ```env
-# 填入你拥有的对应平台的 API Key
 GEMINI_API_KEY="your-gemini-key"
-# 可选：Gemini 兼容代理地址，同时用于 Gemini 文本和图片生成
 GEMINI_BASE_URL=
+
 DEEPSEEK_API_KEY="your-deepseek-key"
+
 OPENAI_API_KEY="your-openai-or-302-key"
-# 可选：OpenAI-compatible API Base URL；302.ai 可填写 https://api.302.ai
 OPENAI_BASE_URL=
 
-
-# 指定当前使用的 LLM 供应商 (gemini, deepseek, openai)
 LLM_PROVIDER=gemini
-# 对应的模型名字 (例如 gemini-3.1-pro-preview, deepseek-chat, gpt-5.5)
 LLM_MODEL=gemini-3.1-pro-preview
 
-# 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai, gpt-image)
 IMAGE_PROVIDER=gemini
 IMAGE_MODEL=gemini-3.1-flash-image-preview
-# Gemini 图片分辨率，可选 1K、2K、4K；非法值会回退到 1K 并输出警告日志
 GEMINI_IMAGE_SIZE=1K
 ```
 
-### 存储与自定义目录配置
-通过配置目录路径可以实现项目存档以及外挂资源读取：
+可选提供商：
+
+| 配置 | 可选值 |
+|------|--------|
+| `LLM_PROVIDER` | `gemini` / `deepseek` / `openai` / `gemini-bridge` / `mock` |
+| `IMAGE_PROVIDER` | `gemini` / `gemini-bridge` / `openai` / `gpt-image` / `prompt` / `mock` |
+
+### 存储与自定义资源
 
 ```env
-# 生成过程中产生的存档和图片将存储于此 (默认 data/projects)
 DATA_DIR=data/projects
-
-# 如果你想自己添加外部角色数据库，可指定该目录 (留空即使用内置角色)
 CHARDB_DIR=
-
-# 如果你想自己拓展生图提示词画风，可指定该目录 (留空即使用内置画风)
 STYLES_DIR=
+MOCK_MODE=
 ```
 
----
+- `DATA_DIR`：生成过程中的项目状态、图片和提示词输出目录。
+- `CHARDB_DIR`：外部角色 YAML 根目录，留空时只使用内置角色库。
+- `STYLES_DIR`：外部画风模板根目录，留空时只使用内置画风。
+- `MOCK_MODE`：设为任意非空值后，LLM 和图像提供商都会切换为 Mock。
 
-## 2. CLI 命令行模式
+## 2. 基础运行
 
-命令行模式适用于在本地快速一键生成，且中途会有命令行交互让您确认“分镜生成情况”。
-
-### 基础调用
-
-包含必填参数 `--characters` 和 `--plot`：
 ```bash
 go run cmd/generate/main.go \
     --characters "lovelive/honoka,lovelive/umi" \
@@ -65,119 +56,87 @@ go run cmd/generate/main.go \
     --language 中文
 ```
 
-一旦开始执行：
-1. 程序会自动生成大纲。
-2. 自动生成详细分镜脚本。
-3. **等待并提示您进行 Review (审阅)**：你可以在终端查看分镜，如果觉得可以按回车继续，否则输入理由让它重新修改分镜。
-4. 按分镜生成多张图片存储于 `data/projects/<UUID>` 中。
+执行流程：
 
-### CLI 全部可用参数
-- `--characters`: 逗号分隔的角色 ID（格式: `剧集代号/角色名`，可以跨区关公战秦琼！）。
-- `--plot`: 漫画大纲与走向的指引词。
-- `--style`: 期望使用的画风ID（默认为 `chibi_figure`）。
-- `--language`: 台词气泡中的对白语言，默认为 `中文`。该参数只影响对白气泡里的台词文字，不影响分镜标题、画面描述、角色动作等内容；漫符与 SFX 始终固定使用日语片假名。
-- `--no-review`: 自动化模式专用。如果加上该参数，程序将不会停下来等待你审阅分镜，直接往下生成图片。
-- `--resume <uuid>`: 当你不小心关掉终端或想从中断的特定项目恢复进度，使用该参数即可。
-- `--list-characters`: 查看当前已装载的所有角色名录 (自带库+你外挂的库)。
-- `--list-styles`: 查看支持的画风名录。
-- `--list-models`: 查看程序已知匹配的所有底层模型。
+1. 读取角色、画风和模型配置。
+2. 生成故事与详细分镜。
+3. 在终端等待人工审阅；按回车接受，或输入修改意见重新生成。
+4. 根据分镜生成图片，输出到 `DATA_DIR/<project-id>`。
 
----
+## 3. CLI 参数
 
-## 3. Server API 模式
+| 参数 | 说明 |
+|------|------|
+| `--characters` | 逗号分隔的角色 ID，例如 `lovelive/honoka,lovelive/umi` |
+| `--plot` | 漫画剧情方向或提示 |
+| `--style` | 画风 ID，例如 `chibi_figure` |
+| `--language` | 台词气泡对白语言，默认 `中文` |
+| `--resume <project-id>` | 从已有项目恢复 |
+| `--retry-image <n>` | 重试第 n 张图片，必须配合 `--resume` |
+| `--list-characters` | 查看当前装载的角色 |
+| `--list-styles` | 查看支持的画风 |
+| `--list-models` | 查看程序已知模型 |
+| `--prompt-only` | 只输出图像提示词，不调用图像生成 API |
+| `--long-manga` | 启用多集长篇漫画流程 |
 
-Server API 模式适用于前后端分离应用。你可以启动它作为生成器核心微服务。
+## 4. 断点续跑和重试
 
-### 启动 Server
-
-因为我们内置了一套精美的静态前端网页（在 `ui/` 目录下），在第一次启动 Server 之前或每次修改了前端代码后，你需要进行前端构建：
-
-```bash
-cd ui
-npm install
-npm run build
-cd ..
-```
-
-完成构建后，启动 Go 后端：
+从已有项目继续：
 
 ```bash
-go run cmd/server/main.go
-# 默认监听于 ":8080" (可通过 `.env` 修改 SERVER_ADDR 设置)
+go run cmd/generate/main.go --resume <project-id>
 ```
 
-### 核心工作流 API 详解
+重试单张图片：
 
-**1. 创建项目**
 ```bash
-curl -X POST http://localhost:8080/api/v1/projects \
-    -H 'Content-Type: application/json' \
-    -d '{
-        "characters": ["bocchi/hitori", "kon/yui"],
-        "plot_hint": "跨番剧音乐女孩碰头，波奇酱的社恐爆发",
-        "style": "watercolor",
-        "language": "中文"
-    }'
+go run cmd/generate/main.go --resume <project-id> --retry-image 3
 ```
-*响应返回带有 `id` 字段的 Project 对象。*
 
-`language` 字段可省略，省略时默认为 `中文`。它只控制台词气泡中的对白语言；漫符与 SFX 固定为日语片假名，不会随 `language` 改变。
+只生成提示词：
 
-**2. 生成剧本大纲 (Story)**
 ```bash
-curl -X POST http://localhost:8080/api/v1/projects/<id>/generate/story
+go run cmd/generate/main.go \
+    --prompt-only \
+    --characters "lovelive/honoka,lovelive/umi" \
+    --plot "社团室里的点心争夺战" \
+    --style chibi_figure
 ```
 
-**3. 生成分镜脚本 (Storyboard)**
+## 5. 长篇漫画流程
+
 ```bash
-curl -X POST http://localhost:8080/api/v1/projects/<id>/generate/storyboard
+go run cmd/generate/main.go \
+    --characters "lovelive/honoka,lovelive/umi" \
+    --plot "二人围绕校园祭准备展开的连续剧情" \
+    --style chibi_figure \
+    --long-manga
 ```
 
-**4. 审阅分镜与人工修正 (Review)**
-```bash
-# 满意分镜时
-curl -X POST http://localhost:8080/api/v1/projects/<id>/review \
-    -H 'Content-Type: application/json' \
-    -d '{"approved": true}'
+长篇流程会先生成 outline，并把状态保存到项目目录。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
 
-# 不满意分镜时，驳回并提供修改意见 (调用后续需重新生成分镜阶段)
-curl -X POST http://localhost:8080/api/v1/projects/<id>/review \
-    -H 'Content-Type: application/json' \
-    -d '{"approved": false, "feedback": "波奇酱不够紧张，加一点内心慌乱的旁白"}'
-```
+## 6. 自定义角色
 
-**5. 生成漫画画面 (Images)**
-```bash
-curl -X POST http://localhost:8080/api/v1/projects/<id>/generate/images
-```
-
-*(高级)* 针对于单张生成失败或丑陋的图片进行重绘补救：
-```bash
-curl -X POST http://localhost:8080/api/v1/projects/<id>/images/0/retry
-```
-
----
-
-## 4. 高级自定义扩展
-
-### 自定义外部角色库
-若要添加系统没有的角色，请在 `.env` 设置 `CHARDB_DIR=./my-characters`。然后在目录下新建文件夹：
+设置 `CHARDB_DIR=./my-characters`，目录结构示例：
 
 ```text
 my-characters/
 └── my-series/
-    ├── _series.yaml          # 番剧总信息 (id, name, name_en)
-    └── john.yaml             # 单一角色的 yaml 设定档
+    ├── _series.yaml
+    └── john.yaml
 ```
-通过编写 YAML 文件传入该角色的官方外貌、发色、特定服装、性格特征从而将自己喜爱的角色加入图库。
 
-### 自定义外部画风模板
-如同设置角色，在 `.env` 指定 `STYLES_DIR=./my-styles`。并在其下创建：
+角色 YAML 格式可参考 `internal/chardb/data/` 下的内置数据。
+
+## 7. 自定义画风
+
+设置 `STYLES_DIR=./my-styles`，目录结构示例：
 
 ```text
 my-styles/
 └── dark_fantasy/
-    ├── style.yaml         # 画风声明包含名称描述
-    └── draw.md.tmpl       # 提供给生图 AI 的 Prompt 魔法模版
+    ├── style.yaml
+    └── draw.md.tmpl
 ```
-你可以在模版中随意注入大师的画风咒语，来让圣谕自演机支持你最爱的上色和渲染技法！
+
+画风模板使用 Go `text/template`，可参考 `internal/prompt/templates/comic_draw/` 下的内置模板。

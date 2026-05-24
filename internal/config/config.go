@@ -30,7 +30,7 @@ type Config struct {
 	ImageModel                 string `json:"image_model"`                   // model identifier
 	GeminiImageSize            string `json:"gemini_image_size"`             // "1K", "2K", or "4K"
 
-	// Mock mode: when true, LLM and image providers return fake data for frontend testing
+	// Mock mode: when true, LLM and image providers return fake data for local testing
 	MockMode bool `json:"mock_mode"`
 
 	// Paths
@@ -38,8 +38,6 @@ type Config struct {
 	CharDBDir string `json:"chardb_dir"` // root directory for character data
 	StylesDir string `json:"styles_dir"` // root directory for custom styles
 
-	// Server
-	ServerAddr string `json:"server_addr"` // HTTP server listen address
 }
 
 // LoadFromEnv loads configuration from environment variables.
@@ -71,8 +69,6 @@ func LoadFromEnv() *Config {
 		DataDir:   getEnvDefault("DATA_DIR", "data/projects"),
 		CharDBDir: getEnvDefault("CHARDB_DIR", ""),
 		StylesDir: getEnvDefault("STYLES_DIR", ""),
-
-		ServerAddr: getEnvDefault("SERVER_ADDR", ":8080"),
 	}
 
 	// In mock mode, override providers to mock

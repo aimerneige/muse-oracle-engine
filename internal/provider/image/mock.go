@@ -1,17 +1,17 @@
 package image
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
-	"bytes"
 )
 
 // MockProvider is an image provider that generates a simple placeholder PNG
-// for testing the frontend flow without calling any image generation API.
+// for local testing without calling any image generation API.
 type MockProvider struct{}
 
 // NewMockProvider creates a new mock image provider.
