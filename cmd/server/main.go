@@ -673,7 +673,7 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 		case "gemini-2.5-flash-image":
 			model = image.GeminiImage25Flash
 		}
-		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model, cfg.GeminiImageSize)
 	case "gemini-bridge":
 		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
 		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.GeminiBridgeModel, timeout), nil

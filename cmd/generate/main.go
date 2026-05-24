@@ -402,7 +402,7 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 		case "gemini-2.5-flash-image":
 			model = image.GeminiImage25Flash
 		}
-		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model)
+		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model, cfg.GeminiImageSize)
 	case "gemini-bridge":
 		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
 		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.GeminiBridgeModel, timeout), nil
@@ -461,6 +461,7 @@ func printModels() {
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
+	fmt.Println("   分辨率可通过 GEMINI_IMAGE_SIZE 配置: 1K / 2K / 4K (默认: 1K)")
 	fmt.Println("  Provider: gemini-bridge")
 	fmt.Println("   └─ fast / thinking / pro (configured by GEMINI_BRIDGE_MODEL, default: pro)")
 	fmt.Println("  Provider: openai")

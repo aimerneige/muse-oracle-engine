@@ -24,4 +24,5 @@ services:
       - LLM_MODEL=${LLM_MODEL:-gemini-3.1-pro-preview}
       - IMAGE_PROVIDER=${IMAGE_PROVIDER:-gemini}
       - IMAGE_MODEL=${IMAGE_MODEL:-gemini-3.1-flash-image-preview}
+      - GEMINI_IMAGE_SIZE=${GEMINI_IMAGE_SIZE:-1K}
     restart: unless-stopped

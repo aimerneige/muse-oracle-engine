@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds the application configuration.
@@ -22,6 +24,7 @@ type Config struct {
 	GeminiBridgeModel          string `json:"gemini_bridge_model"`           // "fast", "thinking", or "pro"
 	GeminiBridgeTimeoutSeconds int    `json:"gemini_bridge_timeout_seconds"` // max wait time per bridge task
 	ImageModel                 string `json:"image_model"`                   // model identifier
+	GeminiImageSize            string `json:"gemini_image_size"`             // "1K", "2K", or "4K"
 
 	// Mock mode: when true, LLM and image providers return fake data for frontend testing
 	MockMode bool `json:"mock_mode"`
@@ -51,6 +54,7 @@ func LoadFromEnv() *Config {
 		LLMModel:                   getEnvDefault("LLM_MODEL", "gemini-3.1-pro-preview"),
 		ImageProvider:              getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:                 getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
+		GeminiImageSize:            normalizeGeminiImageSize(os.Getenv("GEMINI_IMAGE_SIZE")),
 		GPTImageEndpoint:           getEnvDefault("GPT_IMAGE_ENDPOINT", ""),
 		GeminiBridgeEndpoint:       getEnvDefault("GEMINI_BRIDGE_ENDPOINT", "http://127.0.0.1:8765"),
 		GeminiBridgeModel:          getEnvDefault("GEMINI_BRIDGE_MODEL", "pro"),
@@ -124,6 +128,21 @@ func getEnvDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func normalizeGeminiImageSize(value string) string {
+	size := strings.TrimSpace(value)
+	if size == "" {
+		return "1K"
+	}
+
+	switch size {
+	case "1K", "2K", "4K":
+		return size
+	default:
+		log.Printf("Warning: invalid GEMINI_IMAGE_SIZE %q, falling back to 1K", value)
+		return "1K"
+	}
 }
 
 func getEnvIntDefault(key string, fallback int) int {

@@ -70,6 +70,7 @@
 | `GEMINI_BASE_URL` | (空) | (可选) 自定义 Gemini API Base URL，同时用于 Gemini 文本和图片生成 |
 | `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `gemini-bridge` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
+| `GEMINI_IMAGE_SIZE` | `1K` | Gemini 图片分辨率：`1K` / `2K` / `4K`，非法值会回退到 `1K` 并输出警告日志 |
 | `GPT_IMAGE_ENDPOINT` | (空) | (可选) 自定义 GPT Image 的 API 地址 |
 | `GEMINI_BRIDGE_ENDPOINT` | `http://127.0.0.1:8765` | gemini_bridge 本地服务地址 |
 | `GEMINI_BRIDGE_MODEL` | `pro` | gemini_bridge 模型档位：`fast` / `thinking` / `pro` |

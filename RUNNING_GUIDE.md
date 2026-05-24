@@ -27,6 +27,8 @@ LLM_MODEL=gemini-3.1-pro-preview
 # 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai, gpt-image)
 IMAGE_PROVIDER=gemini
 IMAGE_MODEL=gemini-3.1-flash-image-preview
+# Gemini 图片分辨率，可选 1K、2K、4K；非法值会回退到 1K 并输出警告日志
+GEMINI_IMAGE_SIZE=1K
 ```
 
 ### 存储与自定义目录配置

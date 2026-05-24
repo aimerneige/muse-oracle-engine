@@ -33,12 +33,13 @@ func (m GeminiImageModel) String() string {
 
 // GeminiImageAdapter implements Provider using the Gemini image generation API.
 type GeminiImageAdapter struct {
-	client *genai.Client
-	model  GeminiImageModel
+	client    *genai.Client
+	model     GeminiImageModel
+	imageSize string
 }
 
 // NewGeminiImageAdapter creates a new Gemini image generation provider.
-func NewGeminiImageAdapter(apiKey string, model GeminiImageModel) (*GeminiImageAdapter, error) {
+func NewGeminiImageAdapter(apiKey string, model GeminiImageModel, imageSize string) (*GeminiImageAdapter, error) {
 	config := &genai.ClientConfig{
 		APIKey: apiKey,
 	}
@@ -51,8 +52,9 @@ func NewGeminiImageAdapter(apiKey string, model GeminiImageModel) (*GeminiImageA
 		return nil, err
 	}
 	return &GeminiImageAdapter{
-		client: client,
-		model:  model,
+		client:    client,
+		model:     model,
+		imageSize: imageSize,
 	}, nil
 }
 
@@ -65,7 +67,11 @@ func (g *GeminiImageAdapter) GenerateImage(ctx context.Context, prompt string) (
 		ctx,
 		g.model.String(),
 		genai.Text(prompt),
-		nil,
+		&genai.GenerateContentConfig{
+			ImageConfig: &genai.ImageConfig{
+				ImageSize: g.imageSize,
+			},
+		},
 	)
 	if err != nil {
 		return nil, err
