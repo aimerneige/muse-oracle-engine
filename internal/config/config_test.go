@@ -61,6 +61,38 @@ func TestLoadFromEnvFallsBackForInvalidGeminiImageSize(t *testing.T) {
 	}
 }
 
+func TestLoadFromEnvDefaultsOpenAIModel(t *testing.T) {
+	t.Setenv("LLM_PROVIDER", "openai")
+	t.Setenv("LLM_MODEL", "")
+
+	cfg := LoadFromEnv()
+
+	if cfg.LLMModel != "gpt-5.5" {
+		t.Fatalf("expected gpt-5.5, got %s", cfg.LLMModel)
+	}
+}
+
+func TestLoadFromEnvLoadsOpenAIBaseURL(t *testing.T) {
+	t.Setenv("OPENAI_BASE_URL", "https://api.302.ai")
+
+	cfg := LoadFromEnv()
+
+	if cfg.OpenAIBaseURL != "https://api.302.ai/v1/" {
+		t.Fatalf("expected https://api.302.ai/v1/, got %s", cfg.OpenAIBaseURL)
+	}
+}
+
+func TestValidateRequiresOpenAIAPIKeyForOpenAILLM(t *testing.T) {
+	cfg := &Config{
+		LLMProvider:   "openai",
+		ImageProvider: "mock",
+	}
+
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected error for missing OPENAI_API_KEY")
+	}
+}
+
 func TestLoadFromEnvDefaultsGeminiImageSize(t *testing.T) {
 	t.Setenv("GEMINI_IMAGE_SIZE", "")
 

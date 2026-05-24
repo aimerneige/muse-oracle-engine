@@ -55,7 +55,7 @@
 ## 环境要求
 
 - Go 1.26+
-- 大语言模型 API Key（至少配置一个）：`GEMINI_API_KEY` / `DEEPSEEK_API_KEY`
+- 大语言模型 API Key（至少配置一个）：`GEMINI_API_KEY` / `DEEPSEEK_API_KEY` / `OPENAI_API_KEY`
 - 图像生成 API Key：`GEMINI_API_KEY`（原生支持）或 `OPENAI_API_KEY`（DALL-E）
 - （可选）前端构建依赖：Node.js + npm（如需修改 UI）
 
@@ -65,9 +65,10 @@
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `gemini-bridge` / `mock` |
-| `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称 |
+| `LLM_PROVIDER` | `gemini` | LLM 提供商：`gemini` / `deepseek` / `openai` / `gemini-bridge` / `mock` |
+| `LLM_MODEL` | `gemini-3.1-pro-preview` | LLM 模型名称；`LLM_PROVIDER=openai` 时默认 `gpt-5.5` |
 | `GEMINI_BASE_URL` | (空) | (可选) 自定义 Gemini API Base URL，同时用于 Gemini 文本和图片生成 |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1/` | (可选) 自定义 OpenAI-compatible API Base URL；302.ai 可填写 `https://api.302.ai` |
 | `IMAGE_PROVIDER` | `gemini` | 图像提供商：`gemini` / `gemini-bridge` / `openai` / `prompt` / `mock` / `gpt-image` |
 | `IMAGE_MODEL` | `gemini-3.1-flash-image-preview` | 图像模型名称 |
 | `GEMINI_IMAGE_SIZE` | `1K` | Gemini 图片分辨率：`1K` / `2K` / `4K`，非法值会回退到 `1K` 并输出警告日志 |
@@ -142,6 +143,7 @@
 |--------|-------------|
 | Gemini | `gemini-3.1-pro-preview`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-2.5-pro`, `gemini-2.5-flash` 等 |
 | DeepSeek | `deepseek-chat`, `deepseek-reasoner` |
+| OpenAI-compatible | `gpt-5.5`，或通过 `LLM_MODEL` 指定 302.ai/官方兼容模型 |
 
 **图像生成模型:**
 

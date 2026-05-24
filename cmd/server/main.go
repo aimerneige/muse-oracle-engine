@@ -651,6 +651,12 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 			model = llm.DeepSeekV4Pro
 		}
 		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
+	case "openai":
+		model := cfg.LLMModel
+		if model == "" {
+			model = "gpt-5.5"
+		}
+		return llm.NewOpenAICompatAdapter("openai", cfg.OpenAIBaseURL, cfg.OpenAIAPIKey, model), nil
 
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %s", cfg.LLMProvider)

@@ -3,10 +3,13 @@ package config
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 )
+
+const defaultOpenAIBaseURL = "https://api.openai.com/v1/"
 
 // Config holds the application configuration.
 type Config struct {
@@ -14,9 +17,10 @@ type Config struct {
 	GeminiAPIKey   string `json:"gemini_api_key"`
 	DeepSeekAPIKey string `json:"deepseek_api_key"`
 	OpenAIAPIKey   string `json:"openai_api_key"`
+	OpenAIBaseURL  string `json:"openai_base_url"`
 
 	// Model selection
-	LLMProvider                string `json:"llm_provider"`                  // "gemini", "deepseek", "gemini-bridge", "mock"
+	LLMProvider                string `json:"llm_provider"`                  // "gemini", "deepseek", "openai", "gemini-bridge", "mock"
 	LLMModel                   string `json:"llm_model"`                     // model identifier
 	ImageProvider              string `json:"image_provider"`                // "gemini", "gemini-bridge", "openai", "gpt-image", "mock"
 	GPTImageEndpoint           string `json:"gpt_image_endpoint"`            // custom endpoint for GPT-Image
@@ -44,14 +48,16 @@ func LoadFromEnv() *Config {
 	if v := os.Getenv("MOCK_MODE"); v != "" {
 		mockMode = true
 	}
+	llmProvider := getEnvDefault("LLM_PROVIDER", "gemini")
 
 	cfg := &Config{
 		GeminiAPIKey:   os.Getenv("GEMINI_API_KEY"),
 		DeepSeekAPIKey: os.Getenv("DEEPSEEK_API_KEY"),
 		OpenAIAPIKey:   os.Getenv("OPENAI_API_KEY"),
+		OpenAIBaseURL:  normalizeOpenAIBaseURL(os.Getenv("OPENAI_BASE_URL")),
 
-		LLMProvider:                getEnvDefault("LLM_PROVIDER", "gemini"),
-		LLMModel:                   getEnvDefault("LLM_MODEL", "gemini-3.1-pro-preview"),
+		LLMProvider:                llmProvider,
+		LLMModel:                   getEnvDefault("LLM_MODEL", defaultLLMModel(llmProvider)),
 		ImageProvider:              getEnvDefault("IMAGE_PROVIDER", "gemini"),
 		ImageModel:                 getEnvDefault("IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
 		GeminiImageSize:            normalizeGeminiImageSize(os.Getenv("GEMINI_IMAGE_SIZE")),
@@ -93,6 +99,10 @@ func (c *Config) Validate() error {
 		if c.DeepSeekAPIKey == "" {
 			return fmt.Errorf("DEEPSEEK_API_KEY is required when LLM_PROVIDER is 'deepseek'")
 		}
+	case "openai":
+		if c.OpenAIAPIKey == "" {
+			return fmt.Errorf("OPENAI_API_KEY is required when LLM_PROVIDER is 'openai'")
+		}
 
 	case "gemini-bridge", "mock":
 		// mock mode: no API key needed
@@ -128,6 +138,31 @@ func getEnvDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func defaultLLMModel(provider string) string {
+	if provider == "openai" {
+		return "gpt-5.5"
+	}
+	return "gemini-3.1-pro-preview"
+}
+
+func normalizeOpenAIBaseURL(value string) string {
+	baseURL := strings.TrimSpace(value)
+	if baseURL == "" {
+		return defaultOpenAIBaseURL
+	}
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return baseURL
+	}
+	if parsed.Path == "" || parsed.Path == "/" {
+		parsed.Path = "/v1/"
+	} else if !strings.HasSuffix(parsed.Path, "/") {
+		parsed.Path += "/"
+	}
+	return parsed.String()
 }
 
 func normalizeGeminiImageSize(value string) string {

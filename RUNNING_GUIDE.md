@@ -17,11 +17,14 @@ GEMINI_API_KEY="your-gemini-key"
 # 可选：Gemini 兼容代理地址，同时用于 Gemini 文本和图片生成
 GEMINI_BASE_URL=
 DEEPSEEK_API_KEY="your-deepseek-key"
+OPENAI_API_KEY="your-openai-or-302-key"
+# 可选：OpenAI-compatible API Base URL；302.ai 可填写 https://api.302.ai
+OPENAI_BASE_URL=
 
 
-# 指定当前使用的 LLM 供应商 (gemini, deepseek)
+# 指定当前使用的 LLM 供应商 (gemini, deepseek, openai)
 LLM_PROVIDER=gemini
-# 对应的模型名字 (例如 gemini-3.1-pro-preview, deepseek-chat)
+# 对应的模型名字 (例如 gemini-3.1-pro-preview, deepseek-chat, gpt-5.5)
 LLM_MODEL=gemini-3.1-pro-preview
 
 # 指定当前使用的生图供应商 (目前默认 gemini, 可选 openai, gpt-image)

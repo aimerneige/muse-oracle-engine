@@ -18,6 +18,7 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
 
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
       
       # Model Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-gemini}

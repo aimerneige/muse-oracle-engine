@@ -380,6 +380,12 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 			model = llm.DeepSeekV4Pro
 		}
 		return llm.NewDeepSeekAdapter(cfg.DeepSeekAPIKey, model), nil
+	case "openai":
+		model := cfg.LLMModel
+		if model == "" {
+			model = "gpt-5.5"
+		}
+		return llm.NewOpenAICompatAdapter("openai", cfg.OpenAIBaseURL, cfg.OpenAIAPIKey, model), nil
 
 	default:
 		return nil, fmt.Errorf("unknown LLM provider: %s", cfg.LLMProvider)
@@ -453,6 +459,9 @@ func printModels() {
 	fmt.Println("   ├─ deepseek-chat                (DeepSeek Chat)")
 	fmt.Println("   ├─ deepseek-v4-flash            (DeepSeek V4 Flash)")
 	fmt.Println("   └─ deepseek-v4-pro              (DeepSeek V4 Pro)")
+	fmt.Println("  Provider: openai")
+	fmt.Println("   └─ gpt-5.5                      (OpenAI-compatible chat, default)")
+	fmt.Println("      OPENAI_BASE_URL can point to a compatible proxy such as 302.ai")
 	fmt.Println("  Provider: gemini-bridge")
 	fmt.Println("   └─ fast / thinking / pro (configured by GEMINI_BRIDGE_MODEL, default: pro)")
 
