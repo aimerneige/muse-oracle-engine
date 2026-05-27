@@ -1,14 +1,14 @@
 id: ryou
 name: "山田凉"
-name_en: "Yamada Ryou"
+name_en: "Yamada Ryo"
 series: bocchi-the-rock
 appearance:
-  hair_style: "蓝色长直发，及肩，刘海偏分，发丝柔顺"
+  hair_style: "蓝色的中性风短发，不对称刘海通常会遮住一侧眼睛"
   hair_color: "深蓝色"
-  eye_shape: "半睡半醒的慵懒眼型"
-  eye_color: "褐色 / 暗红色"
-  height: "163cm"
-  body_type: "修长但略显无精打采的体型"
-  other: "无特殊标记"
-personality: "我行我素、贝斯手、花钱大手大脚总是破产、语出惊人、冷面搞笑担当"
-tags: ["Kessoku Band", "bassist", "lazy", "poor"]
+  eye_shape: "半睡半醒的慵懒眼型，眼神总是显得十分淡漠"
+  eye_color: "黄色 / 金色"
+  height: "162cm"
+  body_type: "修长高挑、颇具中性帅气感的体型"
+  other: "左眼下方有一颗标志性的泪痣"
+personality: "我行我素、特立独行的贝斯手兼乐队作曲担当。实际上是家里开医院的千金大小姐，但因为把钱全挥霍在买乐器上而经常破产，穷到吃野草或靠队友（主要是虹夏和一里）投喂。极度享受被人称为“怪人”，说话往往一针见血，是乐队的冷面搞笑担当。"
+tags: ["Kessoku Band", "bassist", "composer", "eccentric", "broke-rich-girl"]
