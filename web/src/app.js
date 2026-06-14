@@ -24,11 +24,11 @@
 
   function bindElements() {
     [
-      "saveProjectBtn", "newProjectBtn", "saveSettingsBtn", "clearHistoryBtn",
+      "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "languageInput",
-      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn",
+      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "parseManualBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "panelList", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput"
@@ -39,6 +39,7 @@
 
   function bindEvents() {
     els.saveSettingsBtn.addEventListener("click", saveSettingsFromForm);
+    els.fullAutoBtn.addEventListener("click", runFullAuto);
     els.saveProjectBtn.addEventListener("click", saveProject);
     els.newProjectBtn.addEventListener("click", newProject);
     els.clearHistoryBtn.addEventListener("click", clearHistory);
@@ -51,6 +52,7 @@
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.callLLMBtn.addEventListener("click", callLLM);
+    els.parseManualBtn.addEventListener("click", parseStoryboardFromRaw);
     els.parseStoryboardBtn.addEventListener("click", parseStoryboardFromRaw);
     els.buildImagePromptsBtn.addEventListener("click", buildImagePrompts);
     els.callImageBtn.addEventListener("click", callImageAPI);
@@ -345,12 +347,16 @@
     syncProjectFromForm();
     var characters = selectedCharacters();
     if (characters.length === 0) {
+      state.project.storyboardPrompt = "";
+      els.storyboardPrompt.value = "";
       log("Select at least one character before building the storyboard prompt.");
-      return;
+      return false;
     }
     if (!state.project.plotHint) {
+      state.project.storyboardPrompt = "";
+      els.storyboardPrompt.value = "";
       log("Plot hint is required.");
-      return;
+      return false;
     }
 
     var style = getStyle(state.project.style);
@@ -365,47 +371,61 @@
     renderProjectStatus();
     setActiveTab("storyPrompt");
     log("Storyboard prompt built.");
+    return true;
   }
 
   async function callLLM() {
     saveSettingsFromForm();
     if (!state.project.storyboardPrompt) {
-      buildStoryboardPrompt();
+      if (!buildStoryboardPrompt()) {
+        return false;
+      }
     }
     if (!state.project.storyboardPrompt) {
       return;
     }
     if (!state.settings.llmApiKey) {
       log("LLM API key is required in settings.");
-      return;
+      return false;
     }
 
     setBusy(els.callLLMBtn, true);
     try {
-      log("Calling " + state.settings.llmProvider + " LLM: " + state.settings.llmModel);
-      var text = await generateText(state.project.storyboardPrompt);
+      log("Calling " + state.settings.llmProvider + " LLM in streaming mode: " + state.settings.llmModel);
+      state.project.rawStoryboard = "";
+      els.rawStoryboard.value = "";
+      setActiveTab("storyboard");
+      var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta);
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
       parseStoryboardFromRaw();
       saveProject();
       setActiveTab("storyboard");
+      return true;
     } catch (err) {
       logError("LLM request failed", err);
+      return false;
     } finally {
       setBusy(els.callLLMBtn, false);
     }
   }
 
-  async function generateText(prompt) {
+  async function generateText(prompt, onDelta) {
     if (state.settings.llmProvider === "gemini") {
-      return generateGeminiText(prompt);
+      return generateGeminiText(prompt, onDelta);
     }
-    return generateOpenAIText(prompt);
+    return generateOpenAIText(prompt, onDelta);
   }
 
-  async function generateGeminiText(prompt) {
+  async function generateGeminiText(prompt, onDelta) {
     var endpoint = applyModelToEndpoint(state.settings.llmEndpoint, state.settings.llmModel);
+    try {
+      return await generateGeminiTextStream(streamEndpoint(endpoint), prompt, onDelta);
+    } catch (err) {
+      log("Gemini streaming failed, falling back to normal request: " + readableError(err));
+      resetStoryboardOutput();
+    }
     var response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -424,10 +444,36 @@
     if (!text) {
       throw new Error("Gemini returned no text content.");
     }
+    await appendTypewriter(text, onDelta);
     return text;
   }
 
-  async function generateOpenAIText(prompt) {
+  async function generateGeminiTextStream(endpoint, prompt, onDelta) {
+    var response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": state.settings.llmApiKey
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+    return readSSEText(response, function (payload) {
+      var parts = (((payload.candidates || [])[0] || {}).content || {}).parts || [];
+      return parts.map(function (part) {
+        return part.text || "";
+      }).join("");
+    }, onDelta);
+  }
+
+  async function generateOpenAIText(prompt, onDelta) {
+    try {
+      return await generateOpenAITextStream(prompt, onDelta);
+    } catch (err) {
+      log("OpenAI streaming failed, falling back to normal request: " + readableError(err));
+      resetStoryboardOutput();
+    }
     var response = await fetch(state.settings.llmEndpoint, {
       method: "POST",
       headers: {
@@ -445,7 +491,27 @@
     if (!text) {
       throw new Error("OpenAI returned no chat completion content.");
     }
+    await appendTypewriter(text, onDelta);
     return text;
+  }
+
+  async function generateOpenAITextStream(prompt, onDelta) {
+    var response = await fetch(state.settings.llmEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + state.settings.llmApiKey
+      },
+      body: JSON.stringify({
+        model: state.settings.llmModel,
+        messages: [{ role: "user", content: prompt }],
+        stream: true
+      })
+    });
+    return readSSEText(response, function (payload) {
+      var choice = (payload.choices || [])[0] || {};
+      return choice.delta ? choice.delta.content || "" : "";
+    }, onDelta);
   }
 
   function parseStoryboardFromRaw() {
@@ -540,9 +606,9 @@
       textarea.value = item.prompt;
       textarea.spellcheck = false;
       textarea.addEventListener("input", function () {
-      state.project.imagePrompts[index].prompt = textarea.value;
-      state.project.updatedAt = new Date().toISOString();
-    });
+        state.project.imagePrompts[index].prompt = textarea.value;
+        state.project.updatedAt = new Date().toISOString();
+      });
       card.appendChild(head);
       card.appendChild(textarea);
       els.imagePromptList.appendChild(card);
@@ -559,10 +625,11 @@
     }
     if (!state.settings.imageApiKey) {
       log("Image API key is required in settings.");
-      return;
+      return false;
     }
 
     setBusy(els.callImageBtn, true);
+    var allDone = true;
     try {
       for (var i = 0; i < state.project.imagePrompts.length; i++) {
         var item = state.project.imagePrompts[i];
@@ -573,6 +640,7 @@
           updateImageResult(item.index, { status: "downloaded", dataUrl: result.dataUrl, url: result.url || "", error: "" });
           log("Image " + item.index + " generated and download started.");
         } catch (err) {
+          allDone = false;
           updateImageResult(item.index, { status: "failed", dataUrl: "", url: "", error: readableError(err) });
           logError("Image " + item.index + " failed", err);
         }
@@ -584,8 +652,37 @@
       }) ? "images_done" : "image_partial";
       renderProjectStatus();
       setActiveTab("images");
+      return allDone;
     } finally {
       setBusy(els.callImageBtn, false);
+    }
+  }
+
+  async function runFullAuto() {
+    setBusy(els.fullAutoBtn, true);
+    try {
+      log("Full auto flow started.");
+      if (!buildStoryboardPrompt()) {
+        return;
+      }
+      var llmOK = await callLLM();
+      if (!llmOK) {
+        log("Full auto stopped at LLM step.");
+        return;
+      }
+      buildImagePrompts();
+      if (state.project.imagePrompts.length === 0) {
+        log("Full auto stopped before image generation.");
+        return;
+      }
+      var imageOK = await callImageAPI();
+      if (imageOK) {
+        log("Full auto flow completed.");
+      } else {
+        log("Full auto flow completed with image errors.");
+      }
+    } finally {
+      setBusy(els.fullAutoBtn, false);
     }
   }
 
@@ -856,11 +953,86 @@
     return payload;
   }
 
+  async function readSSEText(response, extractDelta, onDelta) {
+    if (!response.ok) {
+      await parseJSONResponse(response);
+    }
+    if (!response.body || !response.body.getReader) {
+      throw new Error("Streaming response is not readable in this browser.");
+    }
+
+    var reader = response.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = "";
+    var fullText = "";
+
+    while (true) {
+      var result = await reader.read();
+      if (result.done) {
+        break;
+      }
+      buffer += decoder.decode(result.value, { stream: true });
+      var lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line || line.indexOf("data:") !== 0) {
+          continue;
+        }
+        var dataLine = line.slice(5).trim();
+        if (dataLine === "[DONE]") {
+          return fullText;
+        }
+        var payload = JSON.parse(dataLine);
+        var delta = extractDelta(payload);
+        if (!delta) {
+          continue;
+        }
+        fullText += delta;
+        if (onDelta) {
+          onDelta(delta);
+        }
+      }
+    }
+
+    if (!fullText) {
+      throw new Error("Streaming response returned no text.");
+    }
+    return fullText;
+  }
+
+  async function appendTypewriter(text, onDelta) {
+    if (!onDelta || !text) {
+      return;
+    }
+    var chunkSize = 8;
+    for (var i = 0; i < text.length; i += chunkSize) {
+      onDelta(text.slice(i, i + chunkSize));
+      await delay(12);
+    }
+  }
+
+  function appendStoryboardDelta(delta) {
+    state.project.rawStoryboard += delta;
+    els.rawStoryboard.value = state.project.rawStoryboard;
+    els.rawStoryboard.scrollTop = els.rawStoryboard.scrollHeight;
+  }
+
+  function resetStoryboardOutput() {
+    state.project.rawStoryboard = "";
+    els.rawStoryboard.value = "";
+  }
+
   function applyModelToEndpoint(endpoint, model) {
     if (endpoint.indexOf("{model}") !== -1) {
       return endpoint.replace(/\{model\}/g, encodeURIComponent(model));
     }
     return endpoint;
+  }
+
+  function streamEndpoint(endpoint) {
+    var streamed = endpoint.replace(":generateContent", ":streamGenerateContent");
+    return streamed.indexOf("?") === -1 ? streamed + "?alt=sse" : streamed + "&alt=sse";
   }
 
   function setActiveTab(id) {
@@ -964,5 +1136,11 @@
       return "";
     }
     return new Date(value).toLocaleString();
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
   }
 })();
