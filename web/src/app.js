@@ -922,9 +922,10 @@
   }
 
   function toJSKey(key) {
-    return key.replace(/[A-Z]/g, function (letter, index) {
-      return (index === 0 ? "" : "_") + letter.toLowerCase();
-    });
+    return key
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .toLowerCase();
   }
 
   function extractCodeBlocks(markdown) {
