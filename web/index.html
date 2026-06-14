@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoveLive Engine Web</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>LoveLive Engine</h1>
+        <p>静态漫画提示词与图片生成工作台</p>
+      </div>
+      <div class="header-actions">
+        <button id="saveProjectBtn" type="button">保存项目</button>
+        <button id="newProjectBtn" type="button">新建</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-title">
+            <h2>设置</h2>
+            <button id="saveSettingsBtn" type="button">保存</button>
+          </div>
+
+          <label>
+            文本模型提供商
+            <select id="llmProvider"></select>
+          </label>
+          <label>
+            文本 Endpoint
+            <input id="llmEndpoint" type="url" autocomplete="off">
+          </label>
+          <label>
+            文本 API Key
+            <input id="llmApiKey" type="password" autocomplete="off">
+          </label>
+          <label>
+            文本模型
+            <select id="llmModel"></select>
+          </label>
+
+          <div class="divider"></div>
+
+          <label>
+            图片模型提供商
+            <select id="imageProvider"></select>
+          </label>
+          <label>
+            图片 Endpoint
+            <input id="imageEndpoint" type="url" autocomplete="off">
+          </label>
+          <label>
+            图片 API Key
+            <input id="imageApiKey" type="password" autocomplete="off">
+          </label>
+          <label>
+            图片模型
+            <select id="imageModel"></select>
+          </label>
+          <label id="geminiImageSizeWrap">
+            Gemini 图片尺寸
+            <select id="geminiImageSize"></select>
+          </label>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <h2>历史</h2>
+            <button id="clearHistoryBtn" type="button">清空</button>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <section class="panel project-panel">
+          <div class="panel-title">
+            <h2>项目</h2>
+            <span id="projectStatus" class="status-pill">草稿</span>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              作品
+              <select id="seriesFilter"></select>
+            </label>
+            <label>
+              角色搜索
+              <input id="characterSearch" type="search" placeholder="角色名 / ID">
+            </label>
+            <label>
+              画风
+              <select id="styleSelect"></select>
+            </label>
+            <label>
+              对白语言
+              <input id="languageInput" type="text" value="中文">
+            </label>
+          </div>
+
+          <div id="characterList" class="character-list"></div>
+          <div id="selectedCharacters" class="selected-list"></div>
+
+          <label>
+            剧情要求
+            <textarea id="plotHint" rows="5" placeholder="例如：二人在学校里的温馨日常，发糖向，轻百合向"></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
+            <button id="callLLMBtn" type="button" class="primary">调用 LLM 生成分镜</button>
+          </div>
+        </section>
+
+        <section class="tabs">
+          <button class="tab active" data-tab="storyPrompt" type="button">分镜 Prompt</button>
+          <button class="tab" data-tab="storyboard" type="button">分镜</button>
+          <button class="tab" data-tab="imagePrompts" type="button">图片 Prompt</button>
+          <button class="tab" data-tab="images" type="button">图片</button>
+          <button class="tab" data-tab="logs" type="button">日志</button>
+        </section>
+
+        <section id="storyPrompt" class="tab-panel active">
+          <div class="panel-title">
+            <h2>分镜 Prompt</h2>
+            <button data-copy="storyboardPrompt" type="button">复制</button>
+          </div>
+          <textarea id="storyboardPrompt" class="code-area" spellcheck="false"></textarea>
+        </section>
+
+        <section id="storyboard" class="tab-panel">
+          <div class="panel-title">
+            <h2>分镜结果</h2>
+            <div class="inline-actions">
+              <button id="parseStoryboardBtn" type="button">从原文解析</button>
+              <button id="buildImagePromptsBtn" type="button">生成图片 Prompt</button>
+            </div>
+          </div>
+          <label>
+            LLM 原始输出
+            <textarea id="rawStoryboard" class="code-area small" spellcheck="false"></textarea>
+          </label>
+          <div id="panelList" class="panel-list"></div>
+        </section>
+
+        <section id="imagePrompts" class="tab-panel">
+          <div class="panel-title">
+            <h2>图片 Prompt</h2>
+            <button id="callImageBtn" type="button" class="primary">调用图片 API</button>
+          </div>
+          <div id="imagePromptList" class="prompt-list"></div>
+        </section>
+
+        <section id="images" class="tab-panel">
+          <div class="panel-title">
+            <h2>图片结果</h2>
+            <button id="downloadProjectBtn" type="button">导出 JSON</button>
+          </div>
+          <div id="imageList" class="image-list"></div>
+        </section>
+
+        <section id="logs" class="tab-panel">
+          <div class="panel-title">
+            <h2>日志</h2>
+            <button id="clearLogBtn" type="button">清空</button>
+          </div>
+          <pre id="logOutput" class="log-output"></pre>
+        </section>
+      </section>
+    </main>
+
+    <script src="src/data.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>
