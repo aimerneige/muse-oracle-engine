@@ -27,9 +27,11 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "languageInput",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "parseManualBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
+      "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "buildLongEpisodePromptsBtn", "callLongEpisodesBtn",
+      "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodeList",
       "panelList", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput"
     ].forEach(function (id) {
@@ -48,6 +50,7 @@
     els.seriesFilter.addEventListener("change", renderCharacters);
     els.characterSearch.addEventListener("input", renderCharacters);
     els.styleSelect.addEventListener("change", syncProjectFromForm);
+    els.storyMode.addEventListener("change", syncProjectFromForm);
     els.languageInput.addEventListener("input", syncProjectFromForm);
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
@@ -55,6 +58,11 @@
     els.parseManualBtn.addEventListener("click", parseStoryboardFromRaw);
     els.parseStoryboardBtn.addEventListener("click", parseStoryboardFromRaw);
     els.buildImagePromptsBtn.addEventListener("click", buildImagePrompts);
+    els.buildLongOutlinePromptBtn.addEventListener("click", buildLongOutlinePrompt);
+    els.callLongOutlineBtn.addEventListener("click", callLongOutline);
+    els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
+    els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
+    els.callLongEpisodesBtn.addEventListener("click", callLongEpisodes);
     els.callImageBtn.addEventListener("click", callImageAPI);
     els.downloadProjectBtn.addEventListener("click", downloadProject);
     els.clearLogBtn.addEventListener("click", function () {
@@ -101,12 +109,20 @@
       characterIds: [],
       plotHint: "",
       style: "chibi_figure",
+      storyMode: "standard",
       language: "中文",
       storyboardPrompt: "",
       rawStoryboard: "",
       panels: [],
       imagePrompts: [],
       images: [],
+      longOutlinePrompt: "",
+      rawLongOutline: "",
+      longOutline: null,
+      longEpisodePrompts: [],
+      longEpisodeRaws: [],
+      longEpisodes: [],
+      characterCostumes: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -159,10 +175,13 @@
 
   function applyProjectToForm() {
     els.styleSelect.value = state.project.style;
+    els.storyMode.value = state.project.storyMode || "standard";
     els.languageInput.value = state.project.language;
     els.plotHint.value = state.project.plotHint;
     els.storyboardPrompt.value = state.project.storyboardPrompt;
     els.rawStoryboard.value = state.project.rawStoryboard;
+    els.longOutlinePrompt.value = state.project.longOutlinePrompt || "";
+    els.rawLongOutline.value = state.project.rawLongOutline || "";
   }
 
   function fillModelSelect(select, provider, kind) {
@@ -222,10 +241,13 @@
 
   function syncProjectFromForm() {
     state.project.style = els.styleSelect.value;
+    state.project.storyMode = els.storyMode.value;
     state.project.language = normalizeLanguage(els.languageInput.value);
     state.project.plotHint = els.plotHint.value.trim();
     state.project.storyboardPrompt = els.storyboardPrompt.value;
     state.project.rawStoryboard = els.rawStoryboard.value;
+    state.project.longOutlinePrompt = els.longOutlinePrompt.value;
+    state.project.rawLongOutline = els.rawLongOutline.value;
     state.project.updatedAt = new Date().toISOString();
     renderProjectStatus();
   }
@@ -263,6 +285,7 @@
     renderCharacters();
     renderSelectedCharacters();
     renderPanels();
+    renderLongManga();
     renderImagePrompts();
     renderImages();
     renderHistory();
@@ -395,7 +418,7 @@
       state.project.rawStoryboard = "";
       els.rawStoryboard.value = "";
       setActiveTab("storyboard");
-      var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta);
+      var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta, resetStoryboardOutput);
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
@@ -411,20 +434,22 @@
     }
   }
 
-  async function generateText(prompt, onDelta) {
+  async function generateText(prompt, onDelta, onReset) {
     if (state.settings.llmProvider === "gemini") {
-      return generateGeminiText(prompt, onDelta);
+      return generateGeminiText(prompt, onDelta, onReset);
     }
-    return generateOpenAIText(prompt, onDelta);
+    return generateOpenAIText(prompt, onDelta, onReset);
   }
 
-  async function generateGeminiText(prompt, onDelta) {
+  async function generateGeminiText(prompt, onDelta, onReset) {
     var endpoint = applyModelToEndpoint(state.settings.llmEndpoint, state.settings.llmModel);
     try {
       return await generateGeminiTextStream(streamEndpoint(endpoint), prompt, onDelta);
     } catch (err) {
       log("Gemini streaming failed, falling back to normal request: " + readableError(err));
-      resetStoryboardOutput();
+      if (onReset) {
+        onReset();
+      }
     }
     var response = await fetch(endpoint, {
       method: "POST",
@@ -467,12 +492,14 @@
     }, onDelta);
   }
 
-  async function generateOpenAIText(prompt, onDelta) {
+  async function generateOpenAIText(prompt, onDelta, onReset) {
     try {
       return await generateOpenAITextStream(prompt, onDelta);
     } catch (err) {
       log("OpenAI streaming failed, falling back to normal request: " + readableError(err));
-      resetStoryboardOutput();
+      if (onReset) {
+        onReset();
+      }
     }
     var response = await fetch(state.settings.llmEndpoint, {
       method: "POST",
@@ -553,6 +580,9 @@
 
   function buildImagePrompts() {
     syncProjectFromForm();
+    if ((state.project.storyMode || "standard") === "long" && state.project.panels.length === 0) {
+      applyLongEpisodesToPanels();
+    }
     if (state.project.panels.length === 0) {
       parseStoryboardFromRaw();
     }
@@ -585,6 +615,239 @@
     renderProjectStatus();
     setActiveTab("imagePrompts");
     log("Built " + prompts.length + " image prompt(s).");
+  }
+
+  function buildLongOutlinePrompt() {
+    syncProjectFromForm();
+    var characters = selectedCharacters();
+    if (characters.length === 0) {
+      state.project.longOutlinePrompt = "";
+      els.longOutlinePrompt.value = "";
+      log("Select at least one character before building the long manga outline prompt.");
+      return false;
+    }
+    if (!state.project.plotHint) {
+      state.project.longOutlinePrompt = "";
+      els.longOutlinePrompt.value = "";
+      log("Plot hint is required.");
+      return false;
+    }
+
+    state.project.longOutlinePrompt = renderTemplate(data.longOutlineTemplate, {
+      Characters: characters,
+      PlotHint: state.project.plotHint,
+      Language: normalizeLanguage(state.project.language)
+    });
+    els.longOutlinePrompt.value = state.project.longOutlinePrompt;
+    state.project.status = "long_outline_prompt_ready";
+    renderProjectStatus();
+    setActiveTab("longManga");
+    log("Long manga outline prompt built.");
+    return true;
+  }
+
+  async function callLongOutline() {
+    saveSettingsFromForm();
+    if (!state.project.longOutlinePrompt && !buildLongOutlinePrompt()) {
+      return false;
+    }
+    if (!state.settings.llmApiKey) {
+      log("LLM API key is required in settings.");
+      return false;
+    }
+
+    setBusy(els.callLongOutlineBtn, true);
+    try {
+      state.project.rawLongOutline = "";
+      els.rawLongOutline.value = "";
+      setActiveTab("longManga");
+      var text = await generateText(state.project.longOutlinePrompt, appendLongOutlineDelta, resetLongOutlineOutput);
+      state.project.rawLongOutline = text;
+      els.rawLongOutline.value = text;
+      parseLongOutlineFromRaw();
+      saveProject();
+      return true;
+    } catch (err) {
+      logError("Long manga outline request failed", err);
+      return false;
+    } finally {
+      setBusy(els.callLongOutlineBtn, false);
+    }
+  }
+
+  function parseLongOutlineFromRaw() {
+    syncProjectFromForm();
+    try {
+      var outline = normalizeLongOutline(parseJSONBlock(state.project.rawLongOutline));
+      state.project.longOutline = outline;
+      state.project.status = "long_outline_done";
+      renderLongManga();
+      renderProjectStatus();
+      log("Parsed long manga outline with " + outline.episodes.length + " episode(s).");
+      return true;
+    } catch (err) {
+      logError("Failed to parse long manga outline", err);
+      return false;
+    }
+  }
+
+  function buildLongEpisodePrompts() {
+    syncProjectFromForm();
+    if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
+      return false;
+    }
+
+    var style = getStyle(state.project.style);
+    state.project.longEpisodePrompts = state.project.longOutline.episodes.map(function (episode) {
+      var characters = resolveCharacters(episode.character_ids);
+      return {
+        episode: episode.episode,
+        prompt: renderTemplate(data.longEpisodeTemplate, {
+          Characters: characters,
+          CharacterCostumes: costumeStatesForEpisode(episode.character_ids),
+          FullOutline: state.project.longOutline,
+          Episode: episode,
+          Language: normalizeLanguage(state.project.language),
+          StyleDescription: style.description
+        })
+      };
+    });
+    state.project.status = "long_episode_prompts_ready";
+    renderLongManga();
+    renderProjectStatus();
+    setActiveTab("longManga");
+    log("Built " + state.project.longEpisodePrompts.length + " long manga episode prompt(s).");
+    return true;
+  }
+
+  async function callLongEpisodes() {
+    saveSettingsFromForm();
+    if (state.project.longEpisodePrompts.length === 0 && !buildLongEpisodePrompts()) {
+      return false;
+    }
+    if (!state.settings.llmApiKey) {
+      log("LLM API key is required in settings.");
+      return false;
+    }
+
+    setBusy(els.callLongEpisodesBtn, true);
+    var allDone = true;
+    try {
+      for (var i = 0; i < state.project.longEpisodePrompts.length; i++) {
+        var item = state.project.longEpisodePrompts[i];
+        setLongEpisodeRaw(item.episode, "");
+        renderLongManga();
+        try {
+          log("Generating long manga episode " + item.episode + ".");
+          var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
+          setLongEpisodeRaw(item.episode, text);
+          parseLongEpisodeFromRaw(item.episode);
+          saveProject();
+        } catch (err) {
+          allDone = false;
+          logError("Long manga episode " + item.episode + " failed", err);
+        }
+      }
+      applyLongEpisodesToPanels();
+      renderPanels();
+      renderProjectStatus();
+      return allDone;
+    } finally {
+      setBusy(els.callLongEpisodesBtn, false);
+    }
+  }
+
+  function parseLongEpisodeFromRaw(episodeNumber) {
+    var raw = getLongEpisodeRaw(episodeNumber);
+    var outline = findLongOutlineEpisode(episodeNumber);
+    if (!outline) {
+      log("Episode " + episodeNumber + " is not in the current outline.");
+      return false;
+    }
+    try {
+      var script = normalizeLongEpisode(parseJSONBlock(raw), outline);
+      upsertLongEpisode(script);
+      mergeCostumeStates(script.costume_states || []);
+      state.project.status = "long_episode_done";
+      renderLongManga();
+      log("Parsed long manga episode " + episodeNumber + ".");
+      return true;
+    } catch (err) {
+      logError("Failed to parse long manga episode " + episodeNumber, err);
+      return false;
+    }
+  }
+
+  function renderLongManga() {
+    els.longOutlinePrompt.value = state.project.longOutlinePrompt || "";
+    els.rawLongOutline.value = state.project.rawLongOutline || "";
+    renderLongOutlineSummary();
+    renderLongEpisodeList();
+  }
+
+  function renderLongOutlineSummary() {
+    els.longOutlineSummary.innerHTML = "";
+    if (!state.project.longOutline || !state.project.longOutline.episodes) {
+      return;
+    }
+    state.project.longOutline.episodes.forEach(function (episode) {
+      var card = document.createElement("div");
+      card.className = "story-card";
+      card.innerHTML = '<div class="card-head"><h3>第 ' + episode.episode + ' 话《' + escapeHTML(episode.title) + '》</h3><span>' + (episode.character_ids || []).join(", ") + '</span></div>';
+      var text = document.createElement("div");
+      text.textContent = episode.summary;
+      card.appendChild(text);
+      els.longOutlineSummary.appendChild(card);
+    });
+  }
+
+  function renderLongEpisodeList() {
+    els.longEpisodeList.innerHTML = "";
+    state.project.longEpisodePrompts.forEach(function (item) {
+      var card = document.createElement("div");
+      card.className = "prompt-card";
+      var head = document.createElement("div");
+      head.className = "card-head";
+      head.innerHTML = "<h3>第 " + item.episode + " 话 Prompt / 结果</h3>";
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.textContent = "复制 Prompt";
+      copy.addEventListener("click", function () {
+        copyText(item.prompt);
+      });
+      var parse = document.createElement("button");
+      parse.type = "button";
+      parse.textContent = "解析本话结果";
+      parse.addEventListener("click", function () {
+        parseLongEpisodeFromRaw(item.episode);
+      });
+      var actions = document.createElement("div");
+      actions.className = "inline-actions";
+      actions.appendChild(copy);
+      actions.appendChild(parse);
+      head.appendChild(actions);
+
+      var promptArea = document.createElement("textarea");
+      promptArea.value = item.prompt;
+      promptArea.spellcheck = false;
+      promptArea.addEventListener("input", function () {
+        item.prompt = promptArea.value;
+        state.project.updatedAt = new Date().toISOString();
+      });
+
+      var rawArea = document.createElement("textarea");
+      rawArea.value = getLongEpisodeRaw(item.episode);
+      rawArea.placeholder = "可以在这里粘贴官方网页生成的本话 JSON 结果";
+      rawArea.spellcheck = false;
+      rawArea.addEventListener("input", function () {
+        setLongEpisodeRaw(item.episode, rawArea.value);
+      });
+
+      card.appendChild(head);
+      card.appendChild(promptArea);
+      card.appendChild(rawArea);
+      els.longEpisodeList.appendChild(card);
+    });
   }
 
   function renderImagePrompts() {
@@ -662,6 +925,10 @@
     setBusy(els.fullAutoBtn, true);
     try {
       log("Full auto flow started.");
+      if (state.project.storyMode === "long") {
+        await runLongMangaAuto();
+        return;
+      }
       if (!buildStoryboardPrompt()) {
         return;
       }
@@ -684,6 +951,32 @@
     } finally {
       setBusy(els.fullAutoBtn, false);
     }
+  }
+
+  async function runLongMangaAuto() {
+    if (!buildLongOutlinePrompt()) {
+      return;
+    }
+    var outlineOK = await callLongOutline();
+    if (!outlineOK) {
+      log("Full auto stopped at long manga outline step.");
+      return;
+    }
+    if (!buildLongEpisodePrompts()) {
+      return;
+    }
+    var episodesOK = await callLongEpisodes();
+    if (!episodesOK) {
+      log("Full auto stopped with long manga episode errors.");
+      return;
+    }
+    buildImagePrompts();
+    if (state.project.imagePrompts.length === 0) {
+      log("Full auto stopped before image generation.");
+      return;
+    }
+    var imageOK = await callImageAPI();
+    log(imageOK ? "Full auto long manga flow completed." : "Full auto long manga flow completed with image errors.");
   }
 
   async function generateImage(prompt) {
@@ -841,6 +1134,178 @@
     log(prefix + ": " + readableError(err));
   }
 
+  function parseJSONBlock(text) {
+    var blocks = extractCodeBlocksWithLanguage(text, "json");
+    var payload = blocks.length > 0 ? blocks[0] : text;
+    return JSON.parse(payload.trim());
+  }
+
+  function normalizeLongOutline(outline) {
+    if (!outline || !Array.isArray(outline.episodes) || outline.episodes.length === 0) {
+      throw new Error("Long manga outline contains no episodes.");
+    }
+    outline.total_episodes = outline.total_episodes || outline.episodes.length;
+    outline.episodes = outline.episodes.map(function (episode, index) {
+      return {
+        episode: episode.episode || index + 1,
+        title: episode.title || "",
+        summary: episode.summary || "",
+        character_ids: episode.character_ids || []
+      };
+    });
+    return outline;
+  }
+
+  function normalizeLongEpisode(script, outline) {
+    if (!script || !Array.isArray(script.panels) || script.panels.length === 0) {
+      throw new Error("Long manga episode contains no panels.");
+    }
+    script.episode = script.episode || outline.episode;
+    script.title = script.title || outline.title;
+    script.summary = script.summary || outline.summary;
+    script.character_ids = script.character_ids || outline.character_ids || [];
+    script.panels = script.panels.map(function (panel, index) {
+      return {
+        index: panel.index || index + 1,
+        character_ids: panel.character_ids || script.character_ids,
+        content: panel.content || ""
+      };
+    });
+    script.costume_states = script.costume_states || [];
+    return script;
+  }
+
+  function resolveCharacters(ids) {
+    if (!ids || ids.length === 0) {
+      return selectedCharacters();
+    }
+    return ids.map(getCharacter).filter(Boolean);
+  }
+
+  function costumeStatesForEpisode(ids) {
+    var allowed = new Set(ids || []);
+    return (state.project.characterCostumes || []).filter(function (costume) {
+      return allowed.has(costume.character_id);
+    });
+  }
+
+  function findLongOutlineEpisode(episodeNumber) {
+    var outline = state.project.longOutline;
+    if (!outline || !outline.episodes) {
+      return null;
+    }
+    return outline.episodes.find(function (episode) {
+      return episode.episode === episodeNumber;
+    });
+  }
+
+  function upsertLongEpisode(script) {
+    var episodes = state.project.longEpisodes || [];
+    var found = false;
+    state.project.longEpisodes = episodes.map(function (episode) {
+      if (episode.episode === script.episode) {
+        found = true;
+        return script;
+      }
+      return episode;
+    });
+    if (!found) {
+      state.project.longEpisodes.push(script);
+    }
+    state.project.longEpisodes.sort(function (a, b) {
+      return a.episode - b.episode;
+    });
+  }
+
+  function mergeCostumeStates(updates) {
+    var byID = {};
+    (state.project.characterCostumes || []).forEach(function (costume) {
+      byID[costume.character_id] = costume;
+    });
+    updates.forEach(function (costume) {
+      if (costume.character_id && costume.outfit) {
+        byID[costume.character_id] = costume;
+      }
+    });
+    state.project.characterCostumes = Object.keys(byID).sort().map(function (id) {
+      return byID[id];
+    });
+  }
+
+  function applyLongEpisodesToPanels() {
+    state.project.panels = (state.project.longEpisodes || []).map(function (episode, index) {
+      return {
+        index: index + 1,
+        content: longMangaEpisodeContent(episode),
+        characterIds: episode.character_ids || []
+      };
+    });
+    if (state.project.panels.length > 0) {
+      state.project.status = "storyboard_done";
+    }
+  }
+
+  function longMangaEpisodeContent(episode) {
+    var lines = ["#### 【第 " + episode.episode + " 话】", ""];
+    if (episode.summary) {
+      lines.push("**梗概**：" + episode.summary, "");
+    }
+    (episode.panels || []).forEach(function (panel, index) {
+      if (index > 0) {
+        lines.push("");
+      }
+      lines.push(panel.content);
+    });
+    return lines.join("\n");
+  }
+
+  function getLongEpisodeRaw(episodeNumber) {
+    var item = (state.project.longEpisodeRaws || []).find(function (raw) {
+      return raw.episode === episodeNumber;
+    });
+    return item ? item.raw : "";
+  }
+
+  function setLongEpisodeRaw(episodeNumber, raw) {
+    if (!state.project.longEpisodeRaws) {
+      state.project.longEpisodeRaws = [];
+    }
+    var item = state.project.longEpisodeRaws.find(function (entry) {
+      return entry.episode === episodeNumber;
+    });
+    if (item) {
+      item.raw = raw;
+    } else {
+      state.project.longEpisodeRaws.push({ episode: episodeNumber, raw: raw });
+    }
+    state.project.updatedAt = new Date().toISOString();
+  }
+
+  function appendLongOutlineDelta(delta) {
+    state.project.rawLongOutline += delta;
+    els.rawLongOutline.value = state.project.rawLongOutline;
+    els.rawLongOutline.scrollTop = els.rawLongOutline.scrollHeight;
+  }
+
+  function resetLongOutlineOutput() {
+    state.project.rawLongOutline = "";
+    els.rawLongOutline.value = "";
+  }
+
+  function appendLongEpisodeDelta(episodeNumber) {
+    return function (delta) {
+      setLongEpisodeRaw(episodeNumber, getLongEpisodeRaw(episodeNumber) + delta);
+      renderLongEpisodeList();
+    };
+  }
+
+  function resetLongEpisodeOutput(episodeNumber) {
+    return function () {
+      setLongEpisodeRaw(episodeNumber, "");
+      renderLongEpisodeList();
+    };
+  }
+
   function selectedCharacters() {
     return state.project.characterIds.map(getCharacter).filter(Boolean);
   }
@@ -878,10 +1343,23 @@
   }
 
   function renderTemplate(template, context) {
-    var rendered = template.replace(/\{\{\-?\s*range\s+\.Characters\s*\}\}([\s\S]*?)\{\{\-?\s*end\s*\}\}/g, function (_, block) {
-      return (context.Characters || []).map(function (character) {
-        return renderVariables(block, Object.assign({}, context, { ".": character }));
+    return renderTemplateBlocks(template, context);
+  }
+
+  function renderTemplateBlocks(template, context) {
+    var rendered = template.replace(/\{\{\-?\s*range\s+([^{}]+?)\s*\}\}([\s\S]*?)\{\{\-?\s*end\s*\}\}/g, function (_, expression, block) {
+      var values = valueForExpression(expression.trim(), context);
+      if (!Array.isArray(values)) {
+        return "";
+      }
+      return values.map(function (item) {
+        return renderTemplateBlocks(block, Object.assign({}, context, { ".": item }));
       }).join("");
+    });
+    rendered = rendered.replace(/\{\{\-?\s*if\s+([^{}]+?)\s*\}\}([\s\S]*?)(?:\{\{\-?\s*else\s*\}\}([\s\S]*?))?\{\{\-?\s*end\s*\}\}/g, function (_, expression, truthyBlock, falsyBlock) {
+      var value = valueForExpression(expression.trim(), context);
+      var block = isTruthy(value) ? truthyBlock : (falsyBlock || "");
+      return renderTemplateBlocks(block, context);
     });
     return renderVariables(rendered, context);
   }
@@ -893,14 +1371,19 @@
   }
 
   function valueForExpression(expression, context) {
+    if (expression.indexOf("join ") === 0) {
+      return valueForJoinExpression(expression, context);
+    }
+    if (expression.charAt(0) === '"' && expression.charAt(expression.length - 1) === '"') {
+      return expression.slice(1, -1);
+    }
     if (expression.indexOf(".") !== 0) {
       return "";
     }
-    var root = context["."] || context;
     var path = expression.slice(1).split(".");
-    var value = root;
-    if (context["."] && path[0] && Object.prototype.hasOwnProperty.call(context, path[0])) {
-      value = context;
+    var value = context;
+    if (context["."] && path[0] && hasTemplateKey(context["."], path[0])) {
+      value = context["."];
     }
     for (var i = 0; i < path.length; i++) {
       if (!path[i]) {
@@ -908,7 +1391,19 @@
       }
       value = getTemplateValue(value, path[i]);
     }
-    return value == null ? "" : String(value);
+    return value == null ? "" : value;
+  }
+
+  function valueForJoinExpression(expression, context) {
+    var match = expression.match(/^join\s+(\.[^\s]+)\s+"([^"]*)"$/);
+    if (!match) {
+      return "";
+    }
+    var values = valueForExpression(match[1], context);
+    if (!Array.isArray(values)) {
+      return "";
+    }
+    return values.join(match[2]);
   }
 
   function getTemplateValue(value, key) {
@@ -918,7 +1413,25 @@
     if (Object.prototype.hasOwnProperty.call(value, key)) {
       return value[key];
     }
-    return value[toJSKey(key)];
+    var jsKey = toJSKey(key);
+    if (Object.prototype.hasOwnProperty.call(value, jsKey)) {
+      return value[jsKey];
+    }
+    return "";
+  }
+
+  function hasTemplateKey(value, key) {
+    if (!value) {
+      return false;
+    }
+    return Object.prototype.hasOwnProperty.call(value, key) || Object.prototype.hasOwnProperty.call(value, toJSKey(key));
+  }
+
+  function isTruthy(value) {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return Boolean(value);
   }
 
   function toJSKey(key) {
@@ -934,6 +1447,18 @@
     var match;
     while ((match = re.exec(markdown)) !== null) {
       blocks.push(match[1].replace(/\n$/, ""));
+    }
+    return blocks;
+  }
+
+  function extractCodeBlocksWithLanguage(markdown, language) {
+    var blocks = [];
+    var re = /```([^\n]*)\n([\s\S]*?)```/g;
+    var match;
+    while ((match = re.exec(markdown)) !== null) {
+      if (match[1].trim() === language) {
+        blocks.push(match[2].replace(/\n$/, ""));
+      }
     }
     return blocks;
   }
@@ -1137,6 +1662,18 @@
       return "";
     }
     return new Date(value).toLocaleString();
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
   }
 
   function delay(ms) {

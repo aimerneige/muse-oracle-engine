@@ -14,15 +14,17 @@ import (
 )
 
 type staticData struct {
-	Series            []domain.Series              `json:"series"`
-	Characters        []domain.Character           `json:"characters"`
-	Styles            []domain.StyleMeta           `json:"styles"`
-	StorybookTemplate string                       `json:"storybookTemplate"`
-	ComicTemplates    map[domain.ComicStyle]string `json:"comicTemplates"`
-	LLMModels         map[string][]string          `json:"llmModels"`
-	ImageModels       map[string][]string          `json:"imageModels"`
-	DefaultEndpoints  map[string]map[string]string `json:"defaultEndpoints"`
-	ImageSizes        []string                     `json:"imageSizes"`
+	Series              []domain.Series              `json:"series"`
+	Characters          []domain.Character           `json:"characters"`
+	Styles              []domain.StyleMeta           `json:"styles"`
+	StorybookTemplate   string                       `json:"storybookTemplate"`
+	LongOutlineTemplate string                       `json:"longOutlineTemplate"`
+	LongEpisodeTemplate string                       `json:"longEpisodeTemplate"`
+	ComicTemplates      map[domain.ComicStyle]string `json:"comicTemplates"`
+	LLMModels           map[string][]string          `json:"llmModels"`
+	ImageModels         map[string][]string          `json:"imageModels"`
+	DefaultEndpoints    map[string]map[string]string `json:"defaultEndpoints"`
+	ImageSizes          []string                     `json:"imageSizes"`
 }
 
 func main() {
@@ -56,6 +58,14 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
+	longOutline, err := os.ReadFile("internal/prompt/templates/storybook/long_outline.md.tmpl")
+	if err != nil {
+		fail(err)
+	}
+	longEpisode, err := os.ReadFile("internal/prompt/templates/storybook/long_episode.md.tmpl")
+	if err != nil {
+		fail(err)
+	}
 
 	comicTemplates := make(map[domain.ComicStyle]string, len(styles))
 	for _, style := range styles {
@@ -68,11 +78,13 @@ func main() {
 	}
 
 	data := staticData{
-		Series:            series,
-		Characters:        characters,
-		Styles:            styles,
-		StorybookTemplate: string(storybook),
-		ComicTemplates:    comicTemplates,
+		Series:              series,
+		Characters:          characters,
+		Styles:              styles,
+		StorybookTemplate:   string(storybook),
+		LongOutlineTemplate: string(longOutline),
+		LongEpisodeTemplate: string(longEpisode),
+		ComicTemplates:      comicTemplates,
 		LLMModels: map[string][]string{
 			"gemini": {
 				"gemini-3.1-pro-preview",

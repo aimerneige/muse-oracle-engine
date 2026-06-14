@@ -98,6 +98,13 @@
               <select id="styleSelect"></select>
             </label>
             <label>
+              流程
+              <select id="storyMode">
+                <option value="standard">标准漫画</option>
+                <option value="long">长漫画</option>
+              </select>
+            </label>
+            <label>
               对白语言
               <input id="languageInput" type="text" value="中文">
             </label>
@@ -120,6 +127,7 @@
 
         <section class="tabs">
           <button class="tab active" data-tab="storyPrompt" type="button">分镜 Prompt</button>
+          <button class="tab" data-tab="longManga" type="button">长漫画</button>
           <button class="tab" data-tab="storyboard" type="button">分镜</button>
           <button class="tab" data-tab="imagePrompts" type="button">图片 Prompt</button>
           <button class="tab" data-tab="images" type="button">图片</button>
@@ -132,6 +140,30 @@
             <button data-copy="storyboardPrompt" type="button">复制</button>
           </div>
           <textarea id="storyboardPrompt" class="code-area" spellcheck="false"></textarea>
+        </section>
+
+        <section id="longManga" class="tab-panel">
+          <div class="panel-title">
+            <h2>长漫画</h2>
+            <div class="inline-actions">
+              <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
+              <button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button>
+              <button id="parseLongOutlineBtn" type="button">解析梗概</button>
+              <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
+              <button id="callLongEpisodesBtn" type="button" class="primary">调用 LLM 生成逐话分镜</button>
+            </div>
+          </div>
+
+          <label>
+            长漫画梗概 Prompt
+            <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
+          </label>
+          <label>
+            长漫画梗概结果
+            <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
+          </label>
+          <div id="longOutlineSummary" class="summary-list"></div>
+          <div id="longEpisodeList" class="panel-list"></div>
         </section>
 
         <section id="storyboard" class="tab-panel">
