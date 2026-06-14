@@ -118,7 +118,7 @@
             <textarea id="plotHint" rows="5" placeholder="例如：二人在学校里的温馨日常，发糖向，轻百合向"></textarea>
           </label>
 
-          <div class="actions">
+          <div id="standardActions" class="actions" data-route="standard">
             <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
             <button id="callLLMBtn" type="button" class="primary">调用 LLM 生成分镜</button>
             <button id="parseManualBtn" type="button">解析粘贴结果</button>
@@ -126,15 +126,15 @@
         </section>
 
         <section class="tabs">
-          <button class="tab active" data-tab="storyPrompt" type="button">分镜 Prompt</button>
-          <button class="tab" data-tab="longManga" type="button">长漫画</button>
+          <button class="tab active" data-tab="storyPrompt" data-route="standard" type="button">分镜 Prompt</button>
+          <button class="tab" data-tab="longManga" data-route="long" type="button">长漫画</button>
           <button class="tab" data-tab="storyboard" type="button">分镜</button>
           <button class="tab" data-tab="imagePrompts" type="button">图片 Prompt</button>
           <button class="tab" data-tab="images" type="button">图片</button>
           <button class="tab" data-tab="logs" type="button">日志</button>
         </section>
 
-        <section id="storyPrompt" class="tab-panel active">
+        <section id="storyPrompt" class="tab-panel active" data-route="standard">
           <div class="panel-title">
             <h2>分镜 Prompt</h2>
             <button data-copy="storyboardPrompt" type="button">复制</button>
@@ -142,7 +142,7 @@
           <textarea id="storyboardPrompt" class="code-area" spellcheck="false"></textarea>
         </section>
 
-        <section id="longManga" class="tab-panel">
+        <section id="longManga" class="tab-panel" data-route="long">
           <div class="panel-title">
             <h2>长漫画</h2>
             <div class="inline-actions">

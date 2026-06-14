@@ -27,7 +27,7 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput", "standardActions",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "parseManualBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "buildLongEpisodePromptsBtn", "callLongEpisodesBtn",
@@ -50,7 +50,10 @@
     els.seriesFilter.addEventListener("change", renderCharacters);
     els.characterSearch.addEventListener("input", renderCharacters);
     els.styleSelect.addEventListener("change", syncProjectFromForm);
-    els.storyMode.addEventListener("change", syncProjectFromForm);
+    els.storyMode.addEventListener("change", function () {
+      syncProjectFromForm();
+      updateRouteUI();
+    });
     els.languageInput.addEventListener("input", syncProjectFromForm);
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
@@ -281,6 +284,7 @@
   }
 
   function renderAll() {
+    updateRouteUI();
     renderProjectStatus();
     renderCharacters();
     renderSelectedCharacters();
@@ -294,6 +298,18 @@
 
   function renderProjectStatus() {
     els.projectStatus.textContent = state.project.status || "draft";
+  }
+
+  function updateRouteUI() {
+    var mode = state.project.storyMode || "standard";
+    document.querySelectorAll("[data-route]").forEach(function (element) {
+      element.hidden = element.dataset.route !== mode;
+    });
+    var activeTab = document.querySelector(".tab.active");
+    if (activeTab && activeTab.dataset.route && activeTab.dataset.route !== mode) {
+      setActiveTab(mode === "long" ? "longManga" : "storyPrompt");
+    }
+    els.fullAutoBtn.textContent = mode === "long" ? "全自动执行长漫画" : "全自动执行标准漫画";
   }
 
   function renderCharacters() {
