@@ -925,6 +925,7 @@
       upsertLongEpisode(script);
       mergeCostumeStates(script.costume_states || []);
       state.project.status = "long_episode_done";
+      syncLongMangaImagePrompts();
       renderLongManga();
       log("Parsed long manga episode " + episodeNumber + ".");
       return true;
@@ -1024,7 +1025,29 @@
     card.appendChild(head);
     appendField(card, "本话 Prompt", promptArea);
     appendField(card, "本话结果", rawArea);
+    appendLongEpisodeParsedSummary(card, item.episode);
     els.longEpisodeList.appendChild(card);
+  }
+
+  function appendLongEpisodeParsedSummary(card, episodeNumber) {
+    var script = findLongEpisode(episodeNumber);
+    if (!script) {
+      return;
+    }
+    var summary = document.createElement("div");
+    summary.className = "parse-summary";
+    var panels = script.panels || [];
+    var title = document.createElement("div");
+    title.className = "status-pill";
+    title.textContent = "已解析：第 " + script.episode + " 话，" + panels.length + " 格";
+    summary.appendChild(title);
+    panels.forEach(function (panel) {
+      var line = document.createElement("div");
+      line.className = "parse-line";
+      line.textContent = "第 " + panel.index + " 格：" + compactText(panel.content, 120);
+      summary.appendChild(line);
+    });
+    card.appendChild(summary);
   }
 
   function appendField(parent, labelText, control) {
@@ -1113,7 +1136,7 @@
     state.project.longEpisodePrompts.forEach(function (item) {
       var tab = document.createElement("button");
       tab.type = "button";
-      tab.textContent = "第 " + item.episode + " 话";
+      tab.textContent = "第 " + item.episode + " 话" + (findLongEpisode(item.episode) ? " ✓" : "");
       tab.className = item.episode === state.longMangaUI.activeEpisode ? "active" : "";
       tab.addEventListener("click", function () {
         setActiveLongEpisode(item.episode);
@@ -1141,6 +1164,19 @@
     if (!exists) {
       state.longMangaUI.activeEpisode = prompts[0].episode;
     }
+  }
+
+  function findLongEpisode(episodeNumber) {
+    return (state.project.longEpisodes || []).find(function (episode) {
+      return episode.episode === episodeNumber;
+    });
+  }
+
+  function syncLongMangaImagePrompts() {
+    applyLongEpisodesToPanels();
+    renderPanels();
+    buildImagePrompts();
+    state.longMangaUI.step = "episodes";
   }
 
   function renderImagePrompts() {
@@ -1988,6 +2024,11 @@
       return "";
     }
     return new Date(value).toLocaleString();
+  }
+
+  function compactText(value, limit) {
+    var text = String(value || "").replace(/\s+/g, " ").trim();
+    return text.length > limit ? text.slice(0, limit - 1) + "..." : text;
   }
 
   function escapeHTML(value) {

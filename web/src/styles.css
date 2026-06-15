@@ -306,6 +306,20 @@ label {
   color: #ffffff;
 }
 
+.parse-summary {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.parse-line {
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  padding-left: 9px;
+}
+
 .is-hidden {
   display: none !important;
 }
