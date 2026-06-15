@@ -8,6 +8,7 @@
   var state = {
     settings: defaultSettings(),
     project: defaultProject(),
+    settingsCollapsed: false,
     logs: []
   };
 
@@ -24,7 +25,7 @@
 
   function bindElements() {
     [
-      "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "saveSettingsBtn", "clearHistoryBtn",
+      "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput", "standardActions",
@@ -41,6 +42,7 @@
 
   function bindEvents() {
     els.saveSettingsBtn.addEventListener("click", saveSettingsFromForm);
+    els.settingsToggleBtn.addEventListener("click", toggleSettingsPanel);
     els.fullAutoBtn.addEventListener("click", runFullAuto);
     els.saveProjectBtn.addEventListener("click", saveProject);
     els.newProjectBtn.addEventListener("click", newProject);
@@ -239,6 +241,7 @@
       geminiImageSize: els.geminiImageSize.value
     };
     localStorage.setItem(settingsKey, JSON.stringify(state.settings));
+    setSettingsCollapsed(true);
     log("Settings saved locally.");
   }
 
@@ -294,6 +297,23 @@
     renderImages();
     renderHistory();
     renderLogs();
+    renderSettingsPanel();
+  }
+
+  function toggleSettingsPanel() {
+    setSettingsCollapsed(!state.settingsCollapsed);
+  }
+
+  function setSettingsCollapsed(collapsed) {
+    state.settingsCollapsed = collapsed;
+    renderSettingsPanel();
+  }
+
+  function renderSettingsPanel() {
+    els.settingsBody.hidden = state.settingsCollapsed;
+    els.settingsPanel.classList.toggle("collapsed", state.settingsCollapsed);
+    els.settingsToggleBtn.textContent = state.settingsCollapsed ? "展开" : "收起";
+    els.settingsToggleBtn.setAttribute("aria-expanded", String(!state.settingsCollapsed));
   }
 
   function renderProjectStatus() {

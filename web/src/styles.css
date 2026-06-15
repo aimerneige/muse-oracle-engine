@@ -145,6 +145,12 @@ label {
   margin-bottom: 12px;
 }
 
+.panel-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .panel-title h2 {
   margin: 0;
   font-size: 16px;
@@ -158,6 +164,15 @@ label {
   height: 1px;
   margin: 12px 0;
   background: var(--line);
+}
+
+.settings-body {
+  display: grid;
+  gap: 10px;
+}
+
+.panel.collapsed .panel-title {
+  margin-bottom: 0;
 }
 
 .form-grid {
@@ -319,7 +334,7 @@ label {
 }
 
 .log-output {
-  min-height: 320px;
+  height: 260px;
   margin: 0;
   overflow: auto;
   border: 1px solid var(--line);

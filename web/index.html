@@ -21,51 +21,64 @@
 
     <main class="layout">
       <aside class="sidebar">
-        <section class="panel">
+        <section id="settingsPanel" class="panel">
           <div class="panel-title">
             <h2>设置</h2>
-            <button id="saveSettingsBtn" type="button">保存</button>
+            <div class="panel-actions">
+              <button id="settingsToggleBtn" type="button" aria-expanded="true">收起</button>
+              <button id="saveSettingsBtn" type="button">保存</button>
+            </div>
           </div>
 
-          <label>
-            文本模型提供商
-            <select id="llmProvider"></select>
-          </label>
-          <label>
-            文本 Endpoint
-            <input id="llmEndpoint" type="url" autocomplete="off">
-          </label>
-          <label>
-            文本 API Key
-            <input id="llmApiKey" type="password" autocomplete="off">
-          </label>
-          <label>
-            文本模型
-            <select id="llmModel"></select>
-          </label>
+          <div id="settingsBody" class="settings-body">
+            <label>
+              文本模型提供商
+              <select id="llmProvider"></select>
+            </label>
+            <label>
+              文本 Endpoint
+              <input id="llmEndpoint" type="url" autocomplete="off">
+            </label>
+            <label>
+              文本 API Key
+              <input id="llmApiKey" type="password" autocomplete="off">
+            </label>
+            <label>
+              文本模型
+              <select id="llmModel"></select>
+            </label>
 
-          <div class="divider"></div>
+            <div class="divider"></div>
 
-          <label>
-            图片模型提供商
-            <select id="imageProvider"></select>
-          </label>
-          <label>
-            图片 Endpoint
-            <input id="imageEndpoint" type="url" autocomplete="off">
-          </label>
-          <label>
-            图片 API Key
-            <input id="imageApiKey" type="password" autocomplete="off">
-          </label>
-          <label>
-            图片模型
-            <select id="imageModel"></select>
-          </label>
-          <label id="geminiImageSizeWrap">
-            Gemini 图片尺寸
-            <select id="geminiImageSize"></select>
-          </label>
+            <label>
+              图片模型提供商
+              <select id="imageProvider"></select>
+            </label>
+            <label>
+              图片 Endpoint
+              <input id="imageEndpoint" type="url" autocomplete="off">
+            </label>
+            <label>
+              图片 API Key
+              <input id="imageApiKey" type="password" autocomplete="off">
+            </label>
+            <label>
+              图片模型
+              <select id="imageModel"></select>
+            </label>
+            <label id="geminiImageSizeWrap">
+              Gemini 图片尺寸
+              <select id="geminiImageSize"></select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="panel-title">
+            <h2>日志</h2>
+            <button id="clearLogBtn" type="button">清空</button>
+          </div>
+          <pre id="logOutput" class="log-output"></pre>
         </section>
 
         <section class="panel">
@@ -131,7 +144,6 @@
           <button class="tab" data-tab="storyboard" type="button">分镜</button>
           <button class="tab" data-tab="imagePrompts" type="button">图片 Prompt</button>
           <button class="tab" data-tab="images" type="button">图片</button>
-          <button class="tab" data-tab="logs" type="button">日志</button>
         </section>
 
         <section id="storyPrompt" class="tab-panel active" data-route="standard">
@@ -197,13 +209,6 @@
           <div id="imageList" class="image-list"></div>
         </section>
 
-        <section id="logs" class="tab-panel">
-          <div class="panel-title">
-            <h2>日志</h2>
-            <button id="clearLogBtn" type="button">清空</button>
-          </div>
-          <pre id="logOutput" class="log-output"></pre>
-        </section>
       </section>
     </main>
 
