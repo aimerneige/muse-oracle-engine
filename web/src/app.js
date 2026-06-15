@@ -10,10 +10,7 @@
     project: defaultProject(),
     settingsCollapsed: false,
     longMangaUI: {
-      outlineCollapsed: false,
-      episodesCollapsed: false,
-      outlineView: "prompt",
-      episodeView: "prompt",
+      step: "outline",
       activeEpisode: null
     },
     logs: []
@@ -38,9 +35,12 @@
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "manualPasteBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
-      "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "buildLongEpisodePromptsBtn", "callLongEpisodesBtn",
-      "longOutlineToggleBtn", "longOutlineBody", "longOutlinePromptTab", "rawLongOutlineTab", "longOutlinePromptWrap", "rawLongOutlineWrap",
-      "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodesToggleBtn", "longEpisodesBody", "longEpisodeTabs", "longEpisodeList",
+      "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
+      "longStepOutlinePanel", "longStepEpisodesPanel", "longStepImagesPanel",
+      "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
+      "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "parseLongEpisodeBtn", "nextLongEpisodesBtn",
+      "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
+      "buildLongImagePromptsBtn", "callLongImageBtn", "longImagePromptList", "longImageList",
       "panelList", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput"
     ].forEach(function (id) {
@@ -75,16 +75,22 @@
     els.buildLongOutlinePromptBtn.addEventListener("click", buildLongOutlinePrompt);
     els.callLongOutlineBtn.addEventListener("click", callLongOutline);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
+    els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
     els.callLongEpisodesBtn.addEventListener("click", callLongEpisodes);
-    els.longOutlineToggleBtn.addEventListener("click", toggleLongOutline);
-    els.longEpisodesToggleBtn.addEventListener("click", toggleLongEpisodes);
-    els.longOutlinePromptTab.addEventListener("click", function () {
-      setLongOutlineView("prompt");
+    els.parseLongEpisodeBtn.addEventListener("click", parseActiveLongEpisode);
+    els.nextLongEpisodesBtn.addEventListener("click", goToLongImagesStep);
+    els.longStepOutlineTab.addEventListener("click", function () {
+      setLongMangaStep("outline");
     });
-    els.rawLongOutlineTab.addEventListener("click", function () {
-      setLongOutlineView("result");
+    els.longStepEpisodesTab.addEventListener("click", function () {
+      setLongMangaStep("episodes");
     });
+    els.longStepImagesTab.addEventListener("click", function () {
+      setLongMangaStep("images");
+    });
+    els.buildLongImagePromptsBtn.addEventListener("click", buildLongImagePromptsStep);
+    els.callLongImageBtn.addEventListener("click", callImageAPI);
     els.callImageBtn.addEventListener("click", callImageAPI);
     els.downloadProjectBtn.addEventListener("click", downloadProject);
     els.clearLogBtn.addEventListener("click", function () {
@@ -332,29 +338,66 @@
     els.settingsToggleBtn.setAttribute("aria-expanded", String(!state.settingsCollapsed));
   }
 
-  function toggleLongOutline() {
-    state.longMangaUI.outlineCollapsed = !state.longMangaUI.outlineCollapsed;
-    renderLongManga();
-  }
-
-  function toggleLongEpisodes() {
-    state.longMangaUI.episodesCollapsed = !state.longMangaUI.episodesCollapsed;
-    renderLongManga();
-  }
-
-  function setLongOutlineView(view) {
-    state.longMangaUI.outlineView = view;
-    renderLongManga();
-  }
-
-  function setLongEpisodeView(view) {
-    state.longMangaUI.episodeView = view;
+  function setLongMangaStep(step) {
+    state.longMangaUI.step = step;
     renderLongManga();
   }
 
   function setActiveLongEpisode(episodeNumber) {
     state.longMangaUI.activeEpisode = episodeNumber;
     renderLongManga();
+  }
+
+  function parseActiveLongEpisode() {
+    var item = activeLongEpisodePrompt();
+    if (!item) {
+      log("Long manga episode prompt is required before parsing.");
+      return false;
+    }
+    return parseLongEpisodeFromRaw(item.episode);
+  }
+
+  function goToLongEpisodesStep() {
+    if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
+      return false;
+    }
+    if (state.project.longEpisodePrompts.length === 0 && !buildLongEpisodePrompts()) {
+      return false;
+    }
+    setLongMangaStep("episodes");
+    log("Moved to long manga episode prompts.");
+    return true;
+  }
+
+  function goToLongImagesStep() {
+    if (!ensureLongEpisodesParsed()) {
+      return false;
+    }
+    applyLongEpisodesToPanels();
+    renderPanels();
+    buildLongImagePromptsStep();
+    setLongMangaStep("images");
+    log("Moved to long manga image prompts.");
+    return true;
+  }
+
+  function ensureLongEpisodesParsed() {
+    if (state.project.longEpisodePrompts.length === 0 && !buildLongEpisodePrompts()) {
+      return false;
+    }
+    var allDone = true;
+    state.project.longEpisodePrompts.forEach(function (item) {
+      var exists = (state.project.longEpisodes || []).some(function (episode) {
+        return episode.episode === item.episode;
+      });
+      if (!exists) {
+        state.longMangaUI.activeEpisode = item.episode;
+        if (!parseLongEpisodeFromRaw(item.episode)) {
+          allDone = false;
+        }
+      }
+    });
+    return allDone;
   }
 
   function renderProjectStatus() {
@@ -701,8 +744,25 @@
     renderImagePrompts();
     renderImages();
     renderProjectStatus();
-    setActiveTab("imagePrompts");
+    if ((state.project.storyMode || "standard") === "long") {
+      state.longMangaUI.step = "images";
+      renderLongManga();
+      setActiveTab("longManga");
+    } else {
+      setActiveTab("imagePrompts");
+    }
     log("Built " + prompts.length + " image prompt(s).");
+  }
+
+  function buildLongImagePromptsStep() {
+    buildImagePrompts();
+    if (state.project.imagePrompts.length > 0) {
+      state.longMangaUI.step = "images";
+      renderLongManga();
+      setActiveTab("longManga");
+      return true;
+    }
+    return false;
   }
 
   function buildLongOutlinePrompt() {
@@ -728,7 +788,9 @@
     });
     els.longOutlinePrompt.value = state.project.longOutlinePrompt;
     state.project.status = "long_outline_prompt_ready";
+    state.longMangaUI.step = "outline";
     renderProjectStatus();
+    renderLongManga();
     setActiveTab("longManga");
     log("Long manga outline prompt built.");
     return true;
@@ -753,6 +815,7 @@
       state.project.rawLongOutline = text;
       els.rawLongOutline.value = text;
       parseLongOutlineFromRaw();
+      state.longMangaUI.step = "outline";
       saveProject();
       return true;
     } catch (err) {
@@ -769,6 +832,7 @@
       var outline = normalizeLongOutline(parseJSONBlock(state.project.rawLongOutline));
       state.project.longOutline = outline;
       state.project.status = "long_outline_done";
+      state.longMangaUI.step = "outline";
       renderLongManga();
       renderProjectStatus();
       log("Parsed long manga outline with " + outline.episodes.length + " episode(s).");
@@ -801,6 +865,7 @@
       };
     });
     state.project.status = "long_episode_prompts_ready";
+    state.longMangaUI.step = "episodes";
     renderLongManga();
     renderProjectStatus();
     setActiveTab("longManga");
@@ -840,6 +905,8 @@
       applyLongEpisodesToPanels();
       renderPanels();
       renderProjectStatus();
+      state.longMangaUI.step = "episodes";
+      renderLongManga();
       return allDone;
     } finally {
       setBusy(els.callLongEpisodesBtn, false);
@@ -873,20 +940,17 @@
     renderLongMangaSections();
     renderLongOutlineSummary();
     renderLongEpisodeList();
+    renderLongImages();
   }
 
   function renderLongMangaSections() {
-    var outlineCollapsed = state.longMangaUI.outlineCollapsed;
-    var episodesCollapsed = state.longMangaUI.episodesCollapsed;
-    var outlineView = state.longMangaUI.outlineView;
-    els.longOutlineBody.classList.toggle("is-hidden", outlineCollapsed);
-    els.longOutlineToggleBtn.textContent = outlineCollapsed ? "展开" : "收起";
-    els.longOutlinePromptTab.classList.toggle("active", outlineView === "prompt");
-    els.rawLongOutlineTab.classList.toggle("active", outlineView === "result");
-    els.longOutlinePromptWrap.classList.toggle("is-hidden", outlineView !== "prompt");
-    els.rawLongOutlineWrap.classList.toggle("is-hidden", outlineView !== "result");
-    els.longEpisodesBody.classList.toggle("is-hidden", episodesCollapsed);
-    els.longEpisodesToggleBtn.textContent = episodesCollapsed ? "展开" : "收起";
+    var step = state.longMangaUI.step;
+    els.longStepOutlineTab.classList.toggle("active", step === "outline");
+    els.longStepEpisodesTab.classList.toggle("active", step === "episodes");
+    els.longStepImagesTab.classList.toggle("active", step === "images");
+    els.longStepOutlinePanel.classList.toggle("is-hidden", step !== "outline");
+    els.longStepEpisodesPanel.classList.toggle("is-hidden", step !== "episodes");
+    els.longStepImagesPanel.classList.toggle("is-hidden", step !== "images");
   }
 
   function renderLongOutlineSummary() {
@@ -922,7 +986,7 @@
     card.className = "prompt-card";
     var head = document.createElement("div");
     head.className = "card-head";
-    head.innerHTML = "<h3>第 " + item.episode + " 话 Prompt / 结果</h3>";
+    head.innerHTML = "<h3>第 " + item.episode + " 话分镜脚本</h3>";
     var copy = document.createElement("button");
     copy.type = "button";
     copy.textContent = "复制 Prompt";
@@ -941,29 +1005,9 @@
     actions.appendChild(parse);
     head.appendChild(actions);
 
-    var modeTabs = document.createElement("div");
-    modeTabs.className = "sub-tabs";
-    var promptTab = document.createElement("button");
-    promptTab.type = "button";
-    promptTab.textContent = "Prompt";
-    promptTab.className = state.longMangaUI.episodeView === "prompt" ? "active" : "";
-    promptTab.addEventListener("click", function () {
-      setLongEpisodeView("prompt");
-    });
-    var rawTab = document.createElement("button");
-    rawTab.type = "button";
-    rawTab.textContent = "结果";
-    rawTab.className = state.longMangaUI.episodeView === "result" ? "active" : "";
-    rawTab.addEventListener("click", function () {
-      setLongEpisodeView("result");
-    });
-    modeTabs.appendChild(promptTab);
-    modeTabs.appendChild(rawTab);
-
     var promptArea = document.createElement("textarea");
     promptArea.value = item.prompt;
     promptArea.spellcheck = false;
-    promptArea.className = state.longMangaUI.episodeView === "prompt" ? "" : "is-hidden";
     promptArea.addEventListener("input", function () {
       item.prompt = promptArea.value;
       state.project.updatedAt = new Date().toISOString();
@@ -973,16 +1017,91 @@
     rawArea.value = getLongEpisodeRaw(item.episode);
     rawArea.placeholder = "可以在这里粘贴官方网页生成的本话 JSON 结果";
     rawArea.spellcheck = false;
-    rawArea.className = state.longMangaUI.episodeView === "result" ? "" : "is-hidden";
     rawArea.addEventListener("input", function () {
       setLongEpisodeRaw(item.episode, rawArea.value);
     });
 
     card.appendChild(head);
-    card.appendChild(modeTabs);
-    card.appendChild(promptArea);
-    card.appendChild(rawArea);
+    appendField(card, "本话 Prompt", promptArea);
+    appendField(card, "本话结果", rawArea);
     els.longEpisodeList.appendChild(card);
+  }
+
+  function appendField(parent, labelText, control) {
+    var label = document.createElement("label");
+    label.textContent = labelText;
+    label.appendChild(control);
+    parent.appendChild(label);
+  }
+
+  function renderLongImages() {
+    renderLongImagePrompts();
+    renderLongImageResults();
+  }
+
+  function renderLongImagePrompts() {
+    els.longImagePromptList.innerHTML = "";
+    if (state.project.imagePrompts.length === 0) {
+      var empty = document.createElement("span");
+      empty.className = "status-pill";
+      empty.textContent = "暂无图片 Prompt";
+      els.longImagePromptList.appendChild(empty);
+      return;
+    }
+    state.project.imagePrompts.forEach(function (item, index) {
+      var card = document.createElement("div");
+      card.className = "prompt-card";
+      var head = document.createElement("div");
+      head.className = "card-head";
+      head.innerHTML = "<h3>图片 Prompt " + item.index + "</h3>";
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.textContent = "复制";
+      copy.addEventListener("click", function () {
+        copyText(item.prompt);
+      });
+      head.appendChild(copy);
+      var textarea = document.createElement("textarea");
+      textarea.value = item.prompt;
+      textarea.spellcheck = false;
+      textarea.addEventListener("input", function () {
+        state.project.imagePrompts[index].prompt = textarea.value;
+        state.project.updatedAt = new Date().toISOString();
+      });
+      card.appendChild(head);
+      card.appendChild(textarea);
+      els.longImagePromptList.appendChild(card);
+    });
+  }
+
+  function renderLongImageResults() {
+    els.longImageList.innerHTML = "";
+    state.project.images.forEach(function (image) {
+      var card = document.createElement("div");
+      card.className = "image-card";
+      var head = document.createElement("div");
+      head.className = "card-head";
+      head.innerHTML = "<h3>图片 " + image.index + "</h3><span>" + image.status + "</span>";
+      card.appendChild(head);
+      if (image.dataUrl) {
+        var img = document.createElement("img");
+        img.src = image.dataUrl;
+        img.alt = "Generated image " + image.index;
+        card.appendChild(img);
+        var link = document.createElement("a");
+        link.href = image.dataUrl;
+        link.download = "panel-" + String(image.index).padStart(3, "0") + ".png";
+        link.textContent = "重新下载";
+        card.appendChild(link);
+      }
+      if (image.error) {
+        var error = document.createElement("div");
+        error.className = "error";
+        error.textContent = image.error;
+        card.appendChild(error);
+      }
+      els.longImageList.appendChild(card);
+    });
   }
 
   function renderLongEpisodeTabs() {
@@ -1066,6 +1185,7 @@
     }
 
     setBusy(els.callImageBtn, true);
+    setBusy(els.callLongImageBtn, true);
     var allDone = true;
     try {
       for (var i = 0; i < state.project.imagePrompts.length; i++) {
@@ -1088,10 +1208,17 @@
         return image.status === "downloaded";
       }) ? "images_done" : "image_partial";
       renderProjectStatus();
-      setActiveTab("images");
+      if ((state.project.storyMode || "standard") === "long") {
+        state.longMangaUI.step = "images";
+        renderLongManga();
+        setActiveTab("longManga");
+      } else {
+        setActiveTab("images");
+      }
       return allDone;
     } finally {
       setBusy(els.callImageBtn, false);
+      setBusy(els.callLongImageBtn, false);
     }
   }
 

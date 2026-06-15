@@ -292,6 +292,14 @@ label {
   margin-bottom: 8px;
 }
 
+.flow-tabs {
+  margin-bottom: 12px;
+}
+
+.flow-tabs button {
+  min-width: 96px;
+}
+
 .sub-tabs button.active {
   border-color: var(--accent);
   background: var(--accent);

@@ -156,46 +156,59 @@
         <section id="longManga" class="tab-panel" data-route="long">
           <div class="panel-title">
             <h2>长漫画</h2>
-            <div class="inline-actions">
-              <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
-              <button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button>
-              <button id="parseLongOutlineBtn" type="button">解析梗概</button>
-              <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
-              <button id="callLongEpisodesBtn" type="button" class="primary">调用 LLM 生成逐话分镜</button>
-            </div>
           </div>
 
-          <div class="flow-section">
+          <div class="sub-tabs flow-tabs">
+            <button id="longStepOutlineTab" class="active" type="button">梗概</button>
+            <button id="longStepEpisodesTab" type="button">逐话分镜</button>
+            <button id="longStepImagesTab" type="button">图片</button>
+          </div>
+
+          <div id="longStepOutlinePanel" class="flow-section">
             <div class="card-head">
               <h3>梗概</h3>
-              <button id="longOutlineToggleBtn" type="button">收起</button>
-            </div>
-            <div id="longOutlineBody">
-              <div class="sub-tabs">
-                <button id="longOutlinePromptTab" class="active" type="button">Prompt</button>
-                <button id="rawLongOutlineTab" type="button">结果</button>
+              <div class="inline-actions">
+                <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
+                <button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button>
+                <button id="parseLongOutlineBtn" type="button">解析梗概</button>
+                <button id="nextLongOutlineBtn" class="primary" type="button">下一步</button>
               </div>
-              <label id="longOutlinePromptWrap">
-                长漫画梗概 Prompt
-                <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
-              </label>
-              <label id="rawLongOutlineWrap">
-                长漫画梗概结果
-                <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
-              </label>
-              <div id="longOutlineSummary" class="summary-list"></div>
             </div>
+            <label>
+              长漫画梗概 Prompt
+              <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
+            </label>
+            <label>
+              长漫画梗概结果
+              <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
+            </label>
+            <div id="longOutlineSummary" class="summary-list"></div>
           </div>
 
-          <div class="flow-section">
+          <div id="longStepEpisodesPanel" class="flow-section">
             <div class="card-head">
               <h3>逐话分镜</h3>
-              <button id="longEpisodesToggleBtn" type="button">收起</button>
+              <div class="inline-actions">
+                <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
+                <button id="callLongEpisodesBtn" type="button">调用 LLM 生成逐话分镜</button>
+                <button id="parseLongEpisodeBtn" type="button">解析本话结果</button>
+                <button id="nextLongEpisodesBtn" class="primary" type="button">下一步</button>
+              </div>
             </div>
-            <div id="longEpisodesBody">
-              <div id="longEpisodeTabs" class="sub-tabs"></div>
-              <div id="longEpisodeList" class="panel-list compact"></div>
+            <div id="longEpisodeTabs" class="sub-tabs"></div>
+            <div id="longEpisodeList" class="panel-list compact"></div>
+          </div>
+
+          <div id="longStepImagesPanel" class="flow-section">
+            <div class="card-head">
+              <h3>图片</h3>
+              <div class="inline-actions">
+                <button id="buildLongImagePromptsBtn" type="button">生成图片 Prompt</button>
+                <button id="callLongImageBtn" class="primary" type="button">调用图片 API</button>
+              </div>
             </div>
+            <div id="longImagePromptList" class="prompt-list"></div>
+            <div id="longImageList" class="image-list"></div>
           </div>
         </section>
 
