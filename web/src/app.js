@@ -10,6 +10,9 @@
     project: defaultProject(),
     projectSaved: false,
     settingsCollapsed: true,
+    imageUI: {
+      activeIndex: null
+    },
     longMangaUI: {
       step: "outline",
       activeEpisode: null
@@ -41,8 +44,8 @@
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "parseLongEpisodeBtn", "nextLongEpisodesBtn",
       "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
-      "buildLongImagePromptsBtn", "callLongImageBtn", "longImagePromptList", "longImageList",
-      "panelList", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
+      "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
+      "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageTabs", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput"
     ].forEach(function (id) {
       els[id] = document.getElementById(id);
@@ -1091,6 +1094,7 @@
   }
 
   function renderLongImages() {
+    renderImageTabs(els.longImageTabs, imageTabItems());
     renderLongImagePrompts();
     renderLongImageResults();
   }
@@ -1104,60 +1108,20 @@
       els.longImagePromptList.appendChild(empty);
       return;
     }
-    state.project.imagePrompts.forEach(function (item, index) {
-      var card = document.createElement("div");
-      card.className = "prompt-card";
-      var head = document.createElement("div");
-      head.className = "card-head";
-      head.innerHTML = "<h3>图片 Prompt " + item.index + "</h3>";
-      var copy = document.createElement("button");
-      copy.type = "button";
-      copy.textContent = "复制";
-      copy.addEventListener("click", function () {
-        copyText(item.prompt);
-      });
-      head.appendChild(copy);
-      var textarea = document.createElement("textarea");
-      textarea.value = item.prompt;
-      textarea.spellcheck = false;
-      textarea.addEventListener("input", function () {
-        state.project.imagePrompts[index].prompt = textarea.value;
-        state.project.updatedAt = new Date().toISOString();
-      });
-      card.appendChild(head);
-      card.appendChild(textarea);
-      els.longImagePromptList.appendChild(card);
-    });
+    ensureActiveImageIndex();
+    var item = activeImagePrompt();
+    if (item) {
+      appendImagePromptCard(els.longImagePromptList, item);
+    }
   }
 
   function renderLongImageResults() {
     els.longImageList.innerHTML = "";
-    state.project.images.forEach(function (image) {
-      var card = document.createElement("div");
-      card.className = "image-card";
-      var head = document.createElement("div");
-      head.className = "card-head";
-      head.innerHTML = "<h3>图片 " + image.index + "</h3><span>" + image.status + "</span>";
-      card.appendChild(head);
-      if (image.dataUrl) {
-        var img = document.createElement("img");
-        img.src = image.dataUrl;
-        img.alt = "Generated image " + image.index;
-        card.appendChild(img);
-        var link = document.createElement("a");
-        link.href = image.dataUrl;
-        link.download = "panel-" + String(image.index).padStart(3, "0") + ".png";
-        link.textContent = "重新下载";
-        card.appendChild(link);
-      }
-      if (image.error) {
-        var error = document.createElement("div");
-        error.className = "error";
-        error.textContent = image.error;
-        card.appendChild(error);
-      }
-      els.longImageList.appendChild(card);
-    });
+    ensureActiveImageIndex();
+    var image = activeImageResult();
+    if (image) {
+      appendImageResultCard(els.longImageList, image);
+    }
   }
 
   function renderLongEpisodeTabs() {
@@ -1212,32 +1176,149 @@
     state.longMangaUI.step = "episodes";
   }
 
-  function renderImagePrompts() {
-    els.imagePromptList.innerHTML = "";
-    state.project.imagePrompts.forEach(function (item, index) {
-      var card = document.createElement("div");
-      card.className = "prompt-card";
-      var head = document.createElement("div");
-      head.className = "card-head";
-      head.innerHTML = "<h3>图片 Prompt " + item.index + "</h3>";
-      var copy = document.createElement("button");
-      copy.type = "button";
-      copy.textContent = "复制";
-      copy.addEventListener("click", function () {
-        copyText(item.prompt);
+  function imageTabItems() {
+    return state.project.imagePrompts.length > 0 ? state.project.imagePrompts : state.project.images;
+  }
+
+  function renderImageTabs(target, items) {
+    target.innerHTML = "";
+    if (items.length === 0) {
+      return;
+    }
+    ensureActiveImageIndex();
+    items.forEach(function (item) {
+      var tab = document.createElement("button");
+      tab.type = "button";
+      tab.textContent = imageTabLabel(item.index);
+      tab.className = item.index === state.imageUI.activeIndex ? "active" : "";
+      tab.addEventListener("click", function () {
+        setActiveImageIndex(item.index);
       });
-      head.appendChild(copy);
-      var textarea = document.createElement("textarea");
-      textarea.value = item.prompt;
-      textarea.spellcheck = false;
-      textarea.addEventListener("input", function () {
-        state.project.imagePrompts[index].prompt = textarea.value;
-        state.project.updatedAt = new Date().toISOString();
-      });
-      card.appendChild(head);
-      card.appendChild(textarea);
-      els.imagePromptList.appendChild(card);
+      target.appendChild(tab);
     });
+  }
+
+  function imageTabLabel(index) {
+    var image = findImageResult(index);
+    if (image && image.status === "downloaded") {
+      return "图片 " + index + " ✓";
+    }
+    if (image && image.status === "failed") {
+      return "图片 " + index + " !";
+    }
+    return "图片 " + index;
+  }
+
+  function setActiveImageIndex(index) {
+    state.imageUI.activeIndex = index;
+    renderImagePrompts();
+    renderImages();
+    renderLongImages();
+  }
+
+  function ensureActiveImageIndex() {
+    var items = imageTabItems();
+    if (items.length === 0) {
+      state.imageUI.activeIndex = null;
+      return;
+    }
+    var exists = items.some(function (item) {
+      return item.index === state.imageUI.activeIndex;
+    });
+    if (!exists) {
+      state.imageUI.activeIndex = items[0].index;
+    }
+  }
+
+  function activeImagePrompt() {
+    ensureActiveImageIndex();
+    return state.project.imagePrompts.find(function (item) {
+      return item.index === state.imageUI.activeIndex;
+    });
+  }
+
+  function activeImageResult() {
+    ensureActiveImageIndex();
+    var image = findImageResult(state.imageUI.activeIndex);
+    if (image) {
+      return image;
+    }
+    if (state.imageUI.activeIndex === null) {
+      return null;
+    }
+    return { index: state.imageUI.activeIndex, status: "pending", dataUrl: "", error: "" };
+  }
+
+  function findImageResult(index) {
+    return state.project.images.find(function (image) {
+      return image.index === index;
+    });
+  }
+
+  function appendImagePromptCard(parent, item) {
+    var card = document.createElement("div");
+    card.className = "prompt-card";
+    var head = document.createElement("div");
+    head.className = "card-head";
+    head.innerHTML = "<h3>图片 Prompt " + item.index + "</h3>";
+    var copy = document.createElement("button");
+    copy.type = "button";
+    copy.textContent = "复制";
+    copy.addEventListener("click", function () {
+      copyText(item.prompt);
+    });
+    head.appendChild(copy);
+    var textarea = document.createElement("textarea");
+    textarea.value = item.prompt;
+    textarea.spellcheck = false;
+    textarea.addEventListener("input", function () {
+      item.prompt = textarea.value;
+      state.project.updatedAt = new Date().toISOString();
+      autoSaveProject();
+    });
+    card.appendChild(head);
+    card.appendChild(textarea);
+    parent.appendChild(card);
+  }
+
+  function appendImageResultCard(parent, image) {
+    var card = document.createElement("div");
+    card.className = "image-card";
+    var head = document.createElement("div");
+    head.className = "card-head";
+    head.innerHTML = '<h3>图片 ' + image.index + '</h3><span>' + image.status + '</span>';
+    card.appendChild(head);
+    if (image.dataUrl) {
+      var img = document.createElement("img");
+      img.src = image.dataUrl;
+      img.alt = "Generated image " + image.index;
+      card.appendChild(img);
+      var open = document.createElement("a");
+      open.href = image.dataUrl;
+      open.download = "panel-" + String(image.index).padStart(3, "0") + ".png";
+      open.textContent = "重新下载";
+      card.appendChild(open);
+    }
+    if (image.error) {
+      var error = document.createElement("div");
+      error.className = "error";
+      error.textContent = image.error;
+      card.appendChild(error);
+    }
+    parent.appendChild(card);
+  }
+
+  function renderImagePrompts() {
+    renderImageTabs(els.imagePromptTabs, imageTabItems());
+    els.imagePromptList.innerHTML = "";
+    if (state.project.imagePrompts.length === 0) {
+      return;
+    }
+    ensureActiveImageIndex();
+    var item = activeImagePrompt();
+    if (item) {
+      appendImagePromptCard(els.imagePromptList, item);
+    }
   }
 
   async function callImageAPI() {
@@ -1259,6 +1340,7 @@
     try {
       for (var i = 0; i < state.project.imagePrompts.length; i++) {
         var item = state.project.imagePrompts[i];
+        state.imageUI.activeIndex = item.index;
         log("Generating image " + item.index + " with " + state.settings.imageProvider + "/" + state.settings.imageModel);
         try {
           var result = await generateImage(item.prompt);
@@ -1270,7 +1352,9 @@
           updateImageResult(item.index, { status: "failed", dataUrl: "", url: "", error: readableError(err) });
           logError("Image " + item.index + " failed", err);
         }
+        renderImagePrompts();
         renderImages();
+        renderLongImages();
         autoSaveProject();
       }
       state.project.status = state.project.images.every(function (image) {
@@ -1419,33 +1503,13 @@
   }
 
   function renderImages() {
+    renderImageTabs(els.imageTabs, imageTabItems());
     els.imageList.innerHTML = "";
-    state.project.images.forEach(function (image) {
-      var card = document.createElement("div");
-      card.className = "image-card";
-      var head = document.createElement("div");
-      head.className = "card-head";
-      head.innerHTML = '<h3>图片 ' + image.index + '</h3><span>' + image.status + '</span>';
-      card.appendChild(head);
-      if (image.dataUrl) {
-        var img = document.createElement("img");
-        img.src = image.dataUrl;
-        img.alt = "Generated image " + image.index;
-        card.appendChild(img);
-        var open = document.createElement("a");
-        open.href = image.dataUrl;
-        open.download = "panel-" + String(image.index).padStart(3, "0") + ".png";
-        open.textContent = "重新下载";
-        card.appendChild(open);
-      }
-      if (image.error) {
-        var error = document.createElement("div");
-        error.className = "error";
-        error.textContent = image.error;
-        card.appendChild(error);
-      }
-      els.imageList.appendChild(card);
-    });
+    ensureActiveImageIndex();
+    var image = activeImageResult();
+    if (image) {
+      appendImageResultCard(els.imageList, image);
+    }
   }
 
   function updateImageResult(index, patch) {
