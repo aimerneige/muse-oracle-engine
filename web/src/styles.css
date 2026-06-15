@@ -272,6 +272,36 @@ label {
   margin-top: 12px;
 }
 
+.panel-list.compact {
+  margin-top: 8px;
+}
+
+.flow-section {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.sub-tabs button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
 .story-card,
 .prompt-card,
 .image-card,

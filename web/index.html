@@ -165,16 +165,38 @@
             </div>
           </div>
 
-          <label>
-            长漫画梗概 Prompt
-            <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
-          </label>
-          <label>
-            长漫画梗概结果
-            <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
-          </label>
-          <div id="longOutlineSummary" class="summary-list"></div>
-          <div id="longEpisodeList" class="panel-list"></div>
+          <div class="flow-section">
+            <div class="card-head">
+              <h3>梗概</h3>
+              <button id="longOutlineToggleBtn" type="button">收起</button>
+            </div>
+            <div id="longOutlineBody">
+              <div class="sub-tabs">
+                <button id="longOutlinePromptTab" class="active" type="button">Prompt</button>
+                <button id="rawLongOutlineTab" type="button">结果</button>
+              </div>
+              <label id="longOutlinePromptWrap">
+                长漫画梗概 Prompt
+                <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
+              </label>
+              <label id="rawLongOutlineWrap">
+                长漫画梗概结果
+                <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
+              </label>
+              <div id="longOutlineSummary" class="summary-list"></div>
+            </div>
+          </div>
+
+          <div class="flow-section">
+            <div class="card-head">
+              <h3>逐话分镜</h3>
+              <button id="longEpisodesToggleBtn" type="button">收起</button>
+            </div>
+            <div id="longEpisodesBody">
+              <div id="longEpisodeTabs" class="sub-tabs"></div>
+              <div id="longEpisodeList" class="panel-list compact"></div>
+            </div>
+          </div>
         </section>
 
         <section id="storyboard" class="tab-panel">
