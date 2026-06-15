@@ -28,7 +28,7 @@
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput", "standardActions",
-      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "parseManualBtn",
+      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "manualPasteBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "buildLongEpisodePromptsBtn", "callLongEpisodesBtn",
       "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodeList",
@@ -58,7 +58,7 @@
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.callLLMBtn.addEventListener("click", callLLM);
-    els.parseManualBtn.addEventListener("click", parseStoryboardFromRaw);
+    els.manualPasteBtn.addEventListener("click", startManualStoryboardPaste);
     els.parseStoryboardBtn.addEventListener("click", parseStoryboardFromRaw);
     els.buildImagePromptsBtn.addEventListener("click", buildImagePrompts);
     els.buildLongOutlinePromptBtn.addEventListener("click", buildLongOutlinePrompt);
@@ -574,6 +574,13 @@
     renderPanels();
     renderProjectStatus();
     log("Parsed " + blocks.length + " storyboard block(s).");
+  }
+
+  function startManualStoryboardPaste() {
+    setActiveTab("storyboard");
+    els.rawStoryboard.focus();
+    els.rawStoryboard.select();
+    log("Paste the LLM result into the raw output box, then click Parse LLM Output.");
   }
 
   function renderPanels() {
