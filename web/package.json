@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build:web:single": "node web/tools/build_single_html.mjs"
+    "build:single": "node tools/build_single_html.mjs"
   },
   "devDependencies": {
     "terser": "^5.43.1"
