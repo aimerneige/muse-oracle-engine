@@ -28,7 +28,7 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput", "standardActions",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "manualPasteBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "buildLongEpisodePromptsBtn", "callLongEpisodesBtn",
@@ -55,6 +55,7 @@
     els.storyMode.addEventListener("change", function () {
       syncProjectFromForm();
       updateRouteUI();
+      setActiveTab(firstTabForMode(state.project.storyMode));
     });
     els.languageInput.addEventListener("input", syncProjectFromForm);
     els.plotHint.addEventListener("input", syncProjectFromForm);
@@ -326,9 +327,13 @@
     });
     var activeTab = document.querySelector(".tab.active");
     if (activeTab && activeTab.dataset.route && activeTab.dataset.route !== mode) {
-      setActiveTab(mode === "long" ? "longManga" : "storyPrompt");
+      setActiveTab(firstTabForMode(mode));
     }
     els.fullAutoBtn.textContent = mode === "long" ? "全自动执行长漫画" : "全自动执行标准漫画";
+  }
+
+  function firstTabForMode(mode) {
+    return mode === "long" ? "longManga" : "storyPrompt";
   }
 
   function renderCharacters() {
