@@ -8,7 +8,8 @@
   var state = {
     settings: defaultSettings(),
     project: defaultProject(),
-    settingsCollapsed: false,
+    projectSaved: false,
+    settingsCollapsed: true,
     longMangaUI: {
       step: "outline",
       activeEpisode: null
@@ -70,10 +71,12 @@
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.callLLMBtn.addEventListener("click", callLLM);
     els.manualPasteBtn.addEventListener("click", startManualStoryboardPaste);
+    els.rawStoryboard.addEventListener("input", updateRawStoryboardFromInput);
     els.parseStoryboardBtn.addEventListener("click", parseStoryboardFromRaw);
     els.buildImagePromptsBtn.addEventListener("click", buildImagePrompts);
     els.buildLongOutlinePromptBtn.addEventListener("click", buildLongOutlinePrompt);
     els.callLongOutlineBtn.addEventListener("click", callLongOutline);
+    els.rawLongOutline.addEventListener("input", updateRawLongOutlineFromInput);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
@@ -112,7 +115,7 @@
 
     window.addEventListener("beforeunload", function () {
       syncProjectFromForm();
-      localStorage.setItem(projectKey, JSON.stringify(persistableProject(state.project)));
+      autoSaveProject();
     });
   }
 
@@ -158,7 +161,9 @@
 
   function loadState() {
     state.settings = merge(defaultSettings(), readJSON(settingsKey, {}));
-    state.project = hydrateProject(readJSON(projectKey, {}));
+    var savedProject = readJSON(projectKey, null);
+    state.project = savedProject ? hydrateProject(savedProject) : defaultProject();
+    state.projectSaved = !!savedProject;
   }
 
   function hydrateControls() {
@@ -281,8 +286,33 @@
     renderProjectStatus();
   }
 
+  function updateRawStoryboardFromInput() {
+    state.project.rawStoryboard = els.rawStoryboard.value;
+    state.project.updatedAt = new Date().toISOString();
+    autoSaveProject();
+  }
+
+  function updateRawLongOutlineFromInput() {
+    state.project.rawLongOutline = els.rawLongOutline.value;
+    state.project.updatedAt = new Date().toISOString();
+    autoSaveProject();
+  }
+
   function saveProject() {
     syncProjectFromForm();
+    state.projectSaved = true;
+    persistProject();
+    log("Project prompts saved locally: " + state.project.id);
+  }
+
+  function autoSaveProject() {
+    if (!state.projectSaved) {
+      return;
+    }
+    persistProject();
+  }
+
+  function persistProject() {
     var snapshot = persistableProject(state.project);
     localStorage.setItem(projectKey, JSON.stringify(snapshot));
     var history = readHistory();
@@ -292,14 +322,14 @@
     next.unshift(snapshot);
     localStorage.setItem(historyKey, JSON.stringify(next.slice(0, 20)));
     renderHistory();
-    log("Project prompts saved locally: " + state.project.id);
   }
 
   function newProject() {
     state.project = defaultProject();
+    state.projectSaved = false;
     applyProjectToForm();
     renderAll();
-    localStorage.setItem(projectKey, JSON.stringify(persistableProject(state.project)));
+    localStorage.removeItem(projectKey);
     log("New project created.");
   }
 
@@ -547,7 +577,7 @@
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
       parseStoryboardFromRaw();
-      saveProject();
+      autoSaveProject();
       setActiveTab("storyboard");
       return true;
     } catch (err) {
@@ -681,6 +711,7 @@
     state.project.status = blocks.length > 0 ? "storyboard_done" : state.project.status;
     renderPanels();
     renderProjectStatus();
+    autoSaveProject();
     log("Parsed " + blocks.length + " storyboard block(s).");
   }
 
@@ -816,7 +847,7 @@
       els.rawLongOutline.value = text;
       parseLongOutlineFromRaw();
       state.longMangaUI.step = "outline";
-      saveProject();
+      autoSaveProject();
       return true;
     } catch (err) {
       logError("Long manga outline request failed", err);
@@ -835,6 +866,7 @@
       state.longMangaUI.step = "outline";
       renderLongManga();
       renderProjectStatus();
+      autoSaveProject();
       log("Parsed long manga outline with " + outline.episodes.length + " episode(s).");
       return true;
     } catch (err) {
@@ -896,7 +928,7 @@
           var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
           setLongEpisodeRaw(item.episode, text);
           parseLongEpisodeFromRaw(item.episode);
-          saveProject();
+          autoSaveProject();
         } catch (err) {
           allDone = false;
           logError("Long manga episode " + item.episode + " failed", err);
@@ -927,6 +959,7 @@
       state.project.status = "long_episode_done";
       syncLongMangaImagePrompts();
       renderLongManga();
+      autoSaveProject();
       log("Parsed long manga episode " + episodeNumber + ".");
       return true;
     } catch (err) {
@@ -1014,13 +1047,13 @@
       state.project.updatedAt = new Date().toISOString();
     });
 
-    var rawArea = document.createElement("textarea");
-    rawArea.value = getLongEpisodeRaw(item.episode);
-    rawArea.placeholder = "可以在这里粘贴官方网页生成的本话 JSON 结果";
-    rawArea.spellcheck = false;
-    rawArea.addEventListener("input", function () {
-      setLongEpisodeRaw(item.episode, rawArea.value);
-    });
+      var rawArea = document.createElement("textarea");
+      rawArea.value = getLongEpisodeRaw(item.episode);
+      rawArea.placeholder = "可以在这里粘贴官方网页生成的本话 JSON 结果";
+      rawArea.spellcheck = false;
+      rawArea.addEventListener("input", function () {
+        setLongEpisodeRaw(item.episode, rawArea.value, true);
+      });
 
     card.appendChild(head);
     appendField(card, "本话 Prompt", promptArea);
@@ -1238,7 +1271,7 @@
           logError("Image " + item.index + " failed", err);
         }
         renderImages();
-        saveProject();
+        autoSaveProject();
       }
       state.project.status = state.project.images.every(function (image) {
         return image.status === "downloaded";
@@ -1445,9 +1478,10 @@
       button.textContent = (item.plotHint || "未命名项目").slice(0, 46);
       button.addEventListener("click", function () {
         state.project = hydrateProject(item);
+        state.projectSaved = true;
         applyProjectToForm();
         renderAll();
-        localStorage.setItem(projectKey, JSON.stringify(persistableProject(state.project)));
+        autoSaveProject();
         log("Loaded project: " + item.id);
       });
       var meta = document.createElement("span");
@@ -1603,7 +1637,7 @@
     return item ? item.raw : "";
   }
 
-  function setLongEpisodeRaw(episodeNumber, raw) {
+  function setLongEpisodeRaw(episodeNumber, raw, shouldAutoSave) {
     if (!state.project.longEpisodeRaws) {
       state.project.longEpisodeRaws = [];
     }
@@ -1616,6 +1650,9 @@
       state.project.longEpisodeRaws.push({ episode: episodeNumber, raw: raw });
     }
     state.project.updatedAt = new Date().toISOString();
+    if (shouldAutoSave) {
+      autoSaveProject();
+    }
   }
 
   function appendLongOutlineDelta(delta) {
