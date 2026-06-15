@@ -171,6 +171,10 @@ label {
   gap: 10px;
 }
 
+.panel.collapsed .settings-body {
+  display: none;
+}
+
 .panel.collapsed .panel-title {
   margin-bottom: 0;
 }

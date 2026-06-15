@@ -310,7 +310,6 @@
   }
 
   function renderSettingsPanel() {
-    els.settingsBody.hidden = state.settingsCollapsed;
     els.settingsPanel.classList.toggle("collapsed", state.settingsCollapsed);
     els.settingsToggleBtn.textContent = state.settingsCollapsed ? "展开" : "收起";
     els.settingsToggleBtn.setAttribute("aria-expanded", String(!state.settingsCollapsed));
