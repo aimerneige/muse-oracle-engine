@@ -146,7 +146,7 @@
       status: "draft",
       characterIds: [],
       plotHint: "",
-      style: "chibi_figure",
+      style: "watercolor",
       storyMode: "standard",
       language: "中文",
       storyboardPrompt: "",
