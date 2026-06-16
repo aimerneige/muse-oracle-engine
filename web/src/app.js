@@ -747,7 +747,7 @@
     setStandardStep("storyboard");
     els.rawStoryboard.focus();
     els.rawStoryboard.select();
-    log("Paste the LLM result into the raw output box, then click Parse LLM Output.");
+    log("已切到分镜结果，请粘贴 LLM 输出后点击“解析 LLM 输出”。");
   }
 
   function renderPanels() {
