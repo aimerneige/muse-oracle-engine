@@ -199,6 +199,25 @@ label {
   font-size: 12px;
 }
 
+.notice-card {
+  border: 1px solid #e5c99e;
+  border-radius: 8px;
+  background: #fff8ed;
+  color: var(--ink);
+  padding: 12px 14px;
+}
+
+.notice-card h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.notice-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .character-list,
 .selected-list {
   display: flex;

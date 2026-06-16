@@ -13,7 +13,7 @@
         <p>静态漫画提示词与图片生成工作台</p>
       </div>
       <div class="header-actions">
-        <button id="fullAutoBtn" type="button" class="primary">全自动执行</button>
+        <button id="fullAutoBtn" type="button" class="primary" disabled>全自动执行</button>
         <button id="saveProjectBtn" type="button">保存项目</button>
         <button id="newProjectBtn" type="button">新建</button>
       </div>
@@ -91,6 +91,11 @@
       </aside>
 
       <section class="workspace">
+        <section class="notice-card" role="status">
+          <h2>生成功能暂未完成</h2>
+          <p>当前版本的 API 调用还在开发中，暂时无法自动生成分镜或图片。你仍然可以编辑项目、生成 Prompt、手动粘贴结果并导出 JSON。</p>
+        </section>
+
         <section class="panel project-panel">
           <div class="panel-title">
             <h2>项目</h2>
@@ -148,7 +153,7 @@
               <h3>分镜 Prompt</h3>
               <div class="inline-actions">
                 <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
-                <button id="callLLMBtn" type="button">调用 LLM 生成分镜</button>
+                <button id="callLLMBtn" type="button" disabled>调用 LLM 生成分镜</button>
                 <button data-copy="storyboardPrompt" type="button">复制</button>
               </div>
             </div>
@@ -176,7 +181,7 @@
             <div class="card-head">
               <h3>图片</h3>
               <div class="inline-actions">
-                <button id="callImageBtn" type="button" class="primary">调用图片 API</button>
+                <button id="callImageBtn" type="button" class="primary" disabled>调用图片 API</button>
                 <button id="downloadProjectBtn" type="button">导出 JSON</button>
               </div>
             </div>
@@ -202,7 +207,7 @@
               <h3>梗概</h3>
               <div class="inline-actions">
                 <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
-                <button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button>
+                <button id="callLongOutlineBtn" type="button" disabled>调用 LLM 生成梗概</button>
                 <button id="parseLongOutlineBtn" type="button">解析梗概</button>
                 <button id="nextLongOutlineBtn" class="primary" type="button">下一步</button>
               </div>
@@ -223,7 +228,7 @@
               <h3>逐话分镜</h3>
               <div class="inline-actions">
                 <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
-                <button id="callLongEpisodesBtn" type="button">调用 LLM 生成逐话分镜</button>
+                <button id="callLongEpisodesBtn" type="button" disabled>调用 LLM 生成逐话分镜</button>
                 <button id="parseLongEpisodeBtn" type="button">解析本话结果</button>
                 <button id="nextLongEpisodesBtn" class="primary" type="button">下一步</button>
               </div>
@@ -237,7 +242,7 @@
               <h3>图片</h3>
               <div class="inline-actions">
                 <button id="buildLongImagePromptsBtn" type="button">生成图片 Prompt</button>
-                <button id="callLongImageBtn" class="primary" type="button">调用图片 API</button>
+                <button id="callLongImageBtn" class="primary" type="button" disabled>调用图片 API</button>
               </div>
             </div>
             <div id="longImageTabs" class="sub-tabs"></div>
