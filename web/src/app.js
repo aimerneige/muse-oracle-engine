@@ -13,6 +13,9 @@
     imageUI: {
       activeIndex: null
     },
+    standardUI: {
+      step: "prompt"
+    },
     longMangaUI: {
       step: "outline",
       activeEpisode: null
@@ -37,6 +40,8 @@
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
+      "standardStepPromptTab", "standardStepStoryboardTab", "standardStepImagesTab",
+      "standardStepPromptPanel", "standardStepStoryboardPanel", "standardStepImagesPanel",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "manualPasteBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
@@ -74,6 +79,15 @@
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.callLLMBtn.addEventListener("click", callLLM);
     els.manualPasteBtn.addEventListener("click", startManualStoryboardPaste);
+    els.standardStepPromptTab.addEventListener("click", function () {
+      setStandardStep("prompt");
+    });
+    els.standardStepStoryboardTab.addEventListener("click", function () {
+      setStandardStep("storyboard");
+    });
+    els.standardStepImagesTab.addEventListener("click", function () {
+      setStandardStep("images");
+    });
     els.rawStoryboard.addEventListener("input", updateRawStoryboardFromInput);
     els.parseStoryboardBtn.addEventListener("click", parseStoryboardFromRaw);
     els.buildImagePromptsBtn.addEventListener("click", buildImagePrompts);
@@ -102,12 +116,6 @@
     els.clearLogBtn.addEventListener("click", function () {
       state.logs = [];
       renderLogs();
-    });
-
-    document.querySelectorAll(".tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        setActiveTab(tab.dataset.tab);
-      });
     });
 
     document.querySelectorAll("[data-copy]").forEach(function (button) {
@@ -344,6 +352,7 @@
 
   function renderAll() {
     updateRouteUI();
+    renderStandardFlow();
     renderProjectStatus();
     renderCharacters();
     renderSelectedCharacters();
@@ -369,6 +378,21 @@
     els.settingsPanel.classList.toggle("collapsed", state.settingsCollapsed);
     els.settingsToggleBtn.textContent = state.settingsCollapsed ? "展开" : "收起";
     els.settingsToggleBtn.setAttribute("aria-expanded", String(!state.settingsCollapsed));
+  }
+
+  function setStandardStep(step) {
+    state.standardUI.step = step;
+    renderStandardFlow();
+  }
+
+  function renderStandardFlow() {
+    var step = state.standardUI.step;
+    els.standardStepPromptTab.classList.toggle("active", step === "prompt");
+    els.standardStepStoryboardTab.classList.toggle("active", step === "storyboard");
+    els.standardStepImagesTab.classList.toggle("active", step === "images");
+    els.standardStepPromptPanel.classList.toggle("is-hidden", step !== "prompt");
+    els.standardStepStoryboardPanel.classList.toggle("is-hidden", step !== "storyboard");
+    els.standardStepImagesPanel.classList.toggle("is-hidden", step !== "images");
   }
 
   function setLongMangaStep(step) {
@@ -442,10 +466,7 @@
     document.querySelectorAll("[data-route]").forEach(function (element) {
       element.hidden = element.dataset.route !== mode;
     });
-    var activeTab = document.querySelector(".tab.active");
-    if (activeTab && activeTab.dataset.route && activeTab.dataset.route !== mode) {
-      setActiveTab(firstTabForMode(mode));
-    }
+    setActiveTab(firstTabForMode(mode));
     els.fullAutoBtn.textContent = mode === "long" ? "全自动执行长漫画" : "全自动执行标准漫画";
   }
 
@@ -550,6 +571,7 @@
     els.storyboardPrompt.value = state.project.storyboardPrompt;
     renderProjectStatus();
     setActiveTab("storyPrompt");
+    setStandardStep("prompt");
     log("Storyboard prompt built.");
     return true;
   }
@@ -574,14 +596,16 @@
       log("Calling " + state.settings.llmProvider + " LLM in streaming mode: " + state.settings.llmModel);
       state.project.rawStoryboard = "";
       els.rawStoryboard.value = "";
-      setActiveTab("storyboard");
+      setActiveTab("storyPrompt");
+      setStandardStep("storyboard");
       var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta, resetStoryboardOutput);
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
       parseStoryboardFromRaw();
       autoSaveProject();
-      setActiveTab("storyboard");
+      setActiveTab("storyPrompt");
+      setStandardStep("storyboard");
       return true;
     } catch (err) {
       logError("LLM request failed", err);
@@ -719,7 +743,8 @@
   }
 
   function startManualStoryboardPaste() {
-    setActiveTab("storyboard");
+    setActiveTab("storyPrompt");
+    setStandardStep("storyboard");
     els.rawStoryboard.focus();
     els.rawStoryboard.select();
     log("Paste the LLM result into the raw output box, then click Parse LLM Output.");
@@ -783,7 +808,8 @@
       renderLongManga();
       setActiveTab("longManga");
     } else {
-      setActiveTab("imagePrompts");
+      setActiveTab("storyPrompt");
+      setStandardStep("images");
     }
     log("Built " + prompts.length + " image prompt(s).");
   }
@@ -1366,7 +1392,8 @@
         renderLongManga();
         setActiveTab("longManga");
       } else {
-        setActiveTab("images");
+        setActiveTab("storyPrompt");
+        setStandardStep("images");
       }
       return allDone;
     } finally {
@@ -2000,9 +2027,6 @@
   }
 
   function setActiveTab(id) {
-    document.querySelectorAll(".tab").forEach(function (tab) {
-      tab.classList.toggle("active", tab.dataset.tab === id);
-    });
     document.querySelectorAll(".tab-panel").forEach(function (panel) {
       panel.classList.toggle("active", panel.id === id);
     });

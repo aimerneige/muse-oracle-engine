@@ -228,23 +228,6 @@ label {
   background: #fbfcfc;
 }
 
-.tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 1px;
-}
-
-.tab {
-  flex: 0 0 auto;
-}
-
-.tab.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
-}
-
 .tab-panel {
   display: none;
 }
