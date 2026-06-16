@@ -50,7 +50,7 @@
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "parseLongEpisodeBtn", "nextLongEpisodesBtn",
       "longOutlinePrompt", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
-      "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageTabs", "imageList", "downloadProjectBtn",
+      "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput"
     ].forEach(function (id) {
       els[id] = document.getElementById(id);
@@ -1530,7 +1530,6 @@
   }
 
   function renderImages() {
-    renderImageTabs(els.imageTabs, imageTabItems());
     els.imageList.innerHTML = "";
     ensureActiveImageIndex();
     var image = activeImageResult();
