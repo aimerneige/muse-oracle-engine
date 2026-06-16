@@ -149,25 +149,26 @@
               <div class="inline-actions">
                 <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
                 <button id="callLLMBtn" type="button">调用 LLM 生成分镜</button>
-                <button id="manualPasteBtn" type="button">解析 LLM 输出</button>
                 <button data-copy="storyboardPrompt" type="button">复制</button>
               </div>
             </div>
             <textarea id="storyboardPrompt" class="code-area small" spellcheck="false"></textarea>
+            <label>
+              LLM 原始输出
+              <textarea id="rawStoryboard" class="code-area small" spellcheck="false"></textarea>
+            </label>
+            <div class="inline-actions">
+              <button id="parseStoryboardBtn" class="primary" type="button">解析 LLM 输出</button>
+            </div>
           </div>
 
           <div id="standardStepStoryboardPanel" class="flow-section">
             <div class="card-head">
               <h3>分镜结果</h3>
               <div class="inline-actions">
-                <button id="parseStoryboardBtn" type="button">解析 LLM 输出</button>
                 <button id="buildImagePromptsBtn" class="primary" type="button">生成图片 Prompt</button>
               </div>
             </div>
-            <label>
-              LLM 原始输出
-              <textarea id="rawStoryboard" class="code-area small" spellcheck="false"></textarea>
-            </label>
             <div id="panelList" class="panel-list compact"></div>
           </div>
 

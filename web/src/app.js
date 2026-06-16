@@ -42,7 +42,7 @@
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
       "standardStepPromptTab", "standardStepStoryboardTab", "standardStepImagesTab",
       "standardStepPromptPanel", "standardStepStoryboardPanel", "standardStepImagesPanel",
-      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn", "manualPasteBtn",
+      "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
       "longStepOutlinePanel", "longStepEpisodesPanel", "longStepImagesPanel",
@@ -78,7 +78,6 @@
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.callLLMBtn.addEventListener("click", callLLM);
-    els.manualPasteBtn.addEventListener("click", startManualStoryboardPaste);
     els.standardStepPromptTab.addEventListener("click", function () {
       setStandardStep("prompt");
     });
@@ -739,15 +738,10 @@
     renderPanels();
     renderProjectStatus();
     autoSaveProject();
+    if (blocks.length > 0) {
+      setStandardStep("storyboard");
+    }
     log("Parsed " + blocks.length + " storyboard block(s).");
-  }
-
-  function startManualStoryboardPaste() {
-    setActiveTab("storyPrompt");
-    setStandardStep("storyboard");
-    els.rawStoryboard.focus();
-    els.rawStoryboard.select();
-    log("已切到分镜结果，请粘贴 LLM 输出后点击“解析 LLM 输出”。");
   }
 
   function renderPanels() {
