@@ -40,8 +40,8 @@
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
-      "standardStepPromptTab", "standardStepStoryboardTab", "standardStepImagesTab",
-      "standardStepPromptPanel", "standardStepStoryboardPanel", "standardStepImagesPanel",
+      "standardStepPromptTab", "standardStepImagesTab",
+      "standardStepPromptPanel", "standardStepImagesPanel",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn",
       "storyboardPrompt", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
@@ -80,9 +80,6 @@
     els.callLLMBtn.addEventListener("click", callLLM);
     els.standardStepPromptTab.addEventListener("click", function () {
       setStandardStep("prompt");
-    });
-    els.standardStepStoryboardTab.addEventListener("click", function () {
-      setStandardStep("storyboard");
     });
     els.standardStepImagesTab.addEventListener("click", function () {
       setStandardStep("images");
@@ -387,10 +384,8 @@
   function renderStandardFlow() {
     var step = state.standardUI.step;
     els.standardStepPromptTab.classList.toggle("active", step === "prompt");
-    els.standardStepStoryboardTab.classList.toggle("active", step === "storyboard");
     els.standardStepImagesTab.classList.toggle("active", step === "images");
     els.standardStepPromptPanel.classList.toggle("is-hidden", step !== "prompt");
-    els.standardStepStoryboardPanel.classList.toggle("is-hidden", step !== "storyboard");
     els.standardStepImagesPanel.classList.toggle("is-hidden", step !== "images");
   }
 
@@ -596,7 +591,7 @@
       state.project.rawStoryboard = "";
       els.rawStoryboard.value = "";
       setActiveTab("storyPrompt");
-      setStandardStep("storyboard");
+      setStandardStep("prompt");
       var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta, resetStoryboardOutput);
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
@@ -604,7 +599,6 @@
       parseStoryboardFromRaw();
       autoSaveProject();
       setActiveTab("storyPrompt");
-      setStandardStep("storyboard");
       return true;
     } catch (err) {
       logError("LLM request failed", err);
@@ -721,7 +715,7 @@
     }, onDelta);
   }
 
-  function parseStoryboardFromRaw() {
+  function parseStoryboardFromRaw(skipImagePrompts) {
     syncProjectFromForm();
     var blocks = extractCodeBlocks(state.project.rawStoryboard);
     if (blocks.length === 0 && state.project.rawStoryboard.trim()) {
@@ -739,9 +733,14 @@
     renderProjectStatus();
     autoSaveProject();
     if (blocks.length > 0) {
-      setStandardStep("storyboard");
+      if (!skipImagePrompts) {
+        buildImagePrompts();
+      } else {
+        setStandardStep("images");
+      }
     }
     log("Parsed " + blocks.length + " storyboard block(s).");
+    return blocks.length > 0;
   }
 
   function renderPanels() {
@@ -769,7 +768,7 @@
       applyLongEpisodesToPanels();
     }
     if (state.project.panels.length === 0) {
-      parseStoryboardFromRaw();
+      parseStoryboardFromRaw(true);
     }
     if (state.project.panels.length === 0) {
       log("Storyboard panels are required before building image prompts.");

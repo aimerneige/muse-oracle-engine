@@ -143,17 +143,17 @@
           </div>
 
           <div class="sub-tabs flow-tabs">
-            <button id="standardStepPromptTab" class="active" type="button">分镜 Prompt</button>
-            <button id="standardStepStoryboardTab" type="button">分镜结果</button>
+            <button id="standardStepPromptTab" class="active" type="button">分镜</button>
             <button id="standardStepImagesTab" type="button">图片</button>
           </div>
 
           <div id="standardStepPromptPanel" class="flow-section">
             <div class="card-head">
-              <h3>分镜 Prompt</h3>
+              <h3>分镜</h3>
               <div class="inline-actions">
                 <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
                 <button id="callLLMBtn" type="button" disabled>调用 LLM 生成分镜</button>
+                <button id="parseStoryboardBtn" type="button">解析 LLM 输出</button>
                 <button data-copy="storyboardPrompt" type="button">复制</button>
               </div>
             </div>
@@ -162,29 +162,18 @@
               LLM 原始输出
               <textarea id="rawStoryboard" class="code-area small" spellcheck="false" placeholder="将分镜 Prompt 交给 LLM 后，把返回的分镜结果粘贴到这里；API 可用时也可以由按钮自动填入。"></textarea>
             </label>
-            <div class="inline-actions">
-              <button id="parseStoryboardBtn" class="primary" type="button">解析 LLM 输出</button>
-            </div>
-          </div>
-
-          <div id="standardStepStoryboardPanel" class="flow-section">
-            <div class="card-head">
-              <h3>分镜结果</h3>
-              <div class="inline-actions">
-                <button id="buildImagePromptsBtn" class="primary" type="button">生成图片 Prompt</button>
-              </div>
-            </div>
-            <div id="panelList" class="panel-list compact"></div>
           </div>
 
           <div id="standardStepImagesPanel" class="flow-section">
             <div class="card-head">
               <h3>图片</h3>
               <div class="inline-actions">
+                <button id="buildImagePromptsBtn" type="button">生成图片 Prompt</button>
                 <button id="callImageBtn" type="button" class="primary" disabled>调用图片 API</button>
                 <button id="downloadProjectBtn" type="button">导出 JSON</button>
               </div>
             </div>
+            <div id="panelList" class="panel-list compact"></div>
             <div id="imagePromptTabs" class="sub-tabs"></div>
             <div id="imagePromptList" class="prompt-list"></div>
             <div id="imageList" class="image-list"></div>
