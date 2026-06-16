@@ -157,10 +157,10 @@
                 <button data-copy="storyboardPrompt" type="button">复制</button>
               </div>
             </div>
-            <textarea id="storyboardPrompt" class="code-area small" spellcheck="false"></textarea>
+            <textarea id="storyboardPrompt" class="code-area small" spellcheck="false" placeholder="选择角色、填写剧情要求后，点击“生成分镜 Prompt”生成给 LLM 使用的完整提示词。"></textarea>
             <label>
               LLM 原始输出
-              <textarea id="rawStoryboard" class="code-area small" spellcheck="false"></textarea>
+              <textarea id="rawStoryboard" class="code-area small" spellcheck="false" placeholder="将分镜 Prompt 交给 LLM 后，把返回的分镜结果粘贴到这里；API 可用时也可以由按钮自动填入。"></textarea>
             </label>
             <div class="inline-actions">
               <button id="parseStoryboardBtn" class="primary" type="button">解析 LLM 输出</button>
@@ -214,11 +214,11 @@
             </div>
             <label>
               长漫画梗概 Prompt
-              <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false"></textarea>
+              <textarea id="longOutlinePrompt" class="code-area small" spellcheck="false" placeholder="选择角色、填写剧情要求后，点击“生成梗概 Prompt”生成用于规划长漫画结构的提示词。"></textarea>
             </label>
             <label>
               长漫画梗概结果
-              <textarea id="rawLongOutline" class="code-area small" spellcheck="false"></textarea>
+              <textarea id="rawLongOutline" class="code-area small" spellcheck="false" placeholder="将梗概 Prompt 交给 LLM 后，把返回的长漫画梗概粘贴到这里，再解析并进入逐话分镜。"></textarea>
             </label>
             <div id="longOutlineSummary" class="summary-list"></div>
           </div>

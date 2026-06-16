@@ -752,6 +752,7 @@
       card.innerHTML = '<div class="card-head"><h3>分镜 ' + panel.index + '</h3><span>可编辑</span></div>';
       var textarea = document.createElement("textarea");
       textarea.value = panel.content;
+      textarea.placeholder = "这里是解析后的单个分镜内容；确认或微调后，进入下一步生成图片 Prompt。";
       textarea.spellcheck = false;
       textarea.addEventListener("input", function () {
         state.project.panels[index].content = textarea.value;
@@ -1064,6 +1065,7 @@
 
     var promptArea = document.createElement("textarea");
     promptArea.value = item.prompt;
+    promptArea.placeholder = "先解析长漫画梗概，再点击“生成逐话 Prompt”得到本话分镜提示词。";
     promptArea.spellcheck = false;
     promptArea.addEventListener("input", function () {
       item.prompt = promptArea.value;
@@ -1072,7 +1074,7 @@
 
       var rawArea = document.createElement("textarea");
       rawArea.value = getLongEpisodeRaw(item.episode);
-      rawArea.placeholder = "可以在这里粘贴官方网页生成的本话 JSON 结果";
+      rawArea.placeholder = "将本话 Prompt 交给 LLM 后，把返回的分镜结果粘贴到这里，再解析本话内容。";
       rawArea.spellcheck = false;
       rawArea.addEventListener("input", function () {
         setLongEpisodeRaw(item.episode, rawArea.value, true);
@@ -1290,6 +1292,7 @@
     head.appendChild(copy);
     var textarea = document.createElement("textarea");
     textarea.value = item.prompt;
+    textarea.placeholder = "先完成分镜解析，再点击“生成图片 Prompt”得到用于图片模型的提示词。";
     textarea.spellcheck = false;
     textarea.addEventListener("input", function () {
       item.prompt = textarea.value;
