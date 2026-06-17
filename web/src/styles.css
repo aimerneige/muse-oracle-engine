@@ -22,6 +22,7 @@ body {
   color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
+  overflow-x: hidden;
 }
 
 button,
@@ -39,6 +40,7 @@ button {
   color: var(--ink);
   padding: 6px 11px;
   cursor: pointer;
+  line-height: 1.25;
 }
 
 button:hover {
@@ -143,6 +145,7 @@ label {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .panel-actions {
@@ -342,11 +345,13 @@ label {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 .card-head h3 {
   margin: 0;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .card-head span,
@@ -404,34 +409,200 @@ label {
 }
 
 @media (max-width: 920px) {
+  .app-header {
+    padding: 14px 16px;
+  }
+
   .layout {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .workspace {
+    order: 1;
+  }
+
+  .sidebar {
+    order: 2;
   }
 
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .log-output {
+    height: 180px;
+  }
+
+  .code-area {
+    min-height: 360px;
+  }
+
+  .code-area.small,
+  .prompt-card textarea,
+  .story-card textarea {
+    min-height: 190px;
+  }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 720px) {
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 15px;
+  }
+
+  button {
+    min-height: 40px;
+    padding: 8px 10px;
+    white-space: normal;
+  }
+
   .app-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
   }
 
   .header-actions,
   .actions,
   .inline-actions {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   }
 
-  .header-actions button,
-  .actions button,
-  .inline-actions button {
-    flex: 1 1 140px;
+  .panel,
+  .tab-panel {
+    padding: 12px;
+  }
+
+  .panel-title,
+  .card-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .card-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .sub-tabs {
+    flex-wrap: nowrap;
+    margin: 0 -12px 8px;
+    overflow-x: auto;
+    padding: 0 12px 4px;
+    scrollbar-width: thin;
+  }
+
+  .sub-tabs button {
+    flex: 0 0 auto;
+  }
+
+  .flow-tabs button {
+    min-width: 108px;
+  }
+
+  .character-list,
+  .selected-list {
+    flex-wrap: nowrap;
+    margin-inline: -12px;
+    overflow-x: auto;
+    padding-inline: 12px;
+  }
+
+  .selected-list {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
+  .character-chip {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-header {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #fullAutoBtn {
+    grid-column: 1 / -1;
+  }
+
+  .layout {
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .panel,
+  .tab-panel,
+  .flow-section,
+  .story-card,
+  .prompt-card,
+  .image-card,
+  .history-item,
+  .notice-card {
+    border-radius: 6px;
+    padding: 10px;
+  }
+
+  .panel-title h2,
+  .notice-card h2 {
+    font-size: 15px;
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notice-card p {
+    font-size: 13px;
+  }
+
+  .sub-tabs,
+  .character-list,
+  .selected-list {
+    margin-inline: -10px;
+    padding-inline: 10px;
+  }
+
+  .code-area {
+    min-height: 300px;
+  }
+
+  .code-area.small,
+  .prompt-card textarea,
+  .story-card textarea {
+    min-height: 170px;
+  }
+
+  .log-output {
+    height: 150px;
+    padding: 10px;
+  }
+
+  .image-card img {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-actions,
+  .actions,
+  .inline-actions {
     grid-template-columns: 1fr;
   }
 }
