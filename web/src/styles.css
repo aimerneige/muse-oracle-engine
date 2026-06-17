@@ -78,6 +78,10 @@ textarea {
   line-height: 1.5;
 }
 
+textarea[readonly] {
+  background: #f8faf9;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -269,6 +273,19 @@ label {
   min-height: 220px;
 }
 
+.generated-prompt {
+  cursor: text;
+}
+
+.prompt-field {
+  display: grid;
+  gap: 8px;
+}
+
+.copy-prompt-btn {
+  justify-self: end;
+}
+
 .panel-list,
 .prompt-list,
 .image-list {
@@ -406,6 +423,42 @@ label {
   color: #d8f4e7;
   padding: 12px;
   white-space: pre-wrap;
+}
+
+.confirm-dialog {
+  width: min(420px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 0;
+  box-shadow: 0 14px 48px rgba(24, 33, 31, 0.2);
+}
+
+.confirm-dialog::backdrop {
+  background: rgba(24, 33, 31, 0.34);
+}
+
+.confirm-dialog form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.confirm-dialog p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 920px) {
@@ -596,6 +649,15 @@ label {
 
   .image-card img {
     max-width: 100%;
+  }
+
+  .copy-prompt-btn {
+    justify-self: stretch;
+  }
+
+  .dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
