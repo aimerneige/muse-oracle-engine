@@ -12,15 +12,32 @@ import (
 
 // LongMangaStore persists standalone multi-round manga generation state.
 type LongMangaStore struct {
-	rootDir string
+	rootDir     string
+	stateName   string
+	outlineName string
+	storyPrefix string
 }
 
 // NewLongMangaStore creates a store rooted at the same directory as project data.
 func NewLongMangaStore(rootDir string) (*LongMangaStore, error) {
+	return newMangaStore(rootDir, "long_manga.json", "long_outline.json", "long_episode")
+}
+
+// NewFourPanelMangaStore creates storage for the selectable four-panel flow.
+func NewFourPanelMangaStore(rootDir string) (*LongMangaStore, error) {
+	return newMangaStore(rootDir, "four_panel_manga.json", "four_panel_outline.json", "four_panel_story")
+}
+
+func newMangaStore(rootDir, stateName, outlineName, storyPrefix string) (*LongMangaStore, error) {
 	if err := os.MkdirAll(rootDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", rootDir, err)
 	}
-	return &LongMangaStore{rootDir: rootDir}, nil
+	return &LongMangaStore{
+		rootDir:     rootDir,
+		stateName:   stateName,
+		outlineName: outlineName,
+		storyPrefix: storyPrefix,
+	}, nil
 }
 
 func (s *LongMangaStore) Save(state *domain.LongMangaState) error {
@@ -64,7 +81,7 @@ func (s *LongMangaStore) SaveEpisodeScript(projectID string, script domain.LongM
 		return "", fmt.Errorf("failed to create storyboards directory: %w", err)
 	}
 
-	filename := fmt.Sprintf("long_episode_%03d.md", script.Episode)
+	filename := fmt.Sprintf("%s_%03d.md", s.storyPrefix, script.Episode)
 	path := filepath.Join(storyboardsDir, filename)
 	if err := os.WriteFile(path, []byte(formatLongMangaEpisodeScript(script)), 0o644); err != nil {
 		return "", fmt.Errorf("failed to write long manga episode script: %w", err)
@@ -78,7 +95,7 @@ func (s *LongMangaStore) SaveEpisodeFailure(projectID string, episode domain.Lon
 		return "", fmt.Errorf("failed to create storyboards directory: %w", err)
 	}
 
-	filename := fmt.Sprintf("long_episode_%03d.md", episode.Episode)
+	filename := fmt.Sprintf("%s_%03d.md", s.storyPrefix, episode.Episode)
 	path := filepath.Join(storyboardsDir, filename)
 	if err := os.WriteFile(path, []byte(formatLongMangaEpisodeFailure(episode, generationErr)), 0o644); err != nil {
 		return "", fmt.Errorf("failed to write long manga episode failure: %w", err)
@@ -129,11 +146,11 @@ func (s *LongMangaStore) projectDir(projectID string) string {
 }
 
 func (s *LongMangaStore) stateFile(projectID string) string {
-	return filepath.Join(s.projectDir(projectID), "long_manga.json")
+	return filepath.Join(s.projectDir(projectID), s.stateName)
 }
 
 func (s *LongMangaStore) outlineFile(projectID string) string {
-	return filepath.Join(s.projectDir(projectID), "long_outline.json")
+	return filepath.Join(s.projectDir(projectID), s.outlineName)
 }
 
 func formatLongMangaEpisodeScript(script domain.LongMangaEpisodeScript) string {

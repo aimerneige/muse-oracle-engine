@@ -53,6 +53,9 @@
         errors.push("重试图片序号必须是大于 0 的整数");
       }
     }
+	if (config.longManga && config.fourPanelManga) {
+	  errors.push("长篇漫画与四格漫画流程不能同时启用");
+	}
 
     return errors;
   }
@@ -103,11 +106,13 @@
       addValue("language", config.language);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  addFlag("four-panel-manga", config.fourPanelManga);
     } else if (config.mode === "resume") {
       addValue("resume", config.resume);
       addValue("retry-image", config.retryImage);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  addFlag("four-panel-manga", config.fourPanelManga);
     } else {
       addFlag(config.listType, true);
     }
@@ -260,7 +265,8 @@
         retryImage: document.getElementById("retryImage").value,
         listType: selectedListType ? selectedListType.value : "list-characters",
         promptOnly: document.getElementById("promptOnly").checked,
-        longManga: document.getElementById("longManga").checked
+		longManga: document.getElementById("longManga").checked,
+		fourPanelManga: document.getElementById("fourPanelManga").checked
       };
     }
 
@@ -314,6 +320,12 @@
     form.addEventListener("input", render);
     form.addEventListener("change", render);
     document.getElementById("executable").addEventListener("change", render);
+	document.getElementById("longManga").addEventListener("change", function () {
+	  if (this.checked) document.getElementById("fourPanelManga").checked = false;
+	});
+	document.getElementById("fourPanelManga").addEventListener("change", function () {
+	  if (this.checked) document.getElementById("longManga").checked = false;
+	});
     document.getElementById("seriesFilter").addEventListener("change", renderCharacterList);
     document.getElementById("characterSearch").addEventListener("input", renderCharacterList);
     document.getElementById("clearCharacters").addEventListener("click", function () {

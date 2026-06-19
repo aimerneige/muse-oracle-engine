@@ -61,6 +61,21 @@ type LongMangaEpisodeData struct {
 	StyleDescription  string
 }
 
+// FourPanelOutlineData contains data for the four-panel story candidate prompt.
+type FourPanelOutlineData struct {
+	Characters []domain.Character
+	PlotHint   string
+	Language   string
+}
+
+// FourPanelStoryboardData contains data for one selected four-panel story prompt.
+type FourPanelStoryboardData struct {
+	Characters       []domain.Character
+	Episode          domain.LongMangaEpisodeOutline
+	Language         string
+	StyleDescription string
+}
+
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.
 func (e *Engine) RenderStorybook(data StorybookData) (string, error) {
 	data.Language = domain.NormalizeLanguage(data.Language)
@@ -77,6 +92,18 @@ func (e *Engine) RenderLongMangaOutline(data LongMangaOutlineData) (string, erro
 func (e *Engine) RenderLongMangaEpisode(data LongMangaEpisodeData) (string, error) {
 	data.Language = domain.NormalizeLanguage(data.Language)
 	return e.render("long_episode.md.tmpl", data)
+}
+
+// RenderFourPanelOutline renders the independent four-panel story candidate prompt.
+func (e *Engine) RenderFourPanelOutline(data FourPanelOutlineData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
+	return e.render("four_panel_outline.md.tmpl", data)
+}
+
+// RenderFourPanelStoryboard renders one selected four-panel storyboard prompt.
+func (e *Engine) RenderFourPanelStoryboard(data FourPanelStoryboardData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
+	return e.render("four_panel_storyboard.md.tmpl", data)
 }
 
 // ComicDrawData contains the data needed to render a comic drawing prompt.

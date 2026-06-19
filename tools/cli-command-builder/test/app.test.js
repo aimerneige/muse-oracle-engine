@@ -24,6 +24,7 @@ function config(overrides = {}) {
     listType: "list-characters",
     promptOnly: false,
     longManga: false,
+	fourPanelManga: false,
     ...overrides
   };
 }
@@ -80,6 +81,19 @@ test("builds resume and retry command without create parameters", () => {
     "go run cmd/generate/main.go --resume project-id --retry-image 3 --prompt-only"
   );
   assert.deepEqual(result.errors, []);
+});
+
+test("builds a four-panel manga command", () => {
+	const result = buildCommand(config({ fourPanelManga: true }));
+
+	assert.match(result.command, /--four-panel-manga$/);
+	assert.deepEqual(result.errors, []);
+});
+
+test("rejects conflicting multi-round manga modes", () => {
+	const result = buildCommand(config({ longManga: true, fourPanelManga: true }));
+
+	assert.deepEqual(result.errors, ["长篇漫画与四格漫画流程不能同时启用"]);
 });
 
 test("builds exactly one list flag", () => {

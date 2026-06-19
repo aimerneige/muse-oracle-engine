@@ -50,6 +50,7 @@
       "storyboardPrompt", "copyStoryboardPromptBtn", "rawStoryboard", "parseStoryboardBtn", "buildImagePromptsBtn",
       "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
       "longStepOutlinePanel", "longStepEpisodesPanel", "longStepImagesPanel",
+	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "parseLongEpisodeBtn", "nextLongEpisodesBtn",
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
@@ -176,6 +177,7 @@
       longOutlinePrompt: "",
       rawLongOutline: "",
       longOutline: null,
+	  selectedFourPanelStories: [],
       longEpisodePrompts: [],
       longEpisodeRaws: [],
       longEpisodes: [],
@@ -497,14 +499,18 @@
   function updateRouteUI() {
     var mode = state.project.storyMode || "standard";
     document.querySelectorAll("[data-route]").forEach(function (element) {
-      element.hidden = element.dataset.route !== mode;
+	  element.hidden = element.dataset.route.split(" ").indexOf(mode) === -1;
     });
     setActiveTab(firstTabForMode(mode));
-    els.fullAutoBtn.textContent = mode === "long" ? "全自动执行长漫画" : "全自动执行标准漫画";
+	if (mode === "four") {
+	  els.fullAutoBtn.textContent = "执行四格漫画流程";
+	} else {
+	  els.fullAutoBtn.textContent = mode === "long" ? "全自动执行长漫画" : "全自动执行标准漫画";
+	}
   }
 
   function firstTabForMode(mode) {
-    return mode === "long" ? "longManga" : "storyPrompt";
+	return mode === "long" || mode === "four" ? "longManga" : "storyPrompt";
   }
 
   function renderCharacters() {
@@ -1020,7 +1026,7 @@
     if (characters.length === 0) {
       state.project.longOutlinePrompt = "";
       els.longOutlinePrompt.value = "";
-      log("Select at least one character before building the long manga outline prompt.");
+	  log("Select at least one character before building the manga outline prompt.");
       return false;
     }
     if (!state.project.plotHint) {
@@ -1030,22 +1036,23 @@
       return false;
     }
 
-    var prompt = renderTemplate(data.longOutlineTemplate, {
+	var fourPanelMode = state.project.storyMode === "four";
+    var prompt = renderTemplate(fourPanelMode ? data.fourPanelOutlineTemplate : data.longOutlineTemplate, {
       Characters: characters,
       PlotHint: state.project.plotHint,
       Language: normalizeLanguage(state.project.language)
     });
-    if (!await confirmContentOverwrite(state.project.longOutlinePrompt, "已有长漫画梗概 Prompt 会被覆盖。")) {
+	if (!await confirmContentOverwrite(state.project.longOutlinePrompt, "已有漫画梗概 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.longOutlinePrompt = prompt;
     els.longOutlinePrompt.value = state.project.longOutlinePrompt;
-    state.project.status = "long_outline_prompt_ready";
+	state.project.status = fourPanelMode ? "four_panel_outline_prompt_ready" : "long_outline_prompt_ready";
     state.longMangaUI.step = "outline";
     renderProjectStatus();
     renderLongManga();
     setActiveTab("longManga");
-    log("Long manga outline prompt built.");
+	log(fourPanelMode ? "Four-panel manga candidate prompt built." : "Long manga outline prompt built.");
     return true;
   }
 
@@ -1087,12 +1094,14 @@
     try {
       var outline = normalizeLongOutline(parseJSONBlock(state.project.rawLongOutline));
       state.project.longOutline = outline;
-      state.project.status = "long_outline_done";
+	  state.project.selectedFourPanelStories = [];
+	  clearMultiRoundResults();
+	  state.project.status = state.project.storyMode === "four" ? "four_panel_outline_done" : "long_outline_done";
       state.longMangaUI.step = "outline";
       renderLongManga();
       renderProjectStatus();
       autoSaveProject();
-      log("Parsed long manga outline with " + outline.episodes.length + " episode(s).");
+	  log("Parsed manga outline with " + outline.episodes.length + " candidate(s).");
       return true;
     } catch (err) {
       logError("Failed to parse long manga outline", err);
@@ -1106,12 +1115,24 @@
       return false;
     }
 
+	var fourPanelMode = state.project.storyMode === "four";
+	var episodes = state.project.longOutline.episodes;
+	if (fourPanelMode) {
+	  var selected = new Set(state.project.selectedFourPanelStories || []);
+	  episodes = episodes.filter(function (episode) {
+		return selected.has(episode.episode);
+	  });
+	  if (episodes.length === 0) {
+		log("Select at least one four-panel story candidate before building storyboard prompts.");
+		return false;
+	  }
+	}
     var style = getStyle(state.project.style);
-    var prompts = state.project.longOutline.episodes.map(function (episode) {
+    var prompts = episodes.map(function (episode) {
       var characters = resolveCharacters(episode.character_ids);
       return {
         episode: episode.episode,
-        prompt: renderTemplate(data.longEpisodeTemplate, {
+		prompt: renderTemplate(fourPanelMode ? data.fourPanelStoryboardTemplate : data.longEpisodeTemplate, {
           Characters: characters,
           CharacterCostumes: costumeStatesForEpisode(episode.character_ids),
           FullOutline: state.project.longOutline,
@@ -1121,16 +1142,16 @@
         })
       };
     });
-    if (!await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有逐话 Prompt 会被覆盖。")) {
+	if (!await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.longEpisodePrompts = prompts;
-    state.project.status = "long_episode_prompts_ready";
+	state.project.status = fourPanelMode ? "four_panel_storyboard_prompts_ready" : "long_episode_prompts_ready";
     state.longMangaUI.step = "episodes";
     renderLongManga();
     renderProjectStatus();
     setActiveTab("longManga");
-    log("Built " + state.project.longEpisodePrompts.length + " long manga episode prompt(s).");
+	log("Built " + state.project.longEpisodePrompts.length + (fourPanelMode ? " four-panel storyboard prompt(s)." : " long manga episode prompt(s)."));
     return true;
   }
 
@@ -1156,14 +1177,14 @@
         setLongEpisodeRaw(item.episode, "");
         renderLongManga();
         try {
-          log("Generating long manga episode " + item.episode + ".");
+		  log("Generating manga storyboard " + item.episode + ".");
           var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
           setLongEpisodeRaw(item.episode, text);
           await parseLongEpisodeFromRaw(item.episode);
           autoSaveProject();
         } catch (err) {
           allDone = false;
-          logError("Long manga episode " + item.episode + " failed", err);
+		  logError("Manga storyboard " + item.episode + " failed", err);
         }
       }
       applyLongEpisodesToPanels();
@@ -1186,13 +1207,21 @@
     }
     try {
       var script = normalizeLongEpisode(parseJSONBlock(raw), outline);
+	  if (state.project.storyMode === "four") {
+		var stages = ["【起】", "【承】", "【转】", "【合】"];
+		if (script.panels.length !== 4 || script.panels.some(function (panel, index) {
+		  return panel.index !== index + 1 || panel.content.indexOf(stages[index]) === -1;
+		})) {
+		  throw new Error("Four-panel storyboard must contain exactly four panels indexed 1, 2, 3, 4.");
+		}
+	  }
       upsertLongEpisode(script);
       mergeCostumeStates(script.costume_states || []);
-      state.project.status = "long_episode_done";
+	  state.project.status = state.project.storyMode === "four" ? "four_panel_storyboard_done" : "long_episode_done";
       await syncLongMangaImagePrompts();
       renderLongManga();
       autoSaveProject();
-      log("Parsed long manga episode " + episodeNumber + ".");
+	  log("Parsed manga storyboard " + episodeNumber + ".");
       return true;
     } catch (err) {
       logError("Failed to parse long manga episode " + episodeNumber, err);
@@ -1201,6 +1230,13 @@
   }
 
   function renderLongManga() {
+	var fourPanelMode = state.project.storyMode === "four";
+	els.multiRoundTitle.textContent = fourPanelMode ? "四格漫画" : "长漫画";
+	els.multiRoundOutlineTitle.textContent = fourPanelMode ? "候选梗概与选择" : "梗概";
+	els.multiRoundOutlinePromptLabel.textContent = fourPanelMode ? "四格漫画候选梗概 Prompt" : "长漫画梗概 Prompt";
+	els.multiRoundOutlineResultLabel.textContent = fourPanelMode ? "四格漫画候选梗概结果" : "长漫画梗概结果";
+	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : "逐话分镜";
+	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "逐话分镜";
     els.longOutlinePrompt.value = state.project.longOutlinePrompt || "";
     els.rawLongOutline.value = state.project.rawLongOutline || "";
     renderLongMangaSections();
@@ -1227,12 +1263,44 @@
     state.project.longOutline.episodes.forEach(function (episode) {
       var card = document.createElement("div");
       card.className = "story-card";
-      card.innerHTML = '<div class="card-head"><h3>第 ' + episode.episode + ' 话《' + escapeHTML(episode.title) + '》</h3><span>' + (episode.character_ids || []).join(", ") + '</span></div>';
+	  var fourPanelMode = state.project.storyMode === "four";
+	  card.innerHTML = '<div class="card-head"><h3>' + (fourPanelMode ? "候选 " : "第 ") + episode.episode + (fourPanelMode ? "《" : " 话《") + escapeHTML(episode.title) + '》</h3><span>' + (episode.character_ids || []).join(", ") + '</span></div>';
+	  if (fourPanelMode) {
+		var select = document.createElement("label");
+		var checkbox = document.createElement("input");
+		checkbox.type = "checkbox";
+		checkbox.checked = (state.project.selectedFourPanelStories || []).indexOf(episode.episode) !== -1;
+		checkbox.addEventListener("change", function () {
+		  setFourPanelStorySelected(episode.episode, checkbox.checked);
+		});
+		select.appendChild(checkbox);
+		select.appendChild(document.createTextNode(" 选择这个独立四格剧情"));
+		card.appendChild(select);
+	  }
       var text = document.createElement("div");
       text.textContent = episode.summary;
       card.appendChild(text);
       els.longOutlineSummary.appendChild(card);
     });
+  }
+
+  function setFourPanelStorySelected(episodeNumber, selected) {
+	var current = state.project.selectedFourPanelStories || [];
+	state.project.selectedFourPanelStories = selected
+	  ? Array.from(new Set(current.concat(episodeNumber))).sort(function (a, b) { return a - b; })
+	  : current.filter(function (number) { return number !== episodeNumber; });
+	clearMultiRoundResults();
+	autoSaveProject();
+	renderLongManga();
+  }
+
+  function clearMultiRoundResults() {
+	state.project.longEpisodePrompts = [];
+	state.project.longEpisodeRaws = [];
+	state.project.longEpisodes = [];
+	state.project.panels = [];
+	state.project.imagePrompts = [];
+	state.project.images = [];
   }
 
   function renderLongEpisodeList() {
@@ -1597,7 +1665,7 @@
         return image.status === "downloaded";
       }) ? "images_done" : "image_partial";
       renderProjectStatus();
-      if ((state.project.storyMode || "standard") === "long") {
+	  if (["long", "four"].indexOf(state.project.storyMode || "standard") !== -1) {
         state.longMangaUI.step = "images";
         renderLongManga();
         setActiveTab("longManga");
@@ -1616,7 +1684,7 @@
     setBusy(els.fullAutoBtn, true);
     try {
       log("Full auto flow started.");
-      if (state.project.storyMode === "long") {
+	  if (state.project.storyMode === "long" || state.project.storyMode === "four") {
         await runLongMangaAuto();
         return;
       }
@@ -1645,14 +1713,21 @@
   }
 
   async function runLongMangaAuto() {
-    if (!await buildLongOutlinePrompt()) {
-      return;
-    }
-    var outlineOK = await callLongOutline();
-    if (!outlineOK) {
-      log("Full auto stopped at long manga outline step.");
-      return;
-    }
+	var fourPanelReady = state.project.storyMode === "four" && state.project.longOutline && (state.project.selectedFourPanelStories || []).length > 0;
+	if (!fourPanelReady) {
+	  if (!await buildLongOutlinePrompt()) {
+		return;
+	  }
+	  var outlineOK = await callLongOutline();
+	  if (!outlineOK) {
+		log("Full auto stopped at manga outline step.");
+		return;
+	  }
+	  if (state.project.storyMode === "four") {
+		log("Select one or more four-panel story candidates, then continue the flow.");
+		return;
+	  }
+	}
     if (!await buildLongEpisodePrompts()) {
       return;
     }

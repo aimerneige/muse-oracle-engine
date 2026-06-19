@@ -144,6 +144,7 @@
               <select id="storyMode">
                 <option value="standard">标准漫画</option>
                 <option value="long">长漫画</option>
+				<option value="four">四格漫画</option>
               </select>
             </label>
             <label>
@@ -213,9 +214,9 @@
           </div>
         </section>
 
-        <section id="longManga" class="tab-panel" data-route="long">
+        <section id="longManga" class="tab-panel" data-route="long four">
           <div class="panel-title">
-            <h2>长漫画</h2>
+            <h2 id="multiRoundTitle">长漫画</h2>
           </div>
 
           <div class="sub-tabs flow-tabs">
@@ -226,7 +227,7 @@
 
           <div id="longStepOutlinePanel" class="flow-section">
             <div class="card-head">
-              <h3>梗概</h3>
+              <h3 id="multiRoundOutlineTitle">梗概</h3>
               <div class="inline-actions">
                 <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
                 <button id="callLongOutlineBtn" type="button" disabled>调用 LLM 生成梗概</button>
@@ -235,14 +236,14 @@
               </div>
             </div>
             <label>
-              长漫画梗概 Prompt
+              <span id="multiRoundOutlinePromptLabel">长漫画梗概 Prompt</span>
               <div class="prompt-field">
                 <textarea id="longOutlinePrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成梗概 Prompt”生成用于规划长漫画结构的提示词。"></textarea>
                 <button id="copyLongOutlinePromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button>
               </div>
             </label>
             <label>
-              长漫画梗概结果
+              <span id="multiRoundOutlineResultLabel">长漫画梗概结果</span>
               <textarea id="rawLongOutline" class="code-area small" spellcheck="false" placeholder="将梗概 Prompt 交给 LLM 后，把返回的长漫画梗概粘贴到这里，再解析并进入逐话分镜。"></textarea>
             </label>
             <div id="longOutlineSummary" class="summary-list"></div>
@@ -250,7 +251,7 @@
 
           <div id="longStepEpisodesPanel" class="flow-section">
             <div class="card-head">
-              <h3>逐话分镜</h3>
+              <h3 id="multiRoundStoryboardTitle">逐话分镜</h3>
               <div class="inline-actions">
                 <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
                 <button id="callLongEpisodesBtn" type="button" disabled>调用 LLM 生成逐话分镜</button>

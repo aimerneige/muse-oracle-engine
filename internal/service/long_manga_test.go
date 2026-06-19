@@ -67,6 +67,95 @@ func TestGenerateLongMangaOutlineRejectsUnknownCharacter(t *testing.T) {
 	}
 }
 
+func TestSelectFourPanelStoriesKeepsRequestedCandidates(t *testing.T) {
+	t.Parallel()
+
+	selected, err := SelectFourPanelStories(domain.LongMangaOutline{
+		TotalEpisodes: 4,
+		Episodes: []domain.LongMangaEpisodeOutline{
+			{Episode: 1, Title: "一", Summary: "起承转合"},
+			{Episode: 2, Title: "二", Summary: "起承转合"},
+			{Episode: 3, Title: "三", Summary: "起承转合"},
+			{Episode: 4, Title: "四", Summary: "起承转合"},
+		},
+	}, []int{1, 3, 4})
+	if err != nil {
+		t.Fatalf("SelectFourPanelStories returned error: %v", err)
+	}
+	if selected.TotalEpisodes != 3 || len(selected.Episodes) != 3 {
+		t.Fatalf("expected three selected stories, got %+v", selected)
+	}
+	if selected.Episodes[0].Episode != 1 || selected.Episodes[1].Episode != 3 || selected.Episodes[2].Episode != 4 {
+		t.Fatalf("expected stories 1, 3, 4, got %+v", selected.Episodes)
+	}
+}
+
+func TestSelectFourPanelStoriesRejectsUnavailableCandidate(t *testing.T) {
+	t.Parallel()
+
+	_, err := SelectFourPanelStories(domain.LongMangaOutline{
+		TotalEpisodes: 1,
+		Episodes:      []domain.LongMangaEpisodeOutline{{Episode: 1, Title: "一", Summary: "起承转合"}},
+	}, []int{2})
+	if err == nil || !strings.Contains(err.Error(), "story 2 is not available") {
+		t.Fatalf("expected unavailable story error, got %v", err)
+	}
+}
+
+func TestGenerateFourPanelStoriesRejectsNonFourPanelResponse(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+	provider := &stubLLMProvider{
+		response: "```json\n{\"episode\":1,\"title\":\"晨间约定\",\"summary\":\"起承转合\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"第一格\"}]}\n```",
+	}
+	state := &domain.LongMangaState{
+		ProjectID: "project-1",
+		CandidateCharacters: []domain.LongMangaCharacterRef{
+			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
+		},
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 1,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "晨间约定", Summary: "起承转合", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
+	}
+
+	err = NewLongMangaService(provider, engine).GenerateAllFourPanelStories(context.Background(), testLongMangaProject(), state, nil)
+	if err != nil {
+		t.Fatalf("GenerateAllFourPanelStories returned error: %v", err)
+	}
+	if state.Status != domain.LongMangaStatusStoryboardPartial || !strings.Contains(state.Error, "exactly 4 panels") {
+		t.Fatalf("expected non-four-panel response to be retained as partial failure, got status=%s error=%q", state.Status, state.Error)
+	}
+}
+
+func TestValidateFourPanelScriptRequiresOrderedStoryStages(t *testing.T) {
+	t.Parallel()
+
+	script := domain.LongMangaEpisodeScript{
+		Episode: 1,
+		Panels: []domain.LongMangaPanelScript{
+			{Index: 1, Content: "##### 第1格【起】"},
+			{Index: 2, Content: "##### 第2格【承】"},
+			{Index: 3, Content: "##### 第3格【转】"},
+			{Index: 4, Content: "##### 第4格【合】"},
+		},
+	}
+	if err := validateFourPanelScript(script); err != nil {
+		t.Fatalf("expected strict four-panel script to pass, got %v", err)
+	}
+
+	script.Panels[3].Content = "##### 第4格"
+	if err := validateFourPanelScript(script); err == nil || !strings.Contains(err.Error(), "【合】") {
+		t.Fatalf("expected missing final stage to fail, got %v", err)
+	}
+}
+
 func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	t.Parallel()
 

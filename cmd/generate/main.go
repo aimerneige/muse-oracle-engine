@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,7 +37,11 @@ func main() {
 	listModels := flag.Bool("list-models", false, "List all available models")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	longManga := flag.Bool("long-manga", false, "Use multi-round long manga flow: outline, human confirmation, then all episode storyboards")
+	fourPanelManga := flag.Bool("four-panel-manga", false, "Generate four-panel story candidates, select by number, then build strict four-panel storyboards")
 	flag.Parse()
+	if *longManga && *fourPanelManga {
+		log.Fatal("--long-manga and --four-panel-manga cannot be used together")
+	}
 
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
@@ -114,6 +119,10 @@ func main() {
 	longMangaStore, err := storage.NewLongMangaStore(cfg.DataDir)
 	if err != nil {
 		log.Fatalf("Failed to initialize long manga storage: %v", err)
+	}
+	fourPanelMangaStore, err := storage.NewFourPanelMangaStore(cfg.DataDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize four-panel manga storage: %v", err)
 	}
 
 	// Initialize services
@@ -201,6 +210,24 @@ func main() {
 			os.Exit(1)
 		}
 		log.Println("=== Long manga storyboards completed ===")
+		log.Println("=== Continuing to image generation ===")
+		if err := p.Run(ctx, project); err != nil {
+			log.Printf("Pipeline error: %v", err)
+			log.Printf("Project saved. Resume with: generate --resume %s", project.ID)
+			os.Exit(1)
+		}
+		log.Println("=== 全部任务完成 ===")
+		log.Printf("输出目录: %s", store.ProjectDir(project.ID))
+		return
+	}
+
+	if *fourPanelManga {
+		if err := runFourPanelMangaFlow(ctx, project, store, fourPanelMangaStore, longMangaSvc); err != nil {
+			log.Printf("Four-panel manga flow error: %v", err)
+			log.Printf("Project saved. Resume with: generate --resume %s --four-panel-manga", project.ID)
+			os.Exit(1)
+		}
+		log.Println("=== Four-panel manga storyboards completed ===")
 		log.Println("=== Continuing to image generation ===")
 		if err := p.Run(ctx, project); err != nil {
 			log.Printf("Pipeline error: %v", err)
@@ -330,6 +357,116 @@ func confirmLongMangaOutline(projectID string, longStore *storage.LongMangaStore
 		return err
 	}
 	return longStore.Save(state)
+}
+
+func runFourPanelMangaFlow(ctx context.Context, project *domain.Project, store storage.Store, fourPanelStore *storage.LongMangaStore, svc *service.LongMangaService) error {
+	if err := store.Save(project); err != nil {
+		return fmt.Errorf("failed to save project: %w", err)
+	}
+
+	state, err := fourPanelStore.Load(project.ID)
+	if err != nil {
+		if !strings.Contains(err.Error(), "not found") {
+			return err
+		}
+		log.Println("=== Generating four-panel manga story candidates ===")
+		state, err = svc.GenerateFourPanelOutlineWithStore(ctx, project, fourPanelStore)
+		if err != nil {
+			return err
+		}
+		if err := fourPanelStore.Save(state); err != nil {
+			return err
+		}
+		if _, err := fourPanelStore.SaveOutline(project.ID, state.Outline); err != nil {
+			return err
+		}
+	}
+
+	printFourPanelMangaOutline(state)
+	if state.ConfirmedOutline == nil {
+		if err := selectFourPanelMangaStories(project.ID, fourPanelStore, svc); err != nil {
+			return err
+		}
+		state, err = fourPanelStore.Load(project.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Println("=== Generating selected four-panel manga storyboards ===")
+	if err := svc.GenerateAllFourPanelStories(ctx, project, state, fourPanelStore); err != nil {
+		_ = fourPanelStore.Save(state)
+		return err
+	}
+	if err := service.ApplyLongMangaStateToProject(project, state); err != nil {
+		return err
+	}
+	if err := fourPanelStore.Save(state); err != nil {
+		return err
+	}
+	return store.Save(project)
+}
+
+func selectFourPanelMangaStories(projectID string, fourPanelStore *storage.LongMangaStore, svc *service.LongMangaService) error {
+	fmt.Printf("\nOutline state saved to: %s\n", fourPanelStore.StatePath(projectID))
+	fmt.Printf("Outline result saved to: %s\n", fourPanelStore.OutlinePath(projectID))
+	fmt.Print("Select story numbers to generate, separated by commas (for example 1,3,4): ")
+
+	answer, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read four-panel story selection: %w", err)
+	}
+	storyNumbers, err := parseStorySelection(answer)
+	if err != nil {
+		return err
+	}
+
+	state, err := fourPanelStore.Load(projectID)
+	if err != nil {
+		return err
+	}
+	if state.Outline == nil {
+		return fmt.Errorf("four-panel outline is required before selection")
+	}
+	selected, err := service.SelectFourPanelStories(*state.Outline, storyNumbers)
+	if err != nil {
+		return err
+	}
+	if err := svc.ConfirmOutline(state, selected); err != nil {
+		return err
+	}
+	return fourPanelStore.Save(state)
+}
+
+func parseStorySelection(input string) ([]int, error) {
+	parts := strings.Split(strings.TrimSpace(input), ",")
+	storyNumbers := make([]int, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			return nil, fmt.Errorf("story selection must use comma-separated positive numbers")
+		}
+		storyNumber, err := strconv.Atoi(part)
+		if err != nil || storyNumber < 1 {
+			return nil, fmt.Errorf("invalid story number %q", part)
+		}
+		storyNumbers = append(storyNumbers, storyNumber)
+	}
+	return storyNumbers, nil
+}
+
+func printFourPanelMangaOutline(state *domain.LongMangaState) {
+	if state.Outline == nil {
+		return
+	}
+
+	fmt.Printf("\n=== Four-Panel Manga Candidates (%d stories) ===\n", state.Outline.TotalEpisodes)
+	for _, story := range state.Outline.Episodes {
+		fmt.Printf("%d. 《%s》: %s\n", story.Episode, story.Title, story.Summary)
+		if len(story.CharacterIDs) > 0 {
+			fmt.Printf("  Characters: %s\n", strings.Join(story.CharacterIDs, ", "))
+		}
+	}
 }
 
 func printLongMangaOutline(state *domain.LongMangaState) {

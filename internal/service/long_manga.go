@@ -21,6 +21,13 @@ type LongMangaService struct {
 	promptEngine *prompt.Engine
 }
 
+type mangaGenerationMode string
+
+const (
+	longMangaGenerationMode mangaGenerationMode = "long manga"
+	fourPanelGenerationMode mangaGenerationMode = "four-panel manga"
+)
+
 // LongMangaProgressStore persists generated scripts and state during long episode generation.
 type LongMangaProgressStore interface {
 	Save(state *domain.LongMangaState) error
@@ -44,28 +51,33 @@ func (s *LongMangaService) GenerateOutline(ctx context.Context, project *domain.
 
 // GenerateOutlineWithStore creates a human-confirmable outline state and saves its prompt.
 func (s *LongMangaService) GenerateOutlineWithStore(ctx context.Context, project *domain.Project, store LongMangaProgressStore) (*domain.LongMangaState, error) {
-	promptText, err := s.promptEngine.RenderLongMangaOutline(prompt.LongMangaOutlineData{
-		Characters: project.Characters,
-		PlotHint:   project.PlotHint,
-		Language:   domain.NormalizeLanguage(project.Language),
-	})
+	return s.generateOutline(ctx, project, store, longMangaGenerationMode)
+}
+
+// GenerateFourPanelOutlineWithStore creates selectable independent four-panel story candidates.
+func (s *LongMangaService) GenerateFourPanelOutlineWithStore(ctx context.Context, project *domain.Project, store LongMangaProgressStore) (*domain.LongMangaState, error) {
+	return s.generateOutline(ctx, project, store, fourPanelGenerationMode)
+}
+
+func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.Project, store LongMangaProgressStore, mode mangaGenerationMode) (*domain.LongMangaState, error) {
+	promptText, err := s.renderOutlinePrompt(project, mode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to render long manga outline prompt: %w", err)
+		return nil, fmt.Errorf("failed to render %s outline prompt: %w", mode, err)
 	}
 	if store != nil {
-		if _, err := store.SaveLongMangaPrompt(project.ID, "long_outline_prompt", promptText); err != nil {
+		if _, err := store.SaveLongMangaPrompt(project.ID, outlinePromptName(mode), promptText); err != nil {
 			return nil, err
 		}
 	}
 
 	response, err := s.llmProvider.GenerateText(ctx, promptText)
 	if err != nil {
-		return nil, fmt.Errorf("long manga outline generation failed: %w", err)
+		return nil, fmt.Errorf("%s outline generation failed: %w", mode, err)
 	}
 
 	outline, err := parseLongMangaJSON[domain.LongMangaOutline](response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse long manga outline: %w", err)
+		return nil, fmt.Errorf("failed to parse %s outline: %w", mode, err)
 	}
 	if err := normalizeOutline(&outline, candidateCharacterSet(project.Characters)); err != nil {
 		return nil, err
@@ -86,6 +98,28 @@ func (s *LongMangaService) GenerateOutlineWithStore(ctx context.Context, project
 	}, nil
 }
 
+func (s *LongMangaService) renderOutlinePrompt(project *domain.Project, mode mangaGenerationMode) (string, error) {
+	if mode == fourPanelGenerationMode {
+		return s.promptEngine.RenderFourPanelOutline(prompt.FourPanelOutlineData{
+			Characters: project.Characters,
+			PlotHint:   project.PlotHint,
+			Language:   domain.NormalizeLanguage(project.Language),
+		})
+	}
+	return s.promptEngine.RenderLongMangaOutline(prompt.LongMangaOutlineData{
+		Characters: project.Characters,
+		PlotHint:   project.PlotHint,
+		Language:   domain.NormalizeLanguage(project.Language),
+	})
+}
+
+func outlinePromptName(mode mangaGenerationMode) string {
+	if mode == fourPanelGenerationMode {
+		return "four_panel_outline_prompt"
+	}
+	return "long_outline_prompt"
+}
+
 // ConfirmOutline stores the human-confirmed outline for later episode generation.
 func (s *LongMangaService) ConfirmOutline(state *domain.LongMangaState, outline domain.LongMangaOutline) error {
 	characters := characterRefSet(state.CandidateCharacters)
@@ -98,6 +132,32 @@ func (s *LongMangaService) ConfirmOutline(state *domain.LongMangaState, outline 
 	state.Error = ""
 	state.UpdatedAt = time.Now()
 	return nil
+}
+
+// SelectFourPanelStories returns only the requested independent story candidates.
+func SelectFourPanelStories(outline domain.LongMangaOutline, storyNumbers []int) (domain.LongMangaOutline, error) {
+	if len(storyNumbers) == 0 {
+		return domain.LongMangaOutline{}, fmt.Errorf("select at least one four-panel story")
+	}
+
+	selected := make([]domain.LongMangaEpisodeOutline, 0, len(storyNumbers))
+	seen := make(map[int]struct{}, len(storyNumbers))
+	for _, storyNumber := range storyNumbers {
+		if _, exists := seen[storyNumber]; exists {
+			return domain.LongMangaOutline{}, fmt.Errorf("four-panel story %d was selected more than once", storyNumber)
+		}
+		episode, ok := findEpisodeOutline(outline, storyNumber)
+		if !ok {
+			return domain.LongMangaOutline{}, fmt.Errorf("four-panel story %d is not available", storyNumber)
+		}
+		seen[storyNumber] = struct{}{}
+		selected = append(selected, episode)
+	}
+
+	return domain.LongMangaOutline{
+		TotalEpisodes: len(selected),
+		Episodes:      selected,
+	}, nil
 }
 
 // GenerateEpisode expands one confirmed episode outline into a storyboard script.
@@ -130,6 +190,10 @@ func (s *LongMangaService) GenerateEpisode(ctx context.Context, project *domain.
 }
 
 func (s *LongMangaService) generateEpisodeScript(ctx context.Context, project *domain.Project, state *domain.LongMangaState, episodeNumber int, store LongMangaProgressStore) (domain.LongMangaEpisodeScript, error) {
+	return s.generateEpisodeScriptForMode(ctx, project, state, episodeNumber, store, longMangaGenerationMode)
+}
+
+func (s *LongMangaService) generateEpisodeScriptForMode(ctx context.Context, project *domain.Project, state *domain.LongMangaState, episodeNumber int, store LongMangaProgressStore, mode mangaGenerationMode) (domain.LongMangaEpisodeScript, error) {
 	if state.ConfirmedOutline == nil {
 		return domain.LongMangaEpisodeScript{}, fmt.Errorf("confirmed outline is required")
 	}
@@ -149,7 +213,65 @@ func (s *LongMangaService) generateEpisodeScript(ctx context.Context, project *d
 		return domain.LongMangaEpisodeScript{}, err
 	}
 
-	promptText, err := s.promptEngine.RenderLongMangaEpisode(prompt.LongMangaEpisodeData{
+	promptText, err := s.renderEpisodePrompt(project, state, episode, characters, styleDescription, mode)
+	if err != nil {
+		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to render %s storyboard prompt: %w", mode, err)
+	}
+	if store != nil {
+		if _, err := store.SaveLongMangaPrompt(project.ID, episodePromptName(mode, episodeNumber), promptText); err != nil {
+			return domain.LongMangaEpisodeScript{}, err
+		}
+	}
+
+	response, err := s.llmProvider.GenerateText(ctx, promptText)
+	if err != nil {
+		return domain.LongMangaEpisodeScript{}, fmt.Errorf("%s story %d generation failed: %w", mode, episodeNumber, err)
+	}
+
+	script, err := parseLongMangaJSON[domain.LongMangaEpisodeScript](response)
+	if err != nil {
+		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to parse %s story %d: %w", mode, episodeNumber, err)
+	}
+	if err := normalizeEpisodeScript(&script, episode, candidateCharacterSet(project.Characters)); err != nil {
+		return domain.LongMangaEpisodeScript{}, err
+	}
+	if mode == fourPanelGenerationMode {
+		if err := validateFourPanelScript(script); err != nil {
+			return domain.LongMangaEpisodeScript{}, err
+		}
+	}
+
+	script.RawResponse = response
+	return script, nil
+}
+
+func validateFourPanelScript(script domain.LongMangaEpisodeScript) error {
+	if len(script.Panels) != 4 {
+		return fmt.Errorf("four-panel story %d must contain exactly 4 panels, got %d", script.Episode, len(script.Panels))
+	}
+
+	stages := []string{"【起】", "【承】", "【转】", "【合】"}
+	for i, panel := range script.Panels {
+		if panel.Index != i+1 {
+			return fmt.Errorf("four-panel story %d panel indexes must be 1,2,3,4", script.Episode)
+		}
+		if !strings.Contains(panel.Content, stages[i]) {
+			return fmt.Errorf("four-panel story %d panel %d must use the %s stage", script.Episode, panel.Index, stages[i])
+		}
+	}
+	return nil
+}
+
+func (s *LongMangaService) renderEpisodePrompt(project *domain.Project, state *domain.LongMangaState, episode domain.LongMangaEpisodeOutline, characters []domain.Character, styleDescription string, mode mangaGenerationMode) (string, error) {
+	if mode == fourPanelGenerationMode {
+		return s.promptEngine.RenderFourPanelStoryboard(prompt.FourPanelStoryboardData{
+			Characters:       characters,
+			Episode:          episode,
+			Language:         domain.NormalizeLanguage(project.Language),
+			StyleDescription: styleDescription,
+		})
+	}
+	return s.promptEngine.RenderLongMangaEpisode(prompt.LongMangaEpisodeData{
 		Characters:        characters,
 		CharacterCostumes: episodeCostumeStates(state.CharacterCostumes, episode.CharacterIDs),
 		FullOutline:       *state.ConfirmedOutline,
@@ -157,49 +279,41 @@ func (s *LongMangaService) generateEpisodeScript(ctx context.Context, project *d
 		Language:          domain.NormalizeLanguage(project.Language),
 		StyleDescription:  styleDescription,
 	})
-	if err != nil {
-		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to render long manga episode prompt: %w", err)
-	}
-	if store != nil {
-		if _, err := store.SaveLongMangaPrompt(project.ID, fmt.Sprintf("long_episode_%03d_prompt", episodeNumber), promptText); err != nil {
-			return domain.LongMangaEpisodeScript{}, err
-		}
-	}
+}
 
-	response, err := s.llmProvider.GenerateText(ctx, promptText)
-	if err != nil {
-		return domain.LongMangaEpisodeScript{}, fmt.Errorf("long manga episode %d generation failed: %w", episodeNumber, err)
+func episodePromptName(mode mangaGenerationMode, episodeNumber int) string {
+	if mode == fourPanelGenerationMode {
+		return fmt.Sprintf("four_panel_story_%03d_prompt", episodeNumber)
 	}
-
-	script, err := parseLongMangaJSON[domain.LongMangaEpisodeScript](response)
-	if err != nil {
-		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to parse long manga episode %d: %w", episodeNumber, err)
-	}
-	if err := normalizeEpisodeScript(&script, episode, candidateCharacterSet(project.Characters)); err != nil {
-		return domain.LongMangaEpisodeScript{}, err
-	}
-
-	script.RawResponse = response
-	return script, nil
+	return fmt.Sprintf("long_episode_%03d_prompt", episodeNumber)
 }
 
 // GenerateAllEpisodes expands every confirmed episode outline.
 func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore) error {
+	return s.generateAllEpisodesForMode(ctx, project, state, store, longMangaGenerationMode)
+}
+
+// GenerateAllFourPanelStories expands every selected outline into one strict four-panel storyboard.
+func (s *LongMangaService) GenerateAllFourPanelStories(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore) error {
+	return s.generateAllEpisodesForMode(ctx, project, state, store, fourPanelGenerationMode)
+}
+
+func (s *LongMangaService) generateAllEpisodesForMode(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore, mode mangaGenerationMode) error {
 	if state.ConfirmedOutline == nil {
 		return fmt.Errorf("confirmed outline is required")
 	}
 
 	jobs := pendingLongMangaEpisodes(*state.ConfirmedOutline, state.Episodes)
 	if len(jobs) == 0 {
-		log.Println("All long manga episodes are already generated, skipping")
+		log.Printf("All %s storyboards are already generated, skipping", mode)
 		return nil
 	}
 
-	log.Printf("Starting long manga episode generation with %d pending episode(s), sequential costume continuity enabled", len(jobs))
+	log.Printf("Starting %s storyboard generation with %d pending story/stories", mode, len(jobs))
 	var failedEpisodes []string
 	for _, episode := range jobs {
-		log.Printf("Generating long manga episode %d/%d...", episode.Episode, state.ConfirmedOutline.TotalEpisodes)
-		script, err := s.generateEpisodeScript(ctx, project, state, episode.Episode, store)
+		log.Printf("Generating %s story %d...", mode, episode.Episode)
+		script, err := s.generateEpisodeScriptForMode(ctx, project, state, episode.Episode, store, mode)
 		if err != nil {
 			failedEpisodes = append(failedEpisodes, fmt.Sprintf("episode %d: %v", episode.Episode, err))
 			state.Status = domain.LongMangaStatusStoryboardPartial
@@ -207,24 +321,24 @@ func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *dom
 			state.UpdatedAt = time.Now()
 			if store != nil {
 				if _, saveErr := store.SaveEpisodeFailure(project.ID, episode, err); saveErr != nil {
-					return fmt.Errorf("failed to save long manga episode %d failure: %w", episode.Episode, saveErr)
+					return fmt.Errorf("failed to save %s story %d failure: %w", mode, episode.Episode, saveErr)
 				}
 				if saveErr := store.Save(state); saveErr != nil {
 					return fmt.Errorf("%w; additionally failed to save failed long manga state: %v", err, saveErr)
 				}
 			}
-			log.Printf("Long manga episode %d failed: %v", episode.Episode, err)
+			log.Printf("%s story %d failed: %v", mode, episode.Episode, err)
 			continue
 		}
 
 		applyLongMangaEpisodeScript(state, script)
-		log.Printf("Long manga episode %d done", episode.Episode)
+		log.Printf("%s story %d done", mode, episode.Episode)
 		if store != nil {
 			if _, err := store.SaveEpisodeScript(project.ID, script); err != nil {
-				return fmt.Errorf("failed to save long manga episode %d script: %w", episode.Episode, err)
+				return fmt.Errorf("failed to save %s story %d script: %w", mode, episode.Episode, err)
 			}
 			if err := store.Save(state); err != nil {
-				return fmt.Errorf("failed to save long manga state after episode %d: %w", episode.Episode, err)
+				return fmt.Errorf("failed to save manga state after story %d: %w", episode.Episode, err)
 			}
 		}
 	}
@@ -238,7 +352,7 @@ func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *dom
 				return fmt.Errorf("failed to save partial long manga state: %w", err)
 			}
 		}
-		log.Printf("Finished long manga episode generation for project %s with %d failed episode(s)", project.ID, len(failedEpisodes))
+		log.Printf("Finished %s storyboard generation for project %s with %d failed story/stories", mode, project.ID, len(failedEpisodes))
 		return nil
 	}
 
@@ -250,7 +364,7 @@ func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *dom
 			return fmt.Errorf("failed to save completed long manga state: %w", err)
 		}
 	}
-	log.Printf("Finished long manga episode generation for project %s", project.ID)
+	log.Printf("Finished %s storyboard generation for project %s", mode, project.ID)
 	return nil
 }
 
@@ -496,7 +610,6 @@ func pendingLongMangaEpisodes(outline domain.LongMangaOutline, scripts []domain.
 	pending := make([]domain.LongMangaEpisodeOutline, 0, len(outline.Episodes))
 	for _, episode := range outline.Episodes {
 		if hasEpisodeScript(scripts, episode.Episode) {
-			log.Printf("Long manga episode %d already generated, skipping", episode.Episode)
 			continue
 		}
 		pending = append(pending, episode)

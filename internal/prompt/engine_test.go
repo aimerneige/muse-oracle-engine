@@ -170,3 +170,42 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 		t.Fatal("expected long manga episode prompt to require costume state output")
 	}
 }
+
+func TestRenderFourPanelPrompts(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create engine: %v", err)
+	}
+	characters := []domain.Character{{
+		ID: "honoka", Name: "高坂穗乃果", NameEN: "Kousaka Honoka", Series: "lovelive", Personality: "开朗元气",
+	}}
+
+	outlinePrompt, err := engine.RenderFourPanelOutline(FourPanelOutlineData{
+		Characters: characters,
+		PlotHint:   "放学后的点心",
+		Language:   "中文",
+	})
+	if err != nil {
+		t.Fatalf("failed to render four-panel outline prompt: %v", err)
+	}
+	if !strings.Contains(outlinePrompt, "候选彼此独立") || !strings.Contains(outlinePrompt, "起、承、转、合") {
+		t.Fatalf("expected independent four-part story constraints, got %s", outlinePrompt)
+	}
+
+	storyboardPrompt, err := engine.RenderFourPanelStoryboard(FourPanelStoryboardData{
+		Characters: characters,
+		Episode: domain.LongMangaEpisodeOutline{
+			Episode: 1, Title: "点心危机", Summary: "起承转合", CharacterIDs: []string{"lovelive/honoka"},
+		},
+		Language:         "中文",
+		StyleDescription: "水彩风格",
+	})
+	if err != nil {
+		t.Fatalf("failed to render four-panel storyboard prompt: %v", err)
+	}
+	if !strings.Contains(storyboardPrompt, "严格包含 4 项") || !strings.Contains(storyboardPrompt, "第4格【合】") {
+		t.Fatalf("expected strict four-panel constraints, got %s", storyboardPrompt)
+	}
+}
