@@ -52,7 +52,7 @@
       "longStepOutlinePanel", "longStepEpisodesPanel", "longStepImagesPanel",
 	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
-      "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "parseLongEpisodeBtn", "nextLongEpisodesBtn",
+      "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "nextLongEpisodesBtn",
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
@@ -120,7 +120,6 @@
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
     els.callLongEpisodesBtn.addEventListener("click", callLongEpisodes);
-    els.parseLongEpisodeBtn.addEventListener("click", parseActiveLongEpisode);
     els.nextLongEpisodesBtn.addEventListener("click", goToLongImagesStep);
     els.longStepOutlineTab.addEventListener("click", function () {
       setLongMangaStep("outline");
@@ -437,15 +436,6 @@
   function setActiveLongEpisode(episodeNumber) {
     state.longMangaUI.activeEpisode = episodeNumber;
     renderLongManga();
-  }
-
-  async function parseActiveLongEpisode() {
-    var item = activeLongEpisodePrompt();
-    if (!item) {
-      log("Long manga episode prompt is required before parsing.");
-      return false;
-    }
-    return parseLongEpisodeFromRaw(item.episode);
   }
 
   async function goToLongEpisodesStep() {
@@ -963,7 +953,8 @@
     });
   }
 
-  async function buildImagePrompts() {
+  async function buildImagePrompts(options) {
+    options = options || {};
     syncProjectFromForm();
     if ((state.project.storyMode || "standard") === "long" && state.project.panels.length === 0) {
       applyLongEpisodesToPanels();
@@ -988,7 +979,7 @@
         })
       };
     });
-    if (!await confirmContentOverwrite(promptListContent(state.project.imagePrompts), "已有图片 Prompt 会被覆盖。")) {
+    if (options.confirmOverwrite !== false && !await confirmContentOverwrite(promptListContent(state.project.imagePrompts), "已有图片 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.imagePrompts = prompts;
@@ -1001,6 +992,10 @@
     renderImagePrompts();
     renderImages();
     renderProjectStatus();
+    if (options.navigate === false) {
+      log("Built " + prompts.length + " image prompt(s).");
+      return true;
+    }
     if ((state.project.storyMode || "standard") === "long") {
       state.longMangaUI.step = "images";
       renderLongManga();
@@ -1222,6 +1217,10 @@
       upsertLongEpisode(script);
       mergeCostumeStates(script.costume_states || []);
 	  state.project.status = state.project.storyMode === "four" ? "four_panel_storyboard_done" : "long_episode_done";
+	  applyLongEpisodesToPanels();
+	  renderPanels();
+	  await buildImagePrompts({ navigate: false, confirmOverwrite: false });
+	  state.longMangaUI.step = "episodes";
       renderLongManga();
       autoSaveProject();
 	  log("Parsed manga storyboard " + episodeNumber + ".");
