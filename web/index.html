@@ -113,6 +113,19 @@
             <span id="projectStatus" class="status-pill">草稿</span>
           </div>
 
+          <div class="character-settings-head">
+            <div>
+              <h3>角色设定</h3>
+              <p>角色设定仅保存在当前浏览器中。网页数据可能因清理缓存、无痕模式或更换设备而丢失，请导出设定文档并妥善保存。</p>
+            </div>
+            <div class="inline-actions">
+              <button id="addCharacterBtn" type="button">添加角色</button>
+              <button id="importCharactersBtn" type="button">导入设定</button>
+              <button id="exportCharactersBtn" type="button">导出设定</button>
+              <input id="characterFileInput" type="file" accept="application/json,.json" hidden>
+            </div>
+          </div>
+
           <div class="form-grid">
             <label>
               作品
@@ -266,6 +279,74 @@
         <div class="dialog-actions">
           <button id="cancelOverwritePromptBtn" type="submit" value="cancel">取消</button>
           <button id="confirmOverwritePromptBtn" class="primary" type="submit" value="confirm">覆盖</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="characterDialog" class="character-dialog">
+      <form id="characterForm">
+        <div class="panel-title">
+          <h2 id="characterDialogTitle">添加角色</h2>
+          <button id="closeCharacterDialogBtn" type="button">关闭</button>
+        </div>
+        <div class="character-form-grid">
+          <label>
+            作品 ID
+            <input id="characterSeriesInput" type="text" required placeholder="例如：lovelive">
+          </label>
+          <label>
+            角色 ID
+            <input id="characterIDInput" type="text" required placeholder="例如：honoka">
+          </label>
+          <label>
+            中文名
+            <input id="characterNameInput" type="text" required>
+          </label>
+          <label>
+            英文名
+            <input id="characterNameEnInput" type="text">
+          </label>
+          <label>
+            发型
+            <input id="characterHairStyleInput" type="text" required>
+          </label>
+          <label>
+            发色
+            <input id="characterHairColorInput" type="text" required>
+          </label>
+          <label>
+            眼型
+            <input id="characterEyeShapeInput" type="text" required>
+          </label>
+          <label>
+            瞳色
+            <input id="characterEyeColorInput" type="text" required>
+          </label>
+          <label>
+            身高
+            <input id="characterHeightInput" type="text" required>
+          </label>
+          <label>
+            体型
+            <input id="characterBodyTypeInput" type="text" required>
+          </label>
+        </div>
+        <label>
+          其他外观特征
+          <textarea id="characterOtherInput" rows="3" required></textarea>
+        </label>
+        <label>
+          性格
+          <textarea id="characterPersonalityInput" rows="4" required></textarea>
+        </label>
+        <label>
+          标签（使用英文逗号分隔）
+          <input id="characterTagsInput" type="text">
+        </label>
+        <p id="characterFormError" class="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button id="cancelCharacterBtn" type="button">取消</button>
+          <button class="primary" type="submit">保存角色</button>
         </div>
       </form>
     </dialog>

@@ -5,9 +5,12 @@
   var settingsKey = "lovelive-engine-web-settings";
   var projectKey = "lovelive-engine-web-project";
   var historyKey = "lovelive-engine-web-history";
+  var characterSettingsKey = "lovelive-engine-web-characters";
   var state = {
     settings: defaultSettings(),
     project: defaultProject(),
+    characterSettings: [],
+    editingCharacterID: null,
     projectSaved: false,
     settingsCollapsed: true,
     imageUI: {
@@ -31,7 +34,7 @@
     bindEvents();
     hydrateControls();
     renderAll();
-    log("Ready. Static app loaded with " + data.characters.length + " characters and " + data.styles.length + " styles.");
+    log("Ready. Static app loaded with " + effectiveCharacters().length + " characters and " + data.styles.length + " styles.");
   });
 
   function bindElements() {
@@ -40,6 +43,7 @@
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
+      "addCharacterBtn", "importCharactersBtn", "exportCharactersBtn", "characterFileInput",
       "standardStepPromptTab", "standardStepImagesTab",
       "standardStepPromptPanel", "standardStepImagesPanel",
       "characterList", "selectedCharacters", "plotHint", "buildStoryboardPromptBtn", "callLLMBtn",
@@ -51,7 +55,11 @@
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
-      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage"
+      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage",
+      "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
+      "characterSeriesInput", "characterIDInput", "characterNameInput", "characterNameEnInput",
+      "characterHairStyleInput", "characterHairColorInput", "characterEyeShapeInput", "characterEyeColorInput",
+      "characterHeightInput", "characterBodyTypeInput", "characterOtherInput", "characterPersonalityInput", "characterTagsInput"
     ].forEach(function (id) {
       els[id] = document.getElementById(id);
     });
@@ -68,6 +76,15 @@
     els.imageProvider.addEventListener("change", onImageProviderChange);
     els.seriesFilter.addEventListener("change", renderCharacters);
     els.characterSearch.addEventListener("input", renderCharacters);
+    els.addCharacterBtn.addEventListener("click", openNewCharacterDialog);
+    els.importCharactersBtn.addEventListener("click", function () {
+      els.characterFileInput.click();
+    });
+    els.exportCharactersBtn.addEventListener("click", exportCharacterSettings);
+    els.characterFileInput.addEventListener("change", importCharacterSettings);
+    els.characterForm.addEventListener("submit", saveCharacterFromForm);
+    els.closeCharacterDialogBtn.addEventListener("click", closeCharacterDialog);
+    els.cancelCharacterBtn.addEventListener("click", closeCharacterDialog);
     els.styleSelect.addEventListener("change", syncProjectFromForm);
     els.storyMode.addEventListener("change", function () {
       syncProjectFromForm();
@@ -170,6 +187,7 @@
 
   function loadState() {
     state.settings = merge(defaultSettings(), readJSON(settingsKey, {}));
+    state.characterSettings = loadCharacterSettings(readJSON(characterSettingsKey, []));
     var savedProject = readJSON(projectKey, null);
     state.project = savedProject ? hydrateProject(savedProject) : defaultProject();
     state.projectSaved = !!savedProject;
@@ -188,9 +206,7 @@
       return { value: size, label: size };
     }));
 
-    fillSelect(els.seriesFilter, [{ value: "", label: "全部作品" }].concat(data.series.map(function (series) {
-      return { value: series.id, label: series.name + " (" + series.id + ")" };
-    })));
+    fillSeriesFilter();
     fillSelect(els.styleSelect, data.styles.map(function (style) {
       return { value: style.id, label: style.name + " (" + style.id + ")" };
     }));
@@ -248,6 +264,26 @@
       el.textContent = option.label;
       select.appendChild(el);
     });
+  }
+
+  function fillSeriesFilter() {
+    var selected = els.seriesFilter.value;
+    var seriesIDs = effectiveCharacters().map(function (character) {
+      return character.series;
+    }).filter(function (seriesID, index, values) {
+      return values.indexOf(seriesID) === index;
+    }).sort();
+    var options = seriesIDs.map(function (seriesID) {
+      var series = data.series.find(function (item) {
+        return item.id === seriesID;
+      });
+      return {
+        value: seriesID,
+        label: series ? series.name + " (" + seriesID + ")" : seriesID
+      };
+    });
+    fillSelect(els.seriesFilter, [{ value: "", label: "全部作品" }].concat(options));
+    els.seriesFilter.value = seriesIDs.indexOf(selected) === -1 ? "" : selected;
   }
 
   function onLLMProviderChange() {
@@ -475,7 +511,7 @@
     var series = els.seriesFilter.value;
     var query = els.characterSearch.value.trim().toLowerCase();
     var selected = new Set(state.project.characterIds);
-    var list = data.characters.filter(function (character) {
+    var list = effectiveCharacters().filter(function (character) {
       var fullID = character.series + "/" + character.id;
       if (series && character.series !== series) {
         return false;
@@ -494,6 +530,8 @@
     els.characterList.innerHTML = "";
     list.forEach(function (character) {
       var fullID = character.series + "/" + character.id;
+      var entry = document.createElement("span");
+      entry.className = "character-entry";
       var button = document.createElement("button");
       button.type = "button";
       button.className = "character-chip" + (selected.has(fullID) ? " selected" : "");
@@ -502,8 +540,142 @@
       button.addEventListener("click", function () {
         toggleCharacter(fullID);
       });
-      els.characterList.appendChild(button);
+      var editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "character-edit-btn";
+      editButton.textContent = "编辑";
+      editButton.title = "编辑 " + character.name;
+      editButton.addEventListener("click", function () {
+        openEditCharacterDialog(fullID);
+      });
+      entry.appendChild(button);
+      entry.appendChild(editButton);
+      els.characterList.appendChild(entry);
     });
+  }
+
+  function openNewCharacterDialog() {
+    state.editingCharacterID = null;
+    els.characterForm.reset();
+    els.characterDialogTitle.textContent = "添加角色";
+    els.characterSeriesInput.disabled = false;
+    els.characterIDInput.disabled = false;
+    els.characterFormError.textContent = "";
+    els.characterDialog.showModal();
+  }
+
+  function openEditCharacterDialog(fullID) {
+    var character = getCharacter(fullID);
+    if (!character) {
+      return;
+    }
+    state.editingCharacterID = fullID;
+    els.characterDialogTitle.textContent = "编辑角色设定";
+    els.characterSeriesInput.value = character.series;
+    els.characterIDInput.value = character.id;
+    els.characterNameInput.value = character.name;
+    els.characterNameEnInput.value = character.name_en || "";
+    els.characterHairStyleInput.value = character.appearance.hair_style;
+    els.characterHairColorInput.value = character.appearance.hair_color;
+    els.characterEyeShapeInput.value = character.appearance.eye_shape;
+    els.characterEyeColorInput.value = character.appearance.eye_color;
+    els.characterHeightInput.value = character.appearance.height;
+    els.characterBodyTypeInput.value = character.appearance.body_type;
+    els.characterOtherInput.value = character.appearance.other;
+    els.characterPersonalityInput.value = character.personality;
+    els.characterTagsInput.value = (character.tags || []).join(", ");
+    els.characterSeriesInput.disabled = true;
+    els.characterIDInput.disabled = true;
+    els.characterFormError.textContent = "";
+    els.characterDialog.showModal();
+  }
+
+  function closeCharacterDialog() {
+    els.characterDialog.close();
+  }
+
+  function saveCharacterFromForm(event) {
+    event.preventDefault();
+    var character = characterFromForm();
+    var fullID = character.series + "/" + character.id;
+    if (!state.editingCharacterID && getCharacter(fullID)) {
+      els.characterFormError.textContent = "该作品 ID 和角色 ID 已存在，请使用其他 ID。";
+      return;
+    }
+    if (!isValidCharacterID(character.series) || !isValidCharacterID(character.id)) {
+      els.characterFormError.textContent = "作品 ID 和角色 ID 只能包含小写字母、数字和连字符。";
+      return;
+    }
+    storeCharacterSetting(character);
+    closeCharacterDialog();
+    fillSeriesFilter();
+    renderCharacters();
+    renderSelectedCharacters();
+    log("Character setting saved locally: " + fullID);
+  }
+
+  function characterFromForm() {
+    return {
+      id: els.characterIDInput.value.trim(),
+      name: els.characterNameInput.value.trim(),
+      name_en: els.characterNameEnInput.value.trim(),
+      series: els.characterSeriesInput.value.trim(),
+      appearance: {
+        hair_style: els.characterHairStyleInput.value.trim(),
+        hair_color: els.characterHairColorInput.value.trim(),
+        eye_shape: els.characterEyeShapeInput.value.trim(),
+        eye_color: els.characterEyeColorInput.value.trim(),
+        height: els.characterHeightInput.value.trim(),
+        body_type: els.characterBodyTypeInput.value.trim(),
+        other: els.characterOtherInput.value.trim()
+      },
+      personality: els.characterPersonalityInput.value.trim(),
+      tags: els.characterTagsInput.value.split(",").map(function (tag) {
+        return tag.trim();
+      }).filter(Boolean)
+    };
+  }
+
+  function storeCharacterSetting(character) {
+    state.characterSettings = upsertCharacterSettings(state.characterSettings, [character]);
+    localStorage.setItem(characterSettingsKey, JSON.stringify(state.characterSettings));
+  }
+
+  function exportCharacterSettings() {
+    var documentData = {
+      version: 1,
+      characters: state.characterSettings
+    };
+    downloadJSON(documentData, "lovelive-engine-character-settings.json");
+    log("Character settings document exported.");
+  }
+
+  async function importCharacterSettings(event) {
+    var file = event.target.files[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    try {
+      var parsed = JSON.parse(await file.text());
+      var characters = Array.isArray(parsed) ? parsed : parsed.characters;
+      if (!Array.isArray(characters)) {
+        throw new Error("设定文档必须包含 characters 数组。");
+      }
+      var normalized = characters.map(normalizeCharacterSetting);
+      if (normalized.some(function (character) { return !character; })) {
+        throw new Error("设定文档包含字段缺失或 ID 格式错误的角色。请检查文档后重试。");
+      }
+      state.characterSettings = upsertCharacterSettings(state.characterSettings, normalized);
+      localStorage.setItem(characterSettingsKey, JSON.stringify(state.characterSettings));
+      fillSeriesFilter();
+      renderCharacters();
+      renderSelectedCharacters();
+      log("Imported " + normalized.length + " character settings locally.");
+    } catch (err) {
+      window.alert("导入角色设定失败：" + (err.message || String(err)));
+      logError("Character settings import failed", err);
+    }
   }
 
   function renderSelectedCharacters() {
@@ -1811,8 +1983,22 @@
   }
 
   function getCharacter(fullID) {
-    return data.characters.find(function (character) {
+    return effectiveCharacters().find(function (character) {
       return character.series + "/" + character.id === fullID;
+    });
+  }
+
+  function effectiveCharacters() {
+    return upsertCharacterSettings(data.characters, state.characterSettings);
+  }
+
+  function upsertCharacterSettings(current, replacements) {
+    var byID = {};
+    current.concat(replacements).forEach(function (character) {
+      byID[character.series + "/" + character.id] = character;
+    });
+    return Object.keys(byID).sort().map(function (fullID) {
+      return byID[fullID];
     });
   }
 
@@ -2131,11 +2317,15 @@
 
   function downloadProject() {
     syncProjectFromForm();
-    var blob = new Blob([JSON.stringify(persistableProject(state.project), null, 2)], { type: "application/json" });
+    downloadJSON(persistableProject(state.project), "lovelive-engine-project-" + state.project.id + ".json");
+  }
+
+  function downloadJSON(value, filename) {
+    var blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json" });
     var url = URL.createObjectURL(blob);
     var link = document.createElement("a");
     link.href = url;
-    link.download = "lovelive-engine-project-" + state.project.id + ".json";
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -2172,6 +2362,63 @@
     } catch (err) {
       return fallback;
     }
+  }
+
+  function loadCharacterSettings(characters) {
+    if (!Array.isArray(characters)) {
+      return [];
+    }
+    return characters.map(normalizeCharacterSetting).filter(Boolean);
+  }
+
+  function normalizeCharacterSetting(character) {
+    if (!character || typeof character !== "object" || !character.appearance || typeof character.appearance !== "object") {
+      return null;
+    }
+    var required = [
+      character.id,
+      character.name,
+      character.series,
+      character.personality,
+      character.appearance.hair_style,
+      character.appearance.hair_color,
+      character.appearance.eye_shape,
+      character.appearance.eye_color,
+      character.appearance.height,
+      character.appearance.body_type,
+      character.appearance.other
+    ];
+    if (required.some(function (value) { return typeof value !== "string" || !value.trim(); })) {
+      return null;
+    }
+    if (!isValidCharacterID(character.series) || !isValidCharacterID(character.id)) {
+      return null;
+    }
+    return {
+      id: character.id.trim(),
+      name: character.name.trim(),
+      name_en: typeof character.name_en === "string" ? character.name_en.trim() : "",
+      series: character.series.trim(),
+      appearance: {
+        hair_style: character.appearance.hair_style.trim(),
+        hair_color: character.appearance.hair_color.trim(),
+        eye_shape: character.appearance.eye_shape.trim(),
+        eye_color: character.appearance.eye_color.trim(),
+        height: character.appearance.height.trim(),
+        body_type: character.appearance.body_type.trim(),
+        other: character.appearance.other.trim()
+      },
+      personality: character.personality.trim(),
+      tags: Array.isArray(character.tags) ? character.tags.filter(function (tag) {
+        return typeof tag === "string" && tag.trim();
+      }).map(function (tag) {
+        return tag.trim();
+      }) : []
+    };
+  }
+
+  function isValidCharacterID(value) {
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
   }
 
   function merge(base, patch) {
