@@ -119,6 +119,8 @@ go run cmd/generate/main.go --prompt-only --characters 'lovelive/honoka' --plot 
 
 CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 [RUNNING_GUIDE.md](./RUNNING_GUIDE.md)。该文档专门描述命令行工作流。
 
+不熟悉 CLI 参数时，可以打开 [`tools/cli-command-builder/index.html`](./tools/cli-command-builder/index.html)，通过可视化选项生成完整指令。该工具是零依赖的独立静态项目，不连接后端，也不会执行命令。
+
 ## 项目结构
 
 ```text
@@ -134,6 +136,8 @@ CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 
 │   ├── service/           # 故事和漫画生成服务
 │   └── storage/           # CLI 文件持久化
 ├── pkg/mdutil/            # Markdown 代码块提取工具
+├── tools/
+│   └── cli-command-builder/ # 独立的 CLI 指令生成网页
 ├── web/
 │   ├── index.html         # 静态网页入口
 │   ├── src/               # 页面样式、逻辑和生成数据

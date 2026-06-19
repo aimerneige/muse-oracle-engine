@@ -1,0 +1,10 @@
+{
+  "name": "lovelive-engine-cli-command-builder",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "python3 -m http.server 8081",
+    "build": "node tools/build.mjs",
+    "test": "node --test test/*.test.js"
+  }
+}

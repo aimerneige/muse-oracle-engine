@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="LoveLive Engine CLI 命令生成器">
+    <title>CLI 指令生成器 · LoveLive Engine</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">LOVELIVE ENGINE · CLI TOOL</p>
+          <h1>把参数选择，变成一条可用指令。</h1>
+          <p class="hero-copy">无需记忆参数。选择运行场景、填写必要信息，然后复制生成的 CLI 指令。</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true"><span>&gt;_</span></div>
+      </header>
+
+      <section class="builder" aria-label="CLI 指令配置">
+        <div class="config-panel">
+          <div class="section-heading">
+            <span>01</span>
+            <div>
+              <h2>运行方式</h2>
+              <p>选择你希望完成的任务</p>
+            </div>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="任务模式">
+            <button class="mode-tab active" type="button" data-mode="create" role="tab" aria-selected="true">新建漫画</button>
+            <button class="mode-tab" type="button" data-mode="resume" role="tab" aria-selected="false">恢复 / 重试</button>
+            <button class="mode-tab" type="button" data-mode="list" role="tab" aria-selected="false">查询列表</button>
+          </div>
+
+          <label class="field command-field">
+            <span>CLI 调用方式</span>
+            <select id="executable">
+              <option value="go run cmd/generate/main.go">从源码运行（go run）</option>
+              <option value="./bin/generate">运行已构建程序（./bin/generate）</option>
+              <option value="generate">PATH 中的 generate</option>
+            </select>
+          </label>
+
+          <div class="section-heading form-heading">
+            <span>02</span>
+            <div>
+              <h2>参数配置</h2>
+              <p id="modeDescription">填写新漫画所需的角色、剧情与画风</p>
+            </div>
+          </div>
+
+          <form id="commandForm" novalidate>
+            <div id="createFields" class="mode-fields">
+              <label class="field field-wide">
+                <span>角色 ID <b>必填</b></span>
+                <input id="characters" type="text" placeholder="lovelive/honoka,lovelive/umi" autocomplete="off">
+                <small>多个角色使用英文逗号分隔，格式为 作品/角色。</small>
+              </label>
+
+              <label class="field field-wide">
+                <span>剧情方向 <b>必填</b></span>
+                <textarea id="plot" rows="4" placeholder="例如：二人在学校里的温馨日常，发糖向"></textarea>
+              </label>
+
+              <label class="field">
+                <span>漫画画风 <b>必填</b></span>
+                <select id="style">
+                  <option value="">请选择画风</option>
+                  <option value="anime_3d_engine">动漫 3D 引擎</option>
+                  <option value="chibi_figure">Q 版粘土人</option>
+                  <option value="figma_figure">Figma 手办</option>
+                  <option value="watercolor">清新水彩</option>
+                  <option value="crayon_doodle">粉彩蜡笔涂鸦</option>
+                  <option value="papercraft_cutout">立体剪纸拼贴</option>
+                  <option value="pixel_art">复古像素</option>
+                  <option value="plush_photography">毛绒娃娃微距摄影</option>
+                  <option value="retro_pop_comic">美漫波普艺术</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>对白语言</span>
+                <input id="language" type="text" value="中文" autocomplete="off">
+              </label>
+            </div>
+
+            <div id="resumeFields" class="mode-fields hidden">
+              <label class="field field-wide">
+                <span>项目 ID <b>必填</b></span>
+                <input id="resume" type="text" placeholder="已有项目的 UUID" autocomplete="off">
+              </label>
+
+              <label class="field">
+                <span>重试图片序号</span>
+                <input id="retryImage" type="number" min="1" step="1" placeholder="不重试则留空">
+                <small>图片序号从 1 开始。</small>
+              </label>
+            </div>
+
+            <div id="listFields" class="mode-fields hidden">
+              <fieldset class="choice-group field-wide">
+                <legend>查询内容</legend>
+                <label><input type="radio" name="listType" value="list-characters" checked><span>可用角色 <code>--list-characters</code></span></label>
+                <label><input type="radio" name="listType" value="list-styles"><span>可用画风 <code>--list-styles</code></span></label>
+                <label><input type="radio" name="listType" value="list-models"><span>可用模型 <code>--list-models</code></span></label>
+              </fieldset>
+            </div>
+
+            <div id="flowOptions" class="option-row field-wide">
+              <label class="switch-card">
+                <input id="promptOnly" type="checkbox">
+                <span class="switch" aria-hidden="true"></span>
+                <span><strong>仅输出 Prompt</strong><small>添加 --prompt-only，不调用图片 API</small></span>
+              </label>
+              <label class="switch-card">
+                <input id="longManga" type="checkbox">
+                <span class="switch" aria-hidden="true"></span>
+                <span><strong>长篇漫画流程</strong><small>添加 --long-manga，启用多轮流程</small></span>
+              </label>
+            </div>
+          </form>
+        </div>
+
+        <aside class="output-panel">
+          <div class="output-topline">
+            <span class="live-dot"></span>
+            <span>LIVE COMMAND</span>
+          </div>
+          <h2>生成的指令</h2>
+          <p>参数会在输入时自动更新，并使用 POSIX shell 安全转义。</p>
+
+          <div class="terminal">
+            <div class="terminal-bar"><i></i><i></i><i></i><span>terminal</span></div>
+            <pre id="commandOutput" tabindex="0"></pre>
+          </div>
+
+          <div id="validationMessage" class="validation" role="status"></div>
+
+          <div class="output-actions">
+            <button id="copyButton" class="primary-button" type="button">复制指令</button>
+            <button id="resetButton" class="secondary-button" type="button">重置参数</button>
+          </div>
+
+          <div class="parameter-index">
+            <h3>已启用参数</h3>
+            <div id="enabledParameters" class="parameter-tags"></div>
+          </div>
+        </aside>
+      </section>
+
+      <footer>
+        <span>纯静态工具 · 不执行命令 · 不发送数据</span>
+        <span>支持 CLI 全部 11 个参数</span>
+      </footer>
+    </main>
+  </body>
+</html>
