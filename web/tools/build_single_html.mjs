@@ -29,7 +29,7 @@ const favicons = new Map([
   ["favicon-32x32.png", toDataURL(favicon32, "image/png")],
   ["apple-touch-icon.png", toDataURL(appleTouchIcon, "image/png")]
 ]);
-const output = buildHTML(html, minifyCSS(css), minifiedJS, favicons);
+const output = buildHTML(html, minifyCSS(css), minifiedJS, favicons, options.externalFavicons);
 
 await fs.mkdir(path.dirname(path.resolve(rootDir, options.out)), { recursive: true });
 await fs.writeFile(path.resolve(rootDir, options.out), output, "utf8");
@@ -41,7 +41,8 @@ console.log("Characters: " + data.characters.length);
 function parseArgs(args) {
   const parsed = {
     out: "web/dist/lovelive-engine.single.html",
-    series: []
+    series: [],
+    externalFavicons: false
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -62,6 +63,10 @@ function parseArgs(args) {
     }
     if (arg.startsWith("--series=")) {
       parsed.series = splitSeries(arg.slice("--series=".length));
+      continue;
+    }
+    if (arg === "--external-favicons") {
+      parsed.externalFavicons = true;
       continue;
     }
     if (arg === "--help" || arg === "-h") {
@@ -87,7 +92,7 @@ function splitSeries(value) {
 }
 
 function printUsage() {
-  console.log("Usage: node web/tools/build_single_html.mjs [--series lovelive,lovelive-sunshine] [--out web/dist/app.html]");
+  console.log("Usage: node web/tools/build_single_html.mjs [--series lovelive,lovelive-sunshine] [--external-favicons] [--out web/dist/app.html]");
 }
 
 async function readText(relativePath) {
@@ -158,15 +163,17 @@ function minifyCSS(source) {
     .trim();
 }
 
-function buildHTML(source, css, js, favicons) {
+function buildHTML(source, css, js, favicons, externalFavicons) {
   let output = source
     .replace(/<link rel="stylesheet" href="src\/styles\.css">\s*/u, "<style>" + css + "</style>")
-    .replace(/\s*<link rel="manifest" href="site\.webmanifest">/u, "")
     .replace(/\s*<script src="src\/data\.js"><\/script>/u, "")
     .replace(/\s*<script src="src\/app\.js"><\/script>/u, "<script>" + js + "</script>");
 
-  for (const [href, dataURL] of favicons) {
-    output = output.replace('href="' + href + '"', 'href="' + dataURL + '"');
+  if (!externalFavicons) {
+    output = output.replace(/\s*<link rel="manifest" href="site\.webmanifest">/u, "");
+    for (const [href, dataURL] of favicons) {
+      output = output.replace('href="' + href + '"', 'href="' + dataURL + '"');
+    }
   }
 
   return output
