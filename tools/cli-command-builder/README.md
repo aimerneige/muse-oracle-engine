@@ -1,6 +1,6 @@
 # CLI 指令生成器
 
-用于可视化配置 LoveLive Engine CLI 的全部参数，并生成可复制的 POSIX shell 指令。页面完全静态，不连接后端，也不会执行生成的命令。
+用于可视化配置 LoveLive Engine CLI 的全部参数，并生成可复制的 Bash/Zsh 指令。页面完全静态，不连接后端，也不会执行生成的命令。
 
 ## 本地使用
 

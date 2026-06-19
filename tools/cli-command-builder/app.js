@@ -13,6 +13,27 @@
     if (/^[A-Za-z0-9_./:=,+-]+$/.test(text)) {
       return text;
     }
+    if (/[\x00-\x1f\x7f]/.test(text)) {
+      return "$'" + Array.from(text).map(function (character) {
+        const escapes = {
+          "\\": "\\\\",
+          "'": "\\'",
+          "\b": "\\b",
+          "\t": "\\t",
+          "\n": "\\n",
+          "\v": "\\v",
+          "\f": "\\f",
+          "\r": "\\r"
+        };
+        if (escapes[character]) return escapes[character];
+
+        const code = character.charCodeAt(0);
+        if (code < 32 || code === 127) {
+          return "\\x" + code.toString(16).padStart(2, "0");
+        }
+        return character;
+      }).join("") + "'";
+    }
     return "'" + text.replace(/'/g, "'\\''") + "'";
   }
 

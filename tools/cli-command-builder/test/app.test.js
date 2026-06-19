@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const {
   buildCommand,
   filterCharacters,
@@ -29,7 +30,31 @@ function config(overrides = {}) {
 
 test("quotes shell values containing spaces and apostrophes", () => {
   assert.equal(quoteShell("it's tea time"), "'it'\\''s tea time'");
+  assert.equal(quoteShell('"$HOME"; `whoami`'), "'\"$HOME\"; `whoami`'");
   assert.equal(quoteShell("watercolor"), "watercolor");
+});
+
+test("escapes control characters as a single-line ANSI-C shell value", () => {
+  assert.equal(
+    quoteShell("第一行\r\n第二行\tit's \\ ready"),
+    "$'第一行\\r\\n第二行\\tit\\'s \\\\ ready'"
+  );
+});
+
+test("generated command never contains raw line breaks from plot text", () => {
+  const result = buildCommand(config({ plot: "第一行\n第二行\r\n第三行" }));
+
+  assert.equal(result.command.includes("\n"), false);
+  assert.equal(result.command.includes("\r"), false);
+  assert.match(result.command, /--plot \$'第一行\\n第二行\\r\\n第三行'/);
+});
+
+test("special characters survive a real Zsh parsing round trip", () => {
+  const original = "第一行\r\n第二行\t'\"$HOME`whoami`\\end";
+  const result = spawnSync("zsh", ["-c", "printf %s " + quoteShell(original)], { encoding: "utf8" });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, original);
 });
 
 test("builds a complete create command", () => {
