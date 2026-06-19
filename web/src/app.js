@@ -1343,11 +1343,6 @@
     parse.addEventListener("click", function () {
       parseLongEpisodeFromRaw(item.episode);
     });
-    var actions = document.createElement("div");
-    actions.className = "inline-actions";
-    actions.appendChild(parse);
-    head.appendChild(actions);
-
     var promptArea = document.createElement("textarea");
     promptArea.value = item.prompt;
     promptArea.placeholder = "先解析长漫画梗概，再点击“生成逐话 Prompt”得到本话分镜提示词。";
@@ -1368,6 +1363,10 @@
       copyText(item.prompt);
     });
     appendField(card, "本话结果", rawArea);
+    var actions = document.createElement("div");
+    actions.className = "stage-actions result-actions";
+    actions.appendChild(parse);
+    card.appendChild(actions);
     appendLongEpisodeParsedSummary(card, item.episode);
     els.longEpisodeList.appendChild(card);
   }

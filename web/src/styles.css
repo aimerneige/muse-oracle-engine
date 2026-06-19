@@ -420,6 +420,18 @@ label {
   justify-self: end;
 }
 
+.stage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.result-actions,
+.navigation-actions {
+  padding-top: 2px;
+}
+
 .panel-list,
 .prompt-list,
 .image-list {
@@ -680,7 +692,8 @@ label {
 
   .header-actions,
   .actions,
-  .inline-actions {
+  .inline-actions,
+  .stage-actions {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
@@ -845,7 +858,8 @@ label {
 @media (max-width: 380px) {
   .header-actions,
   .actions,
-  .inline-actions {
+  .inline-actions,
+  .stage-actions {
     grid-template-columns: 1fr;
   }
 }
