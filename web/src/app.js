@@ -42,7 +42,7 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "styleSelect", "storyMode", "languageInput",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput",
       "addCharacterBtn", "importCharactersBtn", "exportCharactersBtn", "characterFileInput",
       "standardStepPromptTab", "standardStepImagesTab",
       "standardStepPromptPanel", "standardStepImagesPanel",
@@ -525,9 +525,17 @@
         character.name_en,
         character.personality
       ].join(" ").toLowerCase().indexOf(query) !== -1;
-    }).slice(0, 80);
+    });
 
     els.characterList.innerHTML = "";
+    els.characterListSummary.textContent = "共 " + list.length + " 个";
+    if (list.length === 0) {
+      var empty = document.createElement("p");
+      empty.className = "character-list-empty";
+      empty.textContent = "没有找到匹配的角色，请调整作品或搜索条件。";
+      els.characterList.appendChild(empty);
+      return;
+    }
     list.forEach(function (character) {
       var fullID = character.series + "/" + character.id;
       var entry = document.createElement("span");
@@ -545,6 +553,7 @@
       editButton.className = "character-edit-btn";
       editButton.textContent = "编辑";
       editButton.title = "编辑 " + character.name;
+      editButton.setAttribute("aria-label", "编辑 " + character.name + " 的角色设定");
       editButton.addEventListener("click", function () {
         openEditCharacterDialog(fullID);
       });

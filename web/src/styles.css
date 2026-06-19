@@ -281,6 +281,31 @@ label {
   gap: 7px;
 }
 
+.character-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.character-list-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.character-list-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.character-list-empty {
+  width: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .character-chip {
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -290,19 +315,32 @@ label {
 }
 
 .character-entry {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
 }
 
 .character-entry .character-chip {
+  min-width: 0;
   border-radius: 999px 0 0 999px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .character-edit-btn {
   min-height: 0;
+  min-width: 48px;
   border-left: 0;
   border-radius: 0 999px 999px 0;
   padding-inline: 8px 10px;
+}
+
+.character-entry .character-chip.selected + .character-edit-btn {
+  border-color: var(--accent);
+  background: #e6f3ee;
+  color: var(--accent-strong);
 }
 
 .character-dialog {
@@ -659,22 +697,31 @@ label {
     min-width: 108px;
   }
 
-  .character-list,
-  .selected-list {
-    flex-wrap: nowrap;
-    margin-inline: -12px;
-    overflow-x: auto;
-    padding-inline: 12px;
+  .character-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    max-height: min(50vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fbfcfc;
+    padding: 8px;
+    scrollbar-width: thin;
   }
 
   .selected-list {
-    border-left: 0;
-    border-right: 0;
-    border-radius: 0;
+    flex-wrap: wrap;
+    overflow: visible;
   }
 
-  .character-chip {
-    flex: 0 0 auto;
+  .character-entry {
+    width: 100%;
+  }
+
+  .character-entry .character-chip,
+  .character-edit-btn {
+    min-height: 40px;
   }
 
   .character-settings-head {
@@ -735,11 +782,14 @@ label {
     font-size: 13px;
   }
 
-  .sub-tabs,
-  .character-list,
-  .selected-list {
+  .sub-tabs {
     margin-inline: -10px;
     padding-inline: 10px;
+  }
+
+  .character-list {
+    grid-template-columns: 1fr;
+    max-height: 46vh;
   }
 
   .code-area {
