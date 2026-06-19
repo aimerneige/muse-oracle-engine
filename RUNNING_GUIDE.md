@@ -1,6 +1,6 @@
 # 圣谕自演机 - 运行指南
 
-本文档说明如何配置和运行 CLI-only 版本的“圣谕自演机”。项目只维护 `cmd/generate` 命令行入口，不再提供 Server、Web UI 或 Docker 部署方式。
+本文档专门说明如何配置和运行“圣谕自演机”的 Go CLI。项目同时提供无需后端服务的静态网页，网页使用方式见 [README.md](./README.md)；旧后端 API、旧版 Web UI 和 Docker 部署方式已移除。
 
 ## 1. 环境变量配置
 
