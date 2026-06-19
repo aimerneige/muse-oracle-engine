@@ -9,17 +9,27 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.
 
 const options = parseArgs(process.argv.slice(2));
 
-const [html, css, appJS, dataJS] = await Promise.all([
+const [html, css, appJS, dataJS, faviconICO, favicon16, favicon32, appleTouchIcon] = await Promise.all([
   readText("web/index.html"),
   readText("web/src/styles.css"),
   readText("web/src/app.js"),
-  readText("web/src/data.js")
+  readText("web/src/data.js"),
+  readBinary("web/favicon.ico"),
+  readBinary("web/favicon-16x16.png"),
+  readBinary("web/favicon-32x32.png"),
+  readBinary("web/apple-touch-icon.png")
 ]);
 
 const data = filterData(parseData(dataJS), options.series);
 const bundledJS = "window.LLE_DATA=" + JSON.stringify(data) + ";\n" + appJS;
 const minifiedJS = await minifyJS(bundledJS);
-const output = buildHTML(html, minifyCSS(css), minifiedJS);
+const favicons = new Map([
+  ["favicon.ico", toDataURL(faviconICO, "image/x-icon")],
+  ["favicon-16x16.png", toDataURL(favicon16, "image/png")],
+  ["favicon-32x32.png", toDataURL(favicon32, "image/png")],
+  ["apple-touch-icon.png", toDataURL(appleTouchIcon, "image/png")]
+]);
+const output = buildHTML(html, minifyCSS(css), minifiedJS, favicons);
 
 await fs.mkdir(path.dirname(path.resolve(rootDir, options.out)), { recursive: true });
 await fs.writeFile(path.resolve(rootDir, options.out), output, "utf8");
@@ -84,6 +94,14 @@ async function readText(relativePath) {
   return fs.readFile(path.resolve(rootDir, relativePath), "utf8");
 }
 
+async function readBinary(relativePath) {
+  return fs.readFile(path.resolve(rootDir, relativePath));
+}
+
+function toDataURL(content, mimeType) {
+  return "data:" + mimeType + ";base64," + content.toString("base64");
+}
+
 function parseData(source) {
   const prefix = "window.LLE_DATA = ";
   const trimmed = source.trim();
@@ -140,11 +158,18 @@ function minifyCSS(source) {
     .trim();
 }
 
-function buildHTML(source, css, js) {
-  return source
+function buildHTML(source, css, js, favicons) {
+  let output = source
     .replace(/<link rel="stylesheet" href="src\/styles\.css">\s*/u, "<style>" + css + "</style>")
+    .replace(/\s*<link rel="manifest" href="site\.webmanifest">/u, "")
     .replace(/\s*<script src="src\/data\.js"><\/script>/u, "")
-    .replace(/\s*<script src="src\/app\.js"><\/script>/u, "<script>" + js + "</script>")
+    .replace(/\s*<script src="src\/app\.js"><\/script>/u, "<script>" + js + "</script>");
+
+  for (const [href, dataURL] of favicons) {
+    output = output.replace('href="' + href + '"', 'href="' + dataURL + '"');
+  }
+
+  return output
     .replace(/>\s+</g, "><")
     .trim() + "\n";
 }
