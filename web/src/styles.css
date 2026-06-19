@@ -57,6 +57,13 @@ button {
   text-decoration: none;
 }
 
+.button-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  flex: 0 0 auto;
+}
+
 button:hover,
 .button-link:hover {
   border-color: var(--accent);
