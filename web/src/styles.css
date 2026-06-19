@@ -43,7 +43,22 @@ button {
   line-height: 1.25;
 }
 
-button:hover {
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 6px 11px;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+button:hover,
+.button-link:hover {
   border-color: var(--accent);
 }
 
@@ -507,7 +522,8 @@ label {
     font-size: 15px;
   }
 
-  button {
+  button,
+  .button-link {
     min-height: 40px;
     padding: 8px 10px;
     white-space: normal;
