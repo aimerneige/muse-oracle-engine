@@ -56,7 +56,7 @@
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
-      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage",
+      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog",
       "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
       "characterSeriesInput", "characterIDInput", "characterNameInput", "characterNameEnInput",
       "characterHairStyleInput", "characterHairColorInput", "characterEyeShapeInput", "characterEyeColorInput",
@@ -450,6 +450,10 @@
 
   async function goToLongEpisodesStep() {
     if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
+      return false;
+    }
+    if (state.project.storyMode === "four" && (state.project.selectedFourPanelStories || []).length === 0) {
+      showFourPanelSelectionDialog();
       return false;
     }
     if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts()) {
@@ -1218,7 +1222,6 @@
       upsertLongEpisode(script);
       mergeCostumeStates(script.costume_states || []);
 	  state.project.status = state.project.storyMode === "four" ? "four_panel_storyboard_done" : "long_episode_done";
-      await syncLongMangaImagePrompts();
       renderLongManga();
       autoSaveProject();
 	  log("Parsed manga storyboard " + episodeNumber + ".");
@@ -1264,24 +1267,38 @@
       var card = document.createElement("div");
       card.className = "story-card";
 	  var fourPanelMode = state.project.storyMode === "four";
-	  card.innerHTML = '<div class="card-head"><h3>' + (fourPanelMode ? "候选 " : "第 ") + episode.episode + (fourPanelMode ? "《" : " 话《") + escapeHTML(episode.title) + '》</h3><span>' + (episode.character_ids || []).join(", ") + '</span></div>';
+	  var content = card;
 	  if (fourPanelMode) {
+		card.classList.add("four-panel-story-card");
 		var select = document.createElement("label");
+		select.className = "four-panel-story-selector";
 		var checkbox = document.createElement("input");
 		checkbox.type = "checkbox";
+		checkbox.setAttribute("aria-label", "选择候选 " + episode.episode + "《" + episode.title + "》");
 		checkbox.checked = (state.project.selectedFourPanelStories || []).indexOf(episode.episode) !== -1;
 		checkbox.addEventListener("change", function () {
 		  setFourPanelStorySelected(episode.episode, checkbox.checked);
 		});
 		select.appendChild(checkbox);
-		select.appendChild(document.createTextNode(" 选择这个独立四格剧情"));
 		card.appendChild(select);
+		content = document.createElement("div");
+		content.className = "four-panel-story-content";
+		card.appendChild(content);
 	  }
+	  content.innerHTML = '<div class="card-head"><h3>' + (fourPanelMode ? "候选 " : "第 ") + episode.episode + (fourPanelMode ? "《" : " 话《") + escapeHTML(episode.title) + '》</h3><span>' + (episode.character_ids || []).join(", ") + '</span></div>';
       var text = document.createElement("div");
       text.textContent = episode.summary;
-      card.appendChild(text);
+	  content.appendChild(text);
       els.longOutlineSummary.appendChild(card);
     });
+  }
+
+  function showFourPanelSelectionDialog() {
+    if (els.fourPanelSelectionDialog && typeof els.fourPanelSelectionDialog.showModal === "function") {
+      els.fourPanelSelectionDialog.showModal();
+      return;
+    }
+    window.alert("请至少选择一个喜欢的独立四格剧情，再进入四格分镜。");
   }
 
   function setFourPanelStorySelected(episodeNumber, selected) {
@@ -1476,15 +1493,6 @@
     return (state.project.longEpisodes || []).find(function (episode) {
       return episode.episode === episodeNumber;
     });
-  }
-
-  async function syncLongMangaImagePrompts() {
-    applyLongEpisodesToPanels();
-    renderPanels();
-    if (!promptListContent(state.project.imagePrompts)) {
-      await buildImagePrompts();
-    }
-    state.longMangaUI.step = "episodes";
   }
 
   function imageTabItems() {

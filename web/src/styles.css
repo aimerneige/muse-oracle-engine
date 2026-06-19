@@ -490,6 +490,27 @@ label {
   padding: 12px;
 }
 
+.four-panel-story-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.four-panel-story-selector {
+  display: grid;
+  place-items: start;
+  padding-top: 2px;
+}
+
+.four-panel-story-selector input {
+  margin: 0;
+}
+
+.four-panel-story-content {
+  min-width: 0;
+}
+
 .card-head {
   display: flex;
   align-items: center;
