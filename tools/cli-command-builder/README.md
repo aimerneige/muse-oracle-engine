@@ -20,3 +20,11 @@ npm test
 ```
 
 单文件构建产物位于 `dist/cli-command-builder.html`。项目没有第三方依赖，无需执行 `npm install`。
+
+## 同步角色数据
+
+角色目录是从仓库现有网页数据中提取的精简静态副本，只包含作品和角色的名称及 ID。更新角色数据库并同步 `web/src/data.js` 后，运行：
+
+```bash
+npm run sync:data
+```

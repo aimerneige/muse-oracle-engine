@@ -6,6 +6,7 @@
     <meta name="description" content="LoveLive Engine CLI 命令生成器">
     <title>CLI 指令生成器 · LoveLive Engine</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="character-data.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -54,11 +55,45 @@
 
           <form id="commandForm" novalidate>
             <div id="createFields" class="mode-fields">
-              <label class="field field-wide">
-                <span>角色 ID <b>必填</b></span>
-                <input id="characters" type="text" placeholder="lovelive/honoka,lovelive/umi" autocomplete="off">
-                <small>多个角色使用英文逗号分隔，格式为 作品/角色。</small>
-              </label>
+              <section class="character-picker field-wide" aria-labelledby="characterPickerTitle">
+                <div class="picker-heading">
+                  <div>
+                    <h3 id="characterPickerTitle">选择角色 <b>必填</b></h3>
+                    <p>先按作品筛选，或直接搜索角色名称与 ID。</p>
+                  </div>
+                  <span id="selectedCharacterCount" class="selection-count">已选 0</span>
+                </div>
+
+                <div class="character-filters">
+                  <label class="field">
+                    <span>作品</span>
+                    <select id="seriesFilter">
+                      <option value="">请选择作品</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>搜索</span>
+                    <input id="characterSearch" type="search" placeholder="中文名 / 英文名 / ID" autocomplete="off">
+                  </label>
+                </div>
+
+                <div id="characterList" class="character-list" aria-live="polite"></div>
+
+                <div class="selected-heading">
+                  <span>已选角色</span>
+                  <button id="clearCharacters" type="button">清空</button>
+                </div>
+                <div id="selectedCharacters" class="selected-characters"></div>
+
+                <details class="custom-character">
+                  <summary>添加外部自定义角色</summary>
+                  <label class="field">
+                    <span>自定义角色 ID</span>
+                    <input id="customCharacters" type="text" placeholder="my-series/alice,my-series/bob" autocomplete="off">
+                    <small>多个 ID 使用英文逗号分隔，并与上方已选角色合并。</small>
+                  </label>
+                </details>
+              </section>
 
               <label class="field field-wide">
                 <span>剧情方向 <b>必填</b></span>

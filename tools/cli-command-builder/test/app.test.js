@@ -1,6 +1,14 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { buildCommand, quoteShell, validateConfig } = require("../app.js");
+const {
+  buildCommand,
+  filterCharacters,
+  mergeCharacterIDs,
+  quoteShell,
+  validateConfig
+} = require("../app.js");
+
+require("../character-data.js");
 
 function config(overrides = {}) {
   return {
@@ -61,5 +69,34 @@ test("reports missing create inputs and invalid retry index", () => {
   assert.deepEqual(
     validateConfig(config({ mode: "resume", resume: "project-id", retryImage: "0" })),
     ["重试图片序号必须是大于 0 的整数"]
+  );
+});
+
+test("character catalog contains unique IDs from known series", () => {
+  const data = globalThis.LLE_CHARACTER_DATA;
+  const seriesIDs = new Set(data.series.map((series) => series.id));
+  const characterIDs = data.characters.map((character) => character.series + "/" + character.id);
+
+  assert.equal(data.series.length, 8);
+  assert.equal(data.characters.length, 125);
+  assert.equal(new Set(characterIDs).size, characterIDs.length);
+  assert.equal(data.characters.every((character) => seriesIDs.has(character.series)), true);
+});
+
+test("character filtering requires a series or query", () => {
+  const data = globalThis.LLE_CHARACTER_DATA;
+
+  assert.deepEqual(filterCharacters(data, "", ""), []);
+  assert.equal(filterCharacters(data, "lovelive", "").every((character) => character.series === "lovelive"), true);
+  assert.deepEqual(
+    filterCharacters(data, "", "honoka").map((character) => character.series + "/" + character.id),
+    ["lovelive/honoka"]
+  );
+});
+
+test("selected and custom character IDs are merged without duplicates", () => {
+  assert.deepEqual(
+    mergeCharacterIDs(["lovelive/honoka"], "lovelive/umi, lovelive/honoka"),
+    ["lovelive/honoka", "lovelive/umi"]
   );
 });
