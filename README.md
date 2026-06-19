@@ -69,11 +69,13 @@ npm run build:single -- \
     --out web/dist/lovelive-engine.single.html
 ```
 
-仓库也提供了使用上述作品筛选参数的快捷脚本：
+仓库使用 Just 统一构建 CLI 与 Web 发布产物：
 
 ```bash
-./web/build_single_html.sh
+just build
 ```
+
+Web 产物位于 `web/dist/index.html`，CLI 产物位于 `bin/generate`。
 
 ## 同步网页静态数据
 
@@ -141,17 +143,18 @@ CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 
 │   ├── index.html         # 静态网页入口
 │   ├── src/               # 页面样式、逻辑和生成数据
 │   └── tools/             # 静态数据导出与单文件构建工具
-├── justfile               # Go 开发任务
+├── justfile               # 项目开发与构建任务
 └── RUNNING_GUIDE.md       # CLI 详细运行指南
 ```
 
 ## 开发命令
 
-项目使用 [Just](https://github.com/casey/just) 管理 Go 开发任务：
+项目使用 [Just](https://github.com/casey/just) 管理开发与构建任务：
 
 | 命令 | 说明 |
 |------|------|
-| `just build` | 构建 CLI 二进制 |
+| `just build` | 构建 CLI 二进制与 Web 发布目录 |
+| `just build_web` | 仅构建 Web 发布目录 |
 | `just build_prod` | 构建 Linux 静态 CLI 二进制 |
 | `just run_generate <args>` | 构建并运行 CLI |
 | `just test` / `just test_verbose` | 运行 Go 测试 |

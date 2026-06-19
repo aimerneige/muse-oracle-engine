@@ -8,12 +8,16 @@ go_flags := ""
 default:
     @just --list
 
-# 构建 CLI 二进制文件
-build: (build_generate)
+# 构建 CLI 和 Web 发布产物
+build: build_generate build_web
 
 # 构建 generate 二进制文件
 build_generate:
     go build {{ go_flags }} -o {{ bin_dir }}/generate ./cmd/generate/main.go
+
+# 构建 Web 发布目录
+build_web:
+    ./web/build_dist.sh
 
 # 以生产模式构建 CLI（禁用 CGO，指定 Linux 平台）
 build_prod: (build_generate_prod)
