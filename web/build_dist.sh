@@ -2,6 +2,11 @@
 set -eu
 
 WEB_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT_DIR=$(CDPATH= cd -- "$WEB_DIR/.." && pwd)
+
+cd "$ROOT_DIR"
+go run ./web/tools/export_static_data.go
+
 cd "$WEB_DIR"
 
 rm -rf "$WEB_DIR/dist"
