@@ -134,25 +134,80 @@ func TestGenerateFourPanelStoriesRejectsNonFourPanelResponse(t *testing.T) {
 	}
 }
 
-func TestValidateFourPanelScriptRequiresOrderedStoryStages(t *testing.T) {
+func TestValidateFourPanelScriptRejectsStoryboardSubtitles(t *testing.T) {
 	t.Parallel()
 
 	script := domain.LongMangaEpisodeScript{
 		Episode: 1,
 		Panels: []domain.LongMangaPanelScript{
-			{Index: 1, Content: "##### 第1格【起】"},
-			{Index: 2, Content: "##### 第2格【承】"},
-			{Index: 3, Content: "##### 第3格【转】"},
-			{Index: 4, Content: "##### 第4格【合】"},
+			{Index: 1, Content: "* **【构图与景别】**：中景"},
+			{Index: 2, Content: "* **【构图与景别】**：近景"},
+			{Index: 3, Content: "* **【构图与景别】**：特写"},
+			{Index: 4, Content: "* **【构图与景别】**：全景"},
 		},
 	}
 	if err := validateFourPanelScript(script); err != nil {
 		t.Fatalf("expected strict four-panel script to pass, got %v", err)
 	}
 
-	script.Panels[3].Content = "##### 第4格"
-	if err := validateFourPanelScript(script); err == nil || !strings.Contains(err.Error(), "【合】") {
-		t.Fatalf("expected missing final stage to fail, got %v", err)
+	script.Panels[3].Content = "##### 第4格【合】\n* **【构图与景别】**：全景"
+	if err := validateFourPanelScript(script); err == nil || !strings.Contains(err.Error(), "must not contain storyboard subtitles") {
+		t.Fatalf("expected storyboard subtitle to fail, got %v", err)
+	}
+}
+
+func TestApplyFourPanelMangaStateToProjectRemovesStoryboardSubtitles(t *testing.T) {
+	t.Parallel()
+
+	project := testLongMangaProject()
+	state := &domain.LongMangaState{
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 1,
+			Episodes:      []domain.LongMangaEpisodeOutline{{Episode: 1, Title: "晨间约定", Summary: "起承转合"}},
+		},
+		Episodes: []domain.LongMangaEpisodeScript{{
+			Episode: 1,
+			Panels: []domain.LongMangaPanelScript{
+				{Index: 1, Content: "##### 第1格【起】\n* **【构图与景别】**：中景"},
+				{Index: 2, Content: "##### 第2格【承】\n* **【构图与景别】**：近景"},
+				{Index: 3, Content: "##### 第3格【转】\n* **【构图与景别】**：特写"},
+				{Index: 4, Content: "##### 第4格【合】\n* **【构图与景别】**：全景"},
+			},
+		}},
+	}
+
+	if err := ApplyFourPanelMangaStateToProject(project, state); err != nil {
+		t.Fatalf("ApplyFourPanelMangaStateToProject returned error: %v", err)
+	}
+	content := project.Storyboard.Panels[0].Content
+	for _, forbidden := range []string{"#", "第1格", "第 1 话", "【起】", "【承】", "【转】", "【合】", "起承转合"} {
+		if strings.Contains(content, forbidden) {
+			t.Fatalf("expected title-free four-panel content, found %q in %s", forbidden, content)
+		}
+	}
+	if strings.Count(content, "【构图与景别】") != 4 {
+		t.Fatalf("expected all four panel descriptions to remain, got %s", content)
+	}
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+	drawPrompt, err := engine.RenderComicDraw(project.Style, prompt.ComicDrawData{
+		PanelContent: content,
+		Language:     project.Language,
+	})
+	if err != nil {
+		t.Fatalf("failed to render comic draw prompt: %v", err)
+	}
+	parts := strings.SplitN(drawPrompt, "## 分镜脚本：", 2)
+	if len(parts) != 2 {
+		t.Fatalf("comic draw prompt missing storyboard section")
+	}
+	for _, forbidden := range []string{"#####", "第1格", "【起】", "【承】", "【转】", "【合】", "起承转合"} {
+		if strings.Contains(parts[1], forbidden) {
+			t.Fatalf("comic draw storyboard contains forbidden subtitle %q: %s", forbidden, parts[1])
+		}
 	}
 }
 

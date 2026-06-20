@@ -398,7 +398,7 @@ func runFourPanelMangaFlow(ctx context.Context, project *domain.Project, store s
 		_ = fourPanelStore.Save(state)
 		return err
 	}
-	if err := service.ApplyLongMangaStateToProject(project, state); err != nil {
+	if err := service.ApplyFourPanelMangaStateToProject(project, state); err != nil {
 		return err
 	}
 	if err := fourPanelStore.Save(state); err != nil {

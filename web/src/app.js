@@ -974,7 +974,7 @@
         prompt: renderTemplate(template, {
           Characters: characters,
           CharacterSetting: buildCharacterSetting(characters),
-          PanelContent: panel.content,
+          PanelContent: state.project.storyMode === "four" ? stripFourPanelStoryboardSubtitles(panel.content) : panel.content,
           Language: normalizeLanguage(state.project.language)
         })
       };
@@ -1206,14 +1206,11 @@
     }
     try {
       var script = normalizeLongEpisode(parseJSONBlock(raw), outline);
-	  if (state.project.storyMode === "four") {
-		var stages = ["【起】", "【承】", "【转】", "【合】"];
-		if (script.panels.length !== 4 || script.panels.some(function (panel, index) {
-		  return panel.index !== index + 1 || panel.content.indexOf(stages[index]) === -1;
-		})) {
-		  throw new Error("Four-panel storyboard must contain exactly four panels indexed 1, 2, 3, 4.");
-		}
-	  }
+      if (state.project.storyMode === "four" && (script.panels.length !== 4 || script.panels.some(function (panel, index) {
+        return panel.index !== index + 1 || hasFourPanelStoryboardSubtitle(panel.content);
+      }))) {
+        throw new Error("Four-panel storyboard must contain exactly four title-free panels indexed 1, 2, 3, 4.");
+      }
       upsertLongEpisode(script);
       mergeCostumeStates(script.costume_states || []);
 	  state.project.status = state.project.storyMode === "four" ? "four_panel_storyboard_done" : "long_episode_done";
@@ -1985,10 +1982,11 @@
   }
 
   function applyLongEpisodesToPanels() {
+    var fourPanelMode = state.project.storyMode === "four";
     state.project.panels = (state.project.longEpisodes || []).map(function (episode, index) {
       return {
         index: index + 1,
-        content: longMangaEpisodeContent(episode),
+        content: longMangaEpisodeContent(episode, fourPanelMode),
         characterIds: episode.character_ids || []
       };
     });
@@ -1997,7 +1995,12 @@
     }
   }
 
-  function longMangaEpisodeContent(episode) {
+  function longMangaEpisodeContent(episode, fourPanelMode) {
+    if (fourPanelMode) {
+      return (episode.panels || []).map(function (panel) {
+        return stripFourPanelStoryboardSubtitles(panel.content || "");
+      }).filter(Boolean).join("\n\n");
+    }
     var lines = ["#### 【第 " + episode.episode + " 话】", ""];
     if (episode.summary) {
       lines.push("**梗概**：" + episode.summary, "");
@@ -2009,6 +2012,26 @@
       lines.push(panel.content);
     });
     return lines.join("\n");
+  }
+
+  function stripFourPanelStoryboardSubtitles(content) {
+    return String(content || "").split("\n").filter(function (line) {
+      return !isFourPanelStoryboardSubtitleLine(line);
+    }).join("\n").trim();
+  }
+
+  function hasFourPanelStoryboardSubtitle(content) {
+    return String(content || "").split("\n").some(isFourPanelStoryboardSubtitleLine);
+  }
+
+  function isFourPanelStoryboardSubtitleLine(line) {
+    var trimmed = line.trim();
+    if (trimmed.indexOf("#") === 0) {
+      return true;
+    }
+    return ["【起】", "【承】", "【转】", "【合】", "起：", "承：", "转：", "合：", "起:", "承:", "转:", "合:", "第1格", "第2格", "第3格", "第4格", "第 1 格", "第 2 格", "第 3 格", "第 4 格", "第一格", "第二格", "第三格", "第四格"].some(function (marker) {
+      return trimmed.indexOf(marker) !== -1;
+    });
   }
 
   function getLongEpisodeRaw(episodeNumber) {

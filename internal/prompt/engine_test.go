@@ -205,7 +205,10 @@ func TestRenderFourPanelPrompts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to render four-panel storyboard prompt: %v", err)
 	}
-	if !strings.Contains(storyboardPrompt, "严格包含 4 项") || !strings.Contains(storyboardPrompt, "第4格【合】") {
-		t.Fatalf("expected strict four-panel constraints, got %s", storyboardPrompt)
+	if !strings.Contains(storyboardPrompt, "严格包含 4 项") || !strings.Contains(storyboardPrompt, "禁止分镜子标题") {
+		t.Fatalf("expected strict title-free four-panel constraints, got %s", storyboardPrompt)
+	}
+	if strings.Contains(storyboardPrompt, `"content": "#####`) || strings.Contains(storyboardPrompt, "第4格【合】") {
+		t.Fatalf("expected four-panel content examples without subtitles, got %s", storyboardPrompt)
 	}
 }

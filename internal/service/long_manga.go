@@ -250,13 +250,12 @@ func validateFourPanelScript(script domain.LongMangaEpisodeScript) error {
 		return fmt.Errorf("four-panel story %d must contain exactly 4 panels, got %d", script.Episode, len(script.Panels))
 	}
 
-	stages := []string{"【起】", "【承】", "【转】", "【合】"}
 	for i, panel := range script.Panels {
 		if panel.Index != i+1 {
 			return fmt.Errorf("four-panel story %d panel indexes must be 1,2,3,4", script.Episode)
 		}
-		if !strings.Contains(panel.Content, stages[i]) {
-			return fmt.Errorf("four-panel story %d panel %d must use the %s stage", script.Episode, panel.Index, stages[i])
+		if hasStoryboardSubtitle(panel.Content) {
+			return fmt.Errorf("four-panel story %d panel %d must not contain storyboard subtitles", script.Episode, panel.Index)
 		}
 	}
 	return nil
@@ -370,6 +369,15 @@ func (s *LongMangaService) generateAllEpisodesForMode(ctx context.Context, proje
 
 // ApplyLongMangaStateToProject copies generated long manga scripts into the image pipeline shape.
 func ApplyLongMangaStateToProject(project *domain.Project, state *domain.LongMangaState) error {
+	return applyMangaStateToProject(project, state, longMangaEpisodeContent)
+}
+
+// ApplyFourPanelMangaStateToProject copies strict four-panel scripts without storyboard subtitles.
+func ApplyFourPanelMangaStateToProject(project *domain.Project, state *domain.LongMangaState) error {
+	return applyMangaStateToProject(project, state, fourPanelEpisodeContent)
+}
+
+func applyMangaStateToProject(project *domain.Project, state *domain.LongMangaState, episodeContent func(domain.LongMangaEpisodeScript) string) error {
 	if state.ConfirmedOutline == nil {
 		return fmt.Errorf("confirmed outline is required")
 	}
@@ -381,7 +389,7 @@ func ApplyLongMangaStateToProject(project *domain.Project, state *domain.LongMan
 	for _, episode := range state.Episodes {
 		panels = append(panels, domain.StoryboardPanel{
 			Index:        len(panels) + 1,
-			Content:      longMangaEpisodeContent(episode),
+			Content:      episodeContent(episode),
 			CharacterIDs: episode.CharacterIDs,
 		})
 	}
@@ -685,6 +693,51 @@ func longMangaEpisodeContent(episode domain.LongMangaEpisodeScript) string {
 		sb.WriteString(panel.Content)
 	}
 	return sb.String()
+}
+
+func fourPanelEpisodeContent(episode domain.LongMangaEpisodeScript) string {
+	contents := make([]string, 0, len(episode.Panels))
+	for _, panel := range episode.Panels {
+		content := stripStoryboardSubtitles(panel.Content)
+		if content != "" {
+			contents = append(contents, content)
+		}
+	}
+	return strings.Join(contents, "\n\n")
+}
+
+func stripStoryboardSubtitles(content string) string {
+	lines := strings.Split(content, "\n")
+	filtered := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if isStoryboardSubtitleLine(line) {
+			continue
+		}
+		filtered = append(filtered, line)
+	}
+	return strings.TrimSpace(strings.Join(filtered, "\n"))
+}
+
+func hasStoryboardSubtitle(content string) bool {
+	for _, line := range strings.Split(content, "\n") {
+		if isStoryboardSubtitleLine(line) {
+			return true
+		}
+	}
+	return false
+}
+
+func isStoryboardSubtitleLine(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed, "#") {
+		return true
+	}
+	for _, marker := range []string{"【起】", "【承】", "【转】", "【合】", "起：", "承：", "转：", "合：", "起:", "承:", "转:", "合:", "第1格", "第2格", "第3格", "第4格", "第 1 格", "第 2 格", "第 3 格", "第 4 格", "第一格", "第二格", "第三格", "第四格"} {
+		if strings.HasPrefix(trimmed, marker) || strings.Contains(trimmed, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func longMangaOutlineText(outline domain.LongMangaOutline) string {
