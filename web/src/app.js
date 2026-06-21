@@ -237,9 +237,9 @@
     els.storyMode.value = state.project.storyMode || "standard";
     els.languageInput.value = state.project.language;
     els.plotHint.value = state.project.plotHint;
-    els.storyboardPrompt.value = state.project.storyboardPrompt;
+    setGeneratedPromptValue(els.storyboardPrompt, state.project.storyboardPrompt);
     els.rawStoryboard.value = state.project.rawStoryboard;
-    els.longOutlinePrompt.value = state.project.longOutlinePrompt || "";
+    setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
   }
 
@@ -750,7 +750,7 @@
     }
     state.project.storyboardPrompt = prompt;
     state.project.status = "storyboard_prompt_ready";
-    els.storyboardPrompt.value = state.project.storyboardPrompt;
+    setGeneratedPromptValue(els.storyboardPrompt, state.project.storyboardPrompt);
     renderProjectStatus();
     setActiveTab("storyPrompt");
     setStandardStep("prompt");
@@ -1045,7 +1045,7 @@
       return false;
     }
     state.project.longOutlinePrompt = prompt;
-    els.longOutlinePrompt.value = state.project.longOutlinePrompt;
+    setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt);
 	state.project.status = fourPanelMode ? "four_panel_outline_prompt_ready" : "long_outline_prompt_ready";
     state.longMangaUI.step = "outline";
     renderProjectStatus();
@@ -1236,7 +1236,7 @@
 	els.multiRoundOutlineResultLabel.textContent = fourPanelMode ? "四格漫画候选梗概结果" : "长漫画梗概结果";
 	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : "逐话分镜";
 	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "逐话分镜";
-    els.longOutlinePrompt.value = state.project.longOutlinePrompt || "";
+    setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
     renderLongMangaSections();
     renderLongOutlineSummary();
@@ -1366,6 +1366,7 @@
     card.appendChild(actions);
     appendLongEpisodeParsedSummary(card, item.episode);
     els.longEpisodeList.appendChild(card);
+    scrollPromptToEnd(promptArea);
   }
 
   function appendLongEpisodeParsedSummary(card, episodeNumber) {
@@ -1412,6 +1413,21 @@
     field.appendChild(copy);
     label.appendChild(field);
     parent.appendChild(label);
+  }
+
+  function setGeneratedPromptValue(textarea, value) {
+    if (textarea.value === value) {
+      return;
+    }
+    textarea.value = value;
+    scrollPromptToEnd(textarea);
+  }
+
+  function scrollPromptToEnd(textarea) {
+    textarea.scrollTop = textarea.scrollHeight;
+    window.requestAnimationFrame(function () {
+      textarea.scrollTop = textarea.scrollHeight;
+    });
   }
 
   function renderLongImages() {
@@ -1586,6 +1602,7 @@
       copyText(item.prompt);
     });
     parent.appendChild(card);
+    scrollPromptToEnd(textarea);
   }
 
   function appendImageResultCard(parent, image) {
