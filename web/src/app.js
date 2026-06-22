@@ -459,12 +459,14 @@
   }
 
   async function goToLongImagesStep() {
-    if (!await ensureLongEpisodesParsed()) {
-      return false;
+    if (state.project.storyMode === "four") {
+      if (!await ensureLongEpisodesParsed()) {
+        return false;
+      }
+      applyLongEpisodesToPanels();
+      renderPanels();
+      await buildLongImagePromptsStep();
     }
-    applyLongEpisodesToPanels();
-    renderPanels();
-    await buildLongImagePromptsStep();
     setLongMangaStep("images");
     log("Moved to long manga image prompts.");
     return true;
