@@ -53,8 +53,8 @@
 	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "nextLongEpisodesBtn",
-      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeTabs", "longEpisodeList",
-      "buildLongImagePromptsBtn", "callLongImageBtn", "longImageTabs", "longImagePromptList", "longImageList",
+      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
+      "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog",
       "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
@@ -1334,6 +1334,7 @@
   function renderLongEpisodeList() {
     els.longEpisodeList.innerHTML = "";
     renderLongEpisodeTabs();
+    renderEpisodeOutlineSummary(els.longEpisodeOutlineSummary, state.longMangaUI.activeEpisode);
 
     var item = activeLongEpisodePrompt();
     if (!item) {
@@ -1447,8 +1448,36 @@
 
   function renderLongImages() {
     renderImageTabs(els.longImageTabs, imageTabItems());
+    renderEpisodeOutlineSummary(els.longImageOutlineSummary, activeImageEpisodeNumber());
     renderLongImagePrompts();
     renderLongImageResults();
+  }
+
+  function renderEpisodeOutlineSummary(target, episodeNumber) {
+    target.replaceChildren();
+    var episode = state.project.storyMode === "long" ? findLongOutlineEpisode(episodeNumber) : null;
+    target.classList.toggle("is-hidden", !episode);
+    if (!episode) {
+      return;
+    }
+    var head = document.createElement("div");
+    head.className = "card-head";
+    var title = document.createElement("h3");
+    title.textContent = "第 " + episode.episode + " 话《" + episode.title + "》梗概";
+    head.appendChild(title);
+    var summary = document.createElement("div");
+    summary.textContent = episode.summary;
+    target.appendChild(head);
+    target.appendChild(summary);
+  }
+
+  function activeImageEpisodeNumber() {
+    ensureActiveImageIndex();
+    if (state.imageUI.activeIndex === null) {
+      return null;
+    }
+    var episode = (state.project.longEpisodes || [])[state.imageUI.activeIndex - 1];
+    return episode ? episode.episode : state.imageUI.activeIndex;
   }
 
   function renderLongImagePrompts() {
