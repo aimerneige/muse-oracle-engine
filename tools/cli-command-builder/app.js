@@ -56,6 +56,9 @@
 	if (config.longManga && config.fourPanelManga) {
 	  errors.push("长篇漫画与四格漫画流程不能同时启用");
 	}
+	if (config.longManga && (!Number.isInteger(Number(config.storyLength)) || Number(config.storyLength) < 1)) {
+	  errors.push("剧情长度必须是大于 0 的整数");
+	}
 
     return errors;
   }
@@ -106,12 +109,14 @@
       addValue("language", config.language);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  if (config.longManga) addValue("story-length", config.storyLength);
 	  addFlag("four-panel-manga", config.fourPanelManga);
     } else if (config.mode === "resume") {
       addValue("resume", config.resume);
       addValue("retry-image", config.retryImage);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  if (config.longManga) addValue("story-length", config.storyLength);
 	  addFlag("four-panel-manga", config.fourPanelManga);
     } else {
       addFlag(config.listType, true);
@@ -266,6 +271,7 @@
         listType: selectedListType ? selectedListType.value : "list-characters",
         promptOnly: document.getElementById("promptOnly").checked,
 		longManga: document.getElementById("longManga").checked,
+		storyLength: document.getElementById("storyLength").value,
 		fourPanelManga: document.getElementById("fourPanelManga").checked
       };
     }
@@ -351,6 +357,7 @@
       form.reset();
       selectedCharacterIDs = [];
       document.getElementById("language").value = "中文";
+	  document.getElementById("storyLength").value = "4";
       document.getElementById("executable").selectedIndex = 0;
       renderCharacterList();
       renderSelectedCharacters();

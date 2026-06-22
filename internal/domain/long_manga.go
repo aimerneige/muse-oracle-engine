@@ -18,6 +18,7 @@ type LongMangaState struct {
 	ProjectID           string                   `json:"project_id"`
 	Status              LongMangaStatus          `json:"status"`
 	PlotHint            string                   `json:"plot_hint"`
+	StoryLength         int                      `json:"story_length,omitempty"`
 	Style               ComicStyle               `json:"style"`
 	Language            string                   `json:"language"`
 	CandidateCharacters []LongMangaCharacterRef  `json:"candidate_characters"`

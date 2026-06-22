@@ -37,10 +37,20 @@ func main() {
 	listModels := flag.Bool("list-models", false, "List all available models")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	longManga := flag.Bool("long-manga", false, "Use multi-round long manga flow: outline, human confirmation, then all episode storyboards")
+	storyLength := flag.Int("story-length", 0, "Long manga story length in episodes (default 4; each episode has 4 panels)")
 	fourPanelManga := flag.Bool("four-panel-manga", false, "Generate four-panel story candidates, select by number, then build strict four-panel storyboards")
 	flag.Parse()
+	storyLengthSet := false
+	flag.Visit(func(current *flag.Flag) {
+		if current.Name == "story-length" {
+			storyLengthSet = true
+		}
+	})
 	if *longManga && *fourPanelManga {
 		log.Fatal("--long-manga and --four-panel-manga cannot be used together")
+	}
+	if storyLengthSet && *storyLength <= 0 {
+		log.Fatal("--story-length must be greater than 0")
 	}
 
 	// Load .env file
@@ -149,6 +159,9 @@ func main() {
 			log.Fatalf("Failed to load project %s: %v", *resumeID, err)
 		}
 		log.Printf("✓ Resumed project: %s (status: %s)", project.ID, project.Status)
+		if storyLengthSet {
+			project.StoryLength = *storyLength
+		}
 	} else {
 		// Validate required inputs
 		if *characters == "" || *plotHint == "" || *style == "" {
@@ -164,7 +177,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		project, err = createProject(charRegistry, *characters, *plotHint, *style, *language)
+		project, err = createProject(charRegistry, *characters, *plotHint, *style, *language, *storyLength)
 		if err != nil {
 			log.Fatalf("Failed to create project: %v", err)
 		}
@@ -251,7 +264,7 @@ func main() {
 	log.Printf("输出目录: %s", store.ProjectDir(project.ID))
 }
 
-func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, language string) (*domain.Project, error) {
+func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, language string, storyLength int) (*domain.Project, error) {
 	// Parse character IDs
 	ids := strings.Split(characterIDs, ",")
 	var chars []domain.Character
@@ -271,14 +284,15 @@ func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, lang
 	}
 
 	return &domain.Project{
-		ID:         uuid.New().String(),
-		Status:     domain.StatusCreated,
-		Characters: chars,
-		PlotHint:   plotHint,
-		Style:      comicStyle,
-		Language:   domain.NormalizeLanguage(language),
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		ID:          uuid.New().String(),
+		Status:      domain.StatusCreated,
+		Characters:  chars,
+		PlotHint:    plotHint,
+		StoryLength: storyLength,
+		Style:       comicStyle,
+		Language:    domain.NormalizeLanguage(language),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}, nil
 }
 

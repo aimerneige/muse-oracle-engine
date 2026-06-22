@@ -42,7 +42,7 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthInput",
       "addCharacterBtn", "importCharactersBtn", "exportCharactersBtn", "characterFileInput",
       "standardStepPromptTab", "standardStepImagesTab",
       "standardStepPromptPanel", "standardStepImagesPanel",
@@ -93,6 +93,7 @@
       setActiveTab(firstTabForMode(state.project.storyMode));
     });
     els.languageInput.addEventListener("input", syncProjectFromForm);
+    els.storyLengthInput.addEventListener("input", syncProjectFromForm);
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
     els.copyStoryboardPromptBtn.addEventListener("click", function () {
@@ -165,6 +166,7 @@
       status: "draft",
       characterIds: [],
       plotHint: "",
+      storyLength: 4,
       style: "watercolor",
       storyMode: "standard",
       language: "中文",
@@ -236,6 +238,7 @@
     els.styleSelect.value = state.project.style;
     els.storyMode.value = state.project.storyMode || "standard";
     els.languageInput.value = state.project.language;
+    els.storyLengthInput.value = state.project.storyLength || 4;
     els.plotHint.value = state.project.plotHint;
     setGeneratedPromptValue(els.storyboardPrompt, state.project.storyboardPrompt);
     els.rawStoryboard.value = state.project.rawStoryboard;
@@ -323,6 +326,7 @@
     state.project.style = els.styleSelect.value;
     state.project.storyMode = els.storyMode.value;
     state.project.language = normalizeLanguage(els.languageInput.value);
+    state.project.storyLength = Number.parseInt(els.storyLengthInput.value, 10) || 0;
     state.project.plotHint = els.plotHint.value.trim();
     state.project.storyboardPrompt = els.storyboardPrompt.value;
     state.project.rawStoryboard = els.rawStoryboard.value;
@@ -492,6 +496,7 @@
 
   function updateRouteUI() {
     var mode = state.project.storyMode || "standard";
+	els.storyLengthWrap.classList.toggle("is-hidden", mode !== "long");
     document.querySelectorAll("[data-route]").forEach(function (element) {
 	  element.hidden = element.dataset.route.split(" ").indexOf(mode) === -1;
     });
@@ -1036,10 +1041,18 @@
     }
 
 	var fourPanelMode = state.project.storyMode === "four";
+    if (!fourPanelMode && (!Number.isInteger(state.project.storyLength) || state.project.storyLength < 1)) {
+      state.project.longOutlinePrompt = "";
+      els.longOutlinePrompt.value = "";
+      log("Story length must be a positive integer.");
+      return false;
+    }
     var prompt = renderTemplate(fourPanelMode ? data.fourPanelOutlineTemplate : data.longOutlineTemplate, {
       Characters: characters,
       PlotHint: state.project.plotHint,
-      Language: normalizeLanguage(state.project.language)
+      Language: normalizeLanguage(state.project.language),
+      StoryLength: state.project.storyLength,
+      TotalPanels: state.project.storyLength * 4
     });
 	if (!await confirmContentOverwrite(state.project.longOutlinePrompt, "已有漫画梗概 Prompt 会被覆盖。")) {
       return false;

@@ -110,10 +110,11 @@ go run cmd/generate/main.go \
     --characters "lovelive/honoka,lovelive/umi" \
     --plot "二人围绕校园祭准备展开的连续剧情" \
     --style chibi_figure \
+    --story-length 12 \
     --long-manga
 ```
 
-长篇流程会先生成 outline，并把状态保存到项目目录。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
+`--story-length` 接收大于 0 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 4` 对应 4 话 16 格，`--story-length 12` 对应 12 话 48 格；省略时默认为 4 话。该长度会在第一阶段注入 outline Prompt。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
 
 ## 6. 自定义角色
 

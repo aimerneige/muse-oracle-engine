@@ -46,9 +46,11 @@ type StorybookData struct {
 
 // LongMangaOutlineData contains data for the first multi-round outline prompt.
 type LongMangaOutlineData struct {
-	Characters []domain.Character
-	PlotHint   string
-	Language   string
+	Characters  []domain.Character
+	PlotHint    string
+	Language    string
+	StoryLength int
+	TotalPanels int
 }
 
 // LongMangaEpisodeData contains data for one confirmed-outline episode prompt.

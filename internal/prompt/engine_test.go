@@ -116,8 +116,10 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 	}
 
 	outline, err := engine.RenderLongMangaOutline(LongMangaOutlineData{
-		Characters: []domain.Character{character},
-		PlotHint:   "长篇连续剧情",
+		Characters:  []domain.Character{character},
+		PlotHint:    "长篇连续剧情",
+		StoryLength: 12,
+		TotalPanels: 48,
 	})
 	if err != nil {
 		t.Fatalf("RenderLongMangaOutline returned error: %v", err)
@@ -130,6 +132,9 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 	}
 	if !strings.Contains(outline, "只输出 JSON 代码块") {
 		t.Fatal("expected long manga outline prompt to require JSON output")
+	}
+	if !strings.Contains(outline, "严格生成 12 话") || !strings.Contains(outline, "共 48 格") || !strings.Contains(outline, `"total_episodes": 12`) {
+		t.Fatal("expected long manga outline prompt to include the requested story length")
 	}
 
 	episode, err := engine.RenderLongMangaEpisode(LongMangaEpisodeData{

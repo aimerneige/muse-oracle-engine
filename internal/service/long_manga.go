@@ -60,6 +60,9 @@ func (s *LongMangaService) GenerateFourPanelOutlineWithStore(ctx context.Context
 }
 
 func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.Project, store LongMangaProgressStore, mode mangaGenerationMode) (*domain.LongMangaState, error) {
+	if mode == longMangaGenerationMode {
+		project.StoryLength = domain.NormalizeLongMangaStoryLength(project.StoryLength)
+	}
 	promptText, err := s.renderOutlinePrompt(project, mode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render %s outline prompt: %w", mode, err)
@@ -88,6 +91,7 @@ func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.
 		ProjectID:           project.ID,
 		Status:              domain.LongMangaStatusOutlineGenerated,
 		PlotHint:            project.PlotHint,
+		StoryLength:         project.StoryLength,
 		Style:               project.Style,
 		Language:            domain.NormalizeLanguage(project.Language),
 		CandidateCharacters: longMangaCharacterRefs(project.Characters),
@@ -107,9 +111,11 @@ func (s *LongMangaService) renderOutlinePrompt(project *domain.Project, mode man
 		})
 	}
 	return s.promptEngine.RenderLongMangaOutline(prompt.LongMangaOutlineData{
-		Characters: project.Characters,
-		PlotHint:   project.PlotHint,
-		Language:   domain.NormalizeLanguage(project.Language),
+		Characters:  project.Characters,
+		PlotHint:    project.PlotHint,
+		Language:    domain.NormalizeLanguage(project.Language),
+		StoryLength: project.StoryLength,
+		TotalPanels: project.StoryLength * domain.LongMangaPanelsPerEpisode,
 	})
 }
 

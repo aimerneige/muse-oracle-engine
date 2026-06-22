@@ -120,6 +120,8 @@ go run cmd/generate/main.go --prompt-only --characters 'lovelive/honoka' --plot 
 
 CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 [RUNNING_GUIDE.md](./RUNNING_GUIDE.md)。该文档专门描述命令行工作流。
 
+长漫画使用 `--story-length` 指定话数，每话固定 4 格。例如 `--story-length 4` 生成 4 话 16 格，`--story-length 12` 生成 12 话 48 格；未提供时默认为 4 话。Web 页面切换到“长漫画”后可直接填写“剧情长度（话）”。
+
 不熟悉 CLI 参数时，可以打开 [`tools/cli-command-builder/index.html`](./tools/cli-command-builder/index.html)，通过可视化选项生成完整指令。该工具是零依赖的独立静态项目，不连接后端，也不会执行命令。
 
 ## 项目结构
