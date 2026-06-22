@@ -51,7 +51,7 @@
       "longStepOutlineTab", "longStepEpisodesTab", "longStepImagesTab",
       "longStepOutlinePanel", "longStepEpisodesPanel", "longStepImagesPanel",
 	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
-      "buildLongOutlinePromptBtn", "callLongOutlineBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
+      "buildLongOutlinePromptBtn", "callLongOutlineBtn", "selectAllFourPanelStoriesBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "nextLongEpisodesBtn",
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
@@ -117,6 +117,7 @@
     });
     els.callLongOutlineBtn.addEventListener("click", callLongOutline);
     els.rawLongOutline.addEventListener("input", updateRawLongOutlineFromInput);
+    els.selectAllFourPanelStoriesBtn.addEventListener("click", selectAllFourPanelStories);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
@@ -1251,6 +1252,8 @@
 	els.multiRoundOutlineResultLabel.textContent = fourPanelMode ? "四格漫画候选梗概结果" : "长漫画梗概结果";
 	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : "逐话分镜";
 	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "逐话分镜";
+    els.selectAllFourPanelStoriesBtn.classList.toggle("is-hidden", !fourPanelMode);
+    els.selectAllFourPanelStoriesBtn.disabled = !state.project.longOutline || !state.project.longOutline.episodes || state.project.longOutline.episodes.length === 0;
     setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
     renderLongMangaSections();
@@ -1320,6 +1323,22 @@
 	clearMultiRoundResults();
 	autoSaveProject();
 	renderLongManga();
+  }
+
+  function selectAllFourPanelStories() {
+    if (state.project.storyMode !== "four" || !state.project.longOutline || !state.project.longOutline.episodes) {
+      return;
+    }
+    var selected = new Set(state.project.selectedFourPanelStories || []);
+    if (state.project.longOutline.episodes.every(function (episode) { return selected.has(episode.episode); })) {
+      return;
+    }
+    state.project.selectedFourPanelStories = state.project.longOutline.episodes.map(function (episode) {
+      return episode.episode;
+    });
+    clearMultiRoundResults();
+    autoSaveProject();
+    renderLongManga();
   }
 
   function clearMultiRoundResults() {
