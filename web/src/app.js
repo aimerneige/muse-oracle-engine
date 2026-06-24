@@ -350,10 +350,14 @@
   }
 
   function saveProject() {
+    saveCurrentProject();
+    log("Project prompts saved locally: " + state.project.id);
+  }
+
+  function saveCurrentProject() {
     syncProjectFromForm();
     state.projectSaved = true;
     persistProject();
-    log("Project prompts saved locally: " + state.project.id);
   }
 
   function autoSaveProject() {
@@ -796,7 +800,6 @@
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
       await parseStoryboardFromRaw();
-      autoSaveProject();
       setActiveTab("storyPrompt");
       return true;
     } catch (err) {
@@ -930,13 +933,13 @@
     state.project.status = blocks.length > 0 ? "storyboard_done" : state.project.status;
     renderPanels();
     renderProjectStatus();
-    autoSaveProject();
     if (blocks.length > 0) {
       if (!skipImagePrompts) {
         await buildImagePrompts();
       } else {
         setStandardStep("images");
       }
+      saveCurrentProject();
     }
     log("Parsed " + blocks.length + " storyboard block(s).");
     return blocks.length > 0;
@@ -1094,7 +1097,6 @@
       els.rawLongOutline.value = text;
       parseLongOutlineFromRaw();
       state.longMangaUI.step = "outline";
-      autoSaveProject();
       return true;
     } catch (err) {
       logError("Long manga outline request failed", err);
@@ -1115,7 +1117,7 @@
       state.longMangaUI.step = "outline";
       renderLongManga();
       renderProjectStatus();
-      autoSaveProject();
+      saveCurrentProject();
 	  log("Parsed manga outline with " + outline.episodes.length + " candidate(s).");
       return true;
     } catch (err) {
@@ -1196,7 +1198,6 @@
           var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
           setLongEpisodeRaw(item.episode, text);
           await parseLongEpisodeFromRaw(item.episode);
-          autoSaveProject();
         } catch (err) {
           allDone = false;
 		  logError("Manga storyboard " + item.episode + " failed", err);
@@ -1235,7 +1236,7 @@
 	  await buildImagePrompts({ navigate: false, confirmOverwrite: false });
 	  state.longMangaUI.step = "episodes";
       renderLongManga();
-      autoSaveProject();
+      saveCurrentProject();
 	  log("Parsed manga storyboard " + episodeNumber + ".");
       return true;
     } catch (err) {
