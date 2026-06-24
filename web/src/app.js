@@ -42,7 +42,7 @@
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
-      "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthInput",
+      "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthEnabledInput", "storyLengthInput",
       "addCharacterBtn", "importCharactersBtn", "exportCharactersBtn", "characterFileInput",
       "standardStepPromptTab", "standardStepImagesTab",
       "standardStepPromptPanel", "standardStepImagesPanel",
@@ -93,6 +93,10 @@
       setActiveTab(firstTabForMode(state.project.storyMode));
     });
     els.languageInput.addEventListener("input", syncProjectFromForm);
+    els.storyLengthEnabledInput.addEventListener("change", function () {
+      els.storyLengthInput.disabled = !els.storyLengthEnabledInput.checked;
+      syncProjectFromForm();
+    });
     els.storyLengthInput.addEventListener("input", syncProjectFromForm);
     els.plotHint.addEventListener("input", syncProjectFromForm);
     els.buildStoryboardPromptBtn.addEventListener("click", buildStoryboardPrompt);
@@ -167,7 +171,8 @@
       status: "draft",
       characterIds: [],
       plotHint: "",
-      storyLength: 4,
+      storyLengthEnabled: false,
+      storyLength: 0,
       style: "watercolor",
       storyMode: "standard",
       language: "中文",
@@ -239,6 +244,8 @@
     els.styleSelect.value = state.project.style;
     els.storyMode.value = state.project.storyMode || "standard";
     els.languageInput.value = state.project.language;
+    els.storyLengthEnabledInput.checked = !!state.project.storyLengthEnabled;
+    els.storyLengthInput.disabled = !els.storyLengthEnabledInput.checked;
     els.storyLengthInput.value = state.project.storyLength || 4;
     els.plotHint.value = state.project.plotHint;
     setGeneratedPromptValue(els.storyboardPrompt, state.project.storyboardPrompt);
@@ -327,7 +334,8 @@
     state.project.style = els.styleSelect.value;
     state.project.storyMode = els.storyMode.value;
     state.project.language = normalizeLanguage(els.languageInput.value);
-    state.project.storyLength = Number.parseInt(els.storyLengthInput.value, 10) || 0;
+    state.project.storyLengthEnabled = els.storyLengthEnabledInput.checked;
+    state.project.storyLength = state.project.storyLengthEnabled ? Number.parseInt(els.storyLengthInput.value, 10) || 0 : 0;
     state.project.plotHint = els.plotHint.value.trim();
     state.project.storyboardPrompt = els.storyboardPrompt.value;
     state.project.rawStoryboard = els.rawStoryboard.value;
@@ -1047,18 +1055,18 @@
     }
 
 	var fourPanelMode = state.project.storyMode === "four";
-    if (!fourPanelMode && (!Number.isInteger(state.project.storyLength) || state.project.storyLength < 1)) {
+    if (!fourPanelMode && state.project.storyLengthEnabled && (!Number.isInteger(state.project.storyLength) || state.project.storyLength < 2)) {
       state.project.longOutlinePrompt = "";
       els.longOutlinePrompt.value = "";
-      log("Story length must be a positive integer.");
+      log("Story length must be an integer greater than or equal to 2.");
       return false;
     }
     var prompt = renderTemplate(fourPanelMode ? data.fourPanelOutlineTemplate : data.longOutlineTemplate, {
       Characters: characters,
       PlotHint: state.project.plotHint,
       Language: normalizeLanguage(state.project.language),
-      StoryLength: state.project.storyLength,
-      TotalPanels: state.project.storyLength * 4
+      StoryLength: state.project.storyLengthEnabled ? state.project.storyLength : 0,
+      TotalPanels: state.project.storyLengthEnabled ? state.project.storyLength * 4 : 0
     });
 	if (!await confirmContentOverwrite(state.project.longOutlinePrompt, "已有漫画梗概 Prompt 会被覆盖。")) {
       return false;
@@ -2530,6 +2538,9 @@
 
   function hydrateProject(project) {
     var hydrated = merge(defaultProject(), project);
+    if (project && !Object.prototype.hasOwnProperty.call(project, "storyLengthEnabled") && project.storyLength > 0) {
+      hydrated.storyLengthEnabled = true;
+    }
     hydrated.images = [];
     return hydrated;
   }

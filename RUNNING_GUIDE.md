@@ -114,7 +114,7 @@ go run cmd/generate/main.go \
     --long-manga
 ```
 
-`--story-length` 接收大于 0 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 4` 对应 4 话 16 格，`--story-length 12` 对应 12 话 48 格；省略时默认为 4 话。该长度会在第一阶段注入 outline Prompt。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
+`--story-length` 是可选参数，接收大于等于 2 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 2` 对应 2 话 8 格，`--story-length 12` 对应 12 话 48 格；省略时由 LLM 根据剧情要求自主规划长度。只有提供该参数时，长度才会在第一阶段注入 outline Prompt。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
 
 ## 6. 自定义角色
 

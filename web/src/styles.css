@@ -111,6 +111,16 @@ label {
   font-size: 13px;
 }
 
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-check input {
+  width: auto;
+}
+
 .app-header {
   display: flex;
   align-items: center;

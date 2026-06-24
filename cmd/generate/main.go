@@ -37,7 +37,7 @@ func main() {
 	listModels := flag.Bool("list-models", false, "List all available models")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	longManga := flag.Bool("long-manga", false, "Use multi-round long manga flow: outline, human confirmation, then all episode storyboards")
-	storyLength := flag.Int("story-length", 0, "Long manga story length in episodes (default 4; each episode has 4 panels)")
+	storyLength := flag.Int("story-length", 0, "Optional long manga story length in episodes (minimum 2; omit to let the LLM decide)")
 	fourPanelManga := flag.Bool("four-panel-manga", false, "Generate four-panel story candidates, select by number, then build strict four-panel storyboards")
 	flag.Parse()
 	storyLengthSet := false
@@ -49,8 +49,8 @@ func main() {
 	if *longManga && *fourPanelManga {
 		log.Fatal("--long-manga and --four-panel-manga cannot be used together")
 	}
-	if storyLengthSet && *storyLength <= 0 {
-		log.Fatal("--story-length must be greater than 0")
+	if storyLengthSet && *storyLength < domain.MinLongMangaStoryLength {
+		log.Fatalf("--story-length must be at least %d", domain.MinLongMangaStoryLength)
 	}
 
 	// Load .env file

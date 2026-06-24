@@ -137,6 +137,17 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 		t.Fatal("expected long manga outline prompt to include the requested story length")
 	}
 
+	freeLengthOutline, err := engine.RenderLongMangaOutline(LongMangaOutlineData{
+		Characters: []domain.Character{character},
+		PlotHint:   "长篇连续剧情",
+	})
+	if err != nil {
+		t.Fatalf("RenderLongMangaOutline returned error: %v", err)
+	}
+	if strings.Contains(freeLengthOutline, "严格生成") || strings.Contains(freeLengthOutline, "剧情长度硬规则") {
+		t.Fatal("expected long manga outline prompt to omit fixed story length when unset")
+	}
+
 	episode, err := engine.RenderLongMangaEpisode(LongMangaEpisodeData{
 		Characters: []domain.Character{character},
 		CharacterCostumes: []domain.LongMangaCostumeState{

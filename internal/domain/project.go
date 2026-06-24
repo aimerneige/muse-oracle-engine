@@ -18,22 +18,22 @@ const (
 )
 
 const (
-	DefaultLanguage             = "中文"
-	DefaultLongMangaStoryLength = 4
-	LongMangaPanelsPerEpisode   = 4
+	DefaultLanguage           = "中文"
+	MinLongMangaStoryLength   = 2
+	LongMangaPanelsPerEpisode = 4
 )
 
 // Project represents a manga generation session with all intermediate state.
 type Project struct {
 	ID          string        `json:"id"`
 	Status      ProjectStatus `json:"status"`
-	Characters  []Character   `json:"characters"`             // selected characters with full profiles
-	PlotHint    string        `json:"plot_hint"`              // user-provided story direction
+	Characters  []Character   `json:"characters"` // selected characters with full profiles
+	PlotHint    string        `json:"plot_hint"`  // user-provided story direction
 	StoryLength int           `json:"story_length,omitempty"`
-	Style       ComicStyle    `json:"style"`                  // selected comic style
-	Language    string        `json:"language"`               // speech bubble dialogue language
-	LLMModel    string        `json:"llm_model"`              // model used for text generation
-	ImageModel  string        `json:"image_model"`            // model used for image generation
+	Style       ComicStyle    `json:"style"`       // selected comic style
+	Language    string        `json:"language"`    // speech bubble dialogue language
+	LLMModel    string        `json:"llm_model"`   // model used for text generation
+	ImageModel  string        `json:"image_model"` // model used for image generation
 
 	// Pipeline intermediate results
 	StoryResult *StoryResult  `json:"story_result,omitempty"`
@@ -56,13 +56,6 @@ func NormalizeLanguage(language string) string {
 		return DefaultLanguage
 	}
 	return language
-}
-
-func NormalizeLongMangaStoryLength(storyLength int) int {
-	if storyLength <= 0 {
-		return DefaultLongMangaStoryLength
-	}
-	return storyLength
 }
 
 // HistoryMessage represents a single message in the LLM conversation history.

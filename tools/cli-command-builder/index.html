@@ -155,10 +155,15 @@
                 <span class="switch" aria-hidden="true"></span>
                 <span><strong>长篇漫画流程</strong><small>添加 --long-manga，启用多轮流程</small></span>
               </label>
+			  <label class="switch-card">
+				<input id="storyLengthEnabled" type="checkbox">
+				<span class="switch" aria-hidden="true"></span>
+				<span><strong>使用剧情长度</strong><small>添加 --story-length，限制长篇漫画话数</small></span>
+			  </label>
 			  <label class="field">
 				<span>剧情长度（话）</span>
-				<input id="storyLength" type="number" min="1" step="1" value="4">
-				<small>长篇漫画每话 4 格。</small>
+				<input id="storyLength" type="number" min="2" step="1" value="4" disabled>
+				<small>开启后最少 2 话；关闭时由 LLM 自主规划。</small>
 			  </label>
 			  <label class="switch-card">
 				<input id="fourPanelManga" type="checkbox">

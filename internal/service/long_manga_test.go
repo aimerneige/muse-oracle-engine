@@ -43,8 +43,8 @@ func TestGenerateLongMangaOutlineParsesAndStoresCandidateRefs(t *testing.T) {
 	if _, ok := store.prompts["long_outline_prompt"]; !ok {
 		t.Fatalf("expected outline prompt to be saved, got %+v", store.prompts)
 	}
-	if !strings.Contains(store.prompts["long_outline_prompt"], "严格生成 4 话") || !strings.Contains(store.prompts["long_outline_prompt"], "共 16 格") {
-		t.Fatalf("expected default story length in outline prompt, got %s", store.prompts["long_outline_prompt"])
+	if strings.Contains(store.prompts["long_outline_prompt"], "严格生成") || strings.Contains(store.prompts["long_outline_prompt"], "剧情长度硬规则") {
+		t.Fatalf("expected outline prompt to omit fixed story length, got %s", store.prompts["long_outline_prompt"])
 	}
 }
 

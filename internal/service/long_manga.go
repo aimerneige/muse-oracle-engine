@@ -60,9 +60,6 @@ func (s *LongMangaService) GenerateFourPanelOutlineWithStore(ctx context.Context
 }
 
 func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.Project, store LongMangaProgressStore, mode mangaGenerationMode) (*domain.LongMangaState, error) {
-	if mode == longMangaGenerationMode {
-		project.StoryLength = domain.NormalizeLongMangaStoryLength(project.StoryLength)
-	}
 	promptText, err := s.renderOutlinePrompt(project, mode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render %s outline prompt: %w", mode, err)

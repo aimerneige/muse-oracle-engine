@@ -24,6 +24,7 @@ function config(overrides = {}) {
     listType: "list-characters",
     promptOnly: false,
     longManga: false,
+	storyLengthEnabled: false,
 	storyLength: "4",
 	fourPanelManga: false,
     ...overrides
@@ -60,12 +61,19 @@ test("special characters survive a real Zsh parsing round trip", () => {
 });
 
 test("builds a complete create command", () => {
-  const result = buildCommand(config({ promptOnly: true, longManga: true, storyLength: "12" }));
+  const result = buildCommand(config({ promptOnly: true, longManga: true }));
 
   assert.equal(
     result.command,
-    "go run cmd/generate/main.go --characters lovelive/honoka,lovelive/umi --plot '放学后的点心时间' --style watercolor --language '中文' --prompt-only --long-manga --story-length 12"
+    "go run cmd/generate/main.go --characters lovelive/honoka,lovelive/umi --plot '放学后的点心时间' --style watercolor --language '中文' --prompt-only --long-manga"
   );
+  assert.deepEqual(result.errors, []);
+});
+
+test("adds long manga story length only when enabled", () => {
+  const result = buildCommand(config({ longManga: true, storyLengthEnabled: true, storyLength: "12" }));
+
+  assert.match(result.command, /--long-manga --story-length 12$/);
   assert.deepEqual(result.errors, []);
 });
 
@@ -98,9 +106,9 @@ test("rejects conflicting multi-round manga modes", () => {
 });
 
 test("rejects an invalid long manga story length", () => {
-	const result = buildCommand(config({ longManga: true, storyLength: "0" }));
+	const result = buildCommand(config({ longManga: true, storyLengthEnabled: true, storyLength: "1" }));
 
-	assert.deepEqual(result.errors, ["剧情长度必须是大于 0 的整数"]);
+	assert.deepEqual(result.errors, ["剧情长度必须是大于等于 2 的整数"]);
 });
 
 test("builds exactly one list flag", () => {
