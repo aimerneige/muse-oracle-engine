@@ -56,7 +56,7 @@
       "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
-      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog",
+      "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog", "longEpisodeSequenceDialog", "longEpisodeSequenceMessage",
       "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
       "characterSeriesInput", "characterIDInput", "characterNameInput", "characterNameEnInput",
       "characterHairStyleInput", "characterHairColorInput", "characterEyeShapeInput", "characterEyeColorInput",
@@ -1151,33 +1151,93 @@
 		log("Select at least one four-panel story candidate before building storyboard prompts.");
 		return false;
 	  }
+      var style = getStyle(state.project.style);
+      var prompts = episodes.map(function (episode) {
+        return buildLongEpisodePromptItem(episode, fourPanelMode, style);
+      });
+	  if (!await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
+        return false;
+      }
+      state.project.longEpisodePrompts = prompts;
+	  state.project.status = "four_panel_storyboard_prompts_ready";
+      state.longMangaUI.step = "episodes";
+      renderLongManga();
+      renderProjectStatus();
+      setActiveTab("longManga");
+	  log("Built " + state.project.longEpisodePrompts.length + " four-panel storyboard prompt(s).");
+      return true;
 	}
-    var style = getStyle(state.project.style);
-    var prompts = episodes.map(function (episode) {
-      var characters = resolveCharacters(episode.character_ids);
-      return {
-        episode: episode.episode,
-		prompt: renderTemplate(fourPanelMode ? data.fourPanelStoryboardTemplate : data.longEpisodeTemplate, {
-          Characters: characters,
-          CharacterCostumes: costumeStatesForEpisode(episode.character_ids),
-          FullOutline: state.project.longOutline,
-          Episode: episode,
-          Language: normalizeLanguage(state.project.language),
-          StyleDescription: style.description
-        })
-      };
-    });
-	if (!await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
+
+    var prompt = buildNextLongEpisodePrompt({ showBlocked: true, showCompleteLog: true });
+    if (!prompt) {
+      renderLongManga();
       return false;
     }
-    state.project.longEpisodePrompts = prompts;
-	state.project.status = fourPanelMode ? "four_panel_storyboard_prompts_ready" : "long_episode_prompts_ready";
+	state.project.status = "long_episode_prompts_ready";
     state.longMangaUI.step = "episodes";
     renderLongManga();
     renderProjectStatus();
     setActiveTab("longManga");
-	log("Built " + state.project.longEpisodePrompts.length + (fourPanelMode ? " four-panel storyboard prompt(s)." : " long manga episode prompt(s)."));
+    log("Built long manga episode " + prompt.episode + " prompt.");
     return true;
+  }
+
+  function buildLongEpisodePromptItem(episode, fourPanelMode, style) {
+    var characters = resolveCharacters(episode.character_ids);
+    return {
+      episode: episode.episode,
+	  prompt: renderTemplate(fourPanelMode ? data.fourPanelStoryboardTemplate : data.longEpisodeTemplate, {
+        Characters: characters,
+        CharacterCostumes: costumeStatesForEpisode(episode.character_ids),
+        FullOutline: state.project.longOutline,
+        Episode: episode,
+        Language: normalizeLanguage(state.project.language),
+        StyleDescription: style.description
+      })
+    };
+  }
+
+  function buildNextLongEpisodePrompt(options) {
+    options = options || {};
+    var episodes = orderedLongOutlineEpisodes();
+    var style = getStyle(state.project.style);
+    for (var i = 0; i < episodes.length; i++) {
+      var episode = episodes[i];
+      if (findLongEpisode(episode.episode)) {
+        continue;
+      }
+      if (findLongEpisodePrompt(episode.episode)) {
+        state.longMangaUI.activeEpisode = episode.episode;
+        if (options.showBlocked) {
+          showLongEpisodeSequenceDialog(episode.episode);
+        }
+        return null;
+      }
+      if (i > 0 && !findLongEpisode(episodes[i - 1].episode)) {
+        state.longMangaUI.activeEpisode = episodes[i - 1].episode;
+        if (options.showBlocked) {
+          showLongEpisodeSequenceDialog(episodes[i - 1].episode);
+        }
+        return null;
+      }
+      var prompt = buildLongEpisodePromptItem(episode, false, style);
+      state.project.longEpisodePrompts.push(prompt);
+      state.longMangaUI.activeEpisode = prompt.episode;
+      return prompt;
+    }
+    if (options.showCompleteLog) {
+      log("All long manga episode prompts are already built.");
+    }
+    return null;
+  }
+
+  function orderedLongOutlineEpisodes() {
+    if (!state.project.longOutline || !state.project.longOutline.episodes) {
+      return [];
+    }
+    return state.project.longOutline.episodes.slice().sort(function (a, b) {
+      return a.episode - b.episode;
+    });
   }
 
   async function callLongEpisodes() {
@@ -1198,14 +1258,19 @@
       }
       for (var i = 0; i < state.project.longEpisodePrompts.length; i++) {
         var item = state.project.longEpisodePrompts[i];
+        if (findLongEpisode(item.episode)) {
+          continue;
+        }
         state.longMangaUI.activeEpisode = item.episode;
         setLongEpisodeRaw(item.episode, "");
         renderLongManga();
         try {
-		  log("Generating manga storyboard " + item.episode + ".");
+          log("Generating manga storyboard " + item.episode + ".");
           var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
           setLongEpisodeRaw(item.episode, text);
-          await parseLongEpisodeFromRaw(item.episode);
+          if (!await parseLongEpisodeFromRaw(item.episode)) {
+            allDone = false;
+          }
         } catch (err) {
           allDone = false;
 		  logError("Manga storyboard " + item.episode + " failed", err);
@@ -1242,6 +1307,12 @@
 	  applyLongEpisodesToPanels();
 	  renderPanels();
 	  await buildImagePrompts({ navigate: false, confirmOverwrite: false });
+      if (state.project.storyMode === "long") {
+        var nextPrompt = buildNextLongEpisodePrompt();
+        if (nextPrompt) {
+          log("Built long manga episode " + nextPrompt.episode + " prompt.");
+        }
+      }
 	  state.longMangaUI.step = "episodes";
       renderLongManga();
       saveCurrentProject();
@@ -1322,6 +1393,16 @@
       return;
     }
     window.alert("请至少选择一个喜欢的独立四格剧情，再进入四格分镜。");
+  }
+
+  function showLongEpisodeSequenceDialog(episodeNumber) {
+    var message = "请先完成第 " + episodeNumber + " 话解析，再生成下一话 Prompt。";
+    if (els.longEpisodeSequenceDialog && typeof els.longEpisodeSequenceDialog.showModal === "function") {
+      els.longEpisodeSequenceMessage.textContent = message;
+      els.longEpisodeSequenceDialog.showModal();
+      return;
+    }
+    window.alert(message);
   }
 
   function setFourPanelStorySelected(episodeNumber, selected) {
@@ -1553,8 +1634,12 @@
 
   function activeLongEpisodePrompt() {
     ensureActiveLongEpisode();
-    return state.project.longEpisodePrompts.find(function (item) {
-      return item.episode === state.longMangaUI.activeEpisode;
+    return findLongEpisodePrompt(state.longMangaUI.activeEpisode);
+  }
+
+  function findLongEpisodePrompt(episodeNumber) {
+    return (state.project.longEpisodePrompts || []).find(function (item) {
+      return item.episode === episodeNumber;
     });
   }
 
