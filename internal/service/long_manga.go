@@ -28,6 +28,10 @@ const (
 	fourPanelGenerationMode mangaGenerationMode = "four-panel manga"
 )
 
+type longMangaBatchStoryboardResponse struct {
+	Episodes []domain.LongMangaEpisodeScript `json:"episodes"`
+}
+
 // LongMangaProgressStore persists generated scripts and state during long episode generation.
 type LongMangaProgressStore interface {
 	Save(state *domain.LongMangaState) error
@@ -295,6 +299,70 @@ func (s *LongMangaService) GenerateAllEpisodes(ctx context.Context, project *dom
 	return s.generateAllEpisodesForMode(ctx, project, state, store, longMangaGenerationMode)
 }
 
+// GenerateAllEpisodesBatch expands every confirmed episode outline with one LLM request.
+func (s *LongMangaService) GenerateAllEpisodesBatch(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore) error {
+	if state.ConfirmedOutline == nil {
+		return fmt.Errorf("confirmed outline is required")
+	}
+	if len(state.Episodes) >= len(state.ConfirmedOutline.Episodes) {
+		log.Printf("All long manga storyboards are already generated, skipping")
+		return nil
+	}
+
+	styleDescription, err := storyboardStyleDescription(project.Style)
+	if err != nil {
+		return err
+	}
+	promptText, err := s.promptEngine.RenderLongMangaBatchStoryboard(prompt.LongMangaBatchStoryboardData{
+		Characters:       project.Characters,
+		FullOutline:      *state.ConfirmedOutline,
+		Language:         domain.NormalizeLanguage(project.Language),
+		StyleDescription: styleDescription,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to render long manga batch storyboard prompt: %w", err)
+	}
+	if store != nil {
+		if _, err := store.SaveLongMangaPrompt(project.ID, "long_batch_storyboard_prompt", promptText); err != nil {
+			return err
+		}
+	}
+
+	response, err := s.llmProvider.GenerateText(ctx, promptText)
+	if err != nil {
+		return fmt.Errorf("long manga batch storyboard generation failed: %w", err)
+	}
+
+	scripts, err := parseLongMangaBatchStoryboard(response, *state.ConfirmedOutline, candidateCharacterSet(project.Characters))
+	if err != nil {
+		return fmt.Errorf("failed to parse long manga batch storyboard: %w", err)
+	}
+	for i := range scripts {
+		scripts[i].RawResponse = response
+		applyLongMangaEpisodeScript(state, scripts[i])
+	}
+	state.Status = domain.LongMangaStatusStoryboardDone
+	state.Error = ""
+	state.UpdatedAt = time.Now()
+	if state.RawResponses == nil {
+		state.RawResponses = make(map[string]string)
+	}
+	state.RawResponses["batch_storyboard"] = response
+
+	if store != nil {
+		for _, script := range scripts {
+			if _, err := store.SaveEpisodeScript(project.ID, script); err != nil {
+				return fmt.Errorf("failed to save long manga story %d script: %w", script.Episode, err)
+			}
+		}
+		if err := store.Save(state); err != nil {
+			return fmt.Errorf("failed to save completed long manga state: %w", err)
+		}
+	}
+	log.Printf("Finished long manga batch storyboard generation for project %s", project.ID)
+	return nil
+}
+
 // GenerateAllFourPanelStories expands every selected outline into one strict four-panel storyboard.
 func (s *LongMangaService) GenerateAllFourPanelStories(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore) error {
 	return s.generateAllEpisodesForMode(ctx, project, state, store, fourPanelGenerationMode)
@@ -413,16 +481,84 @@ func applyMangaStateToProject(project *domain.Project, state *domain.LongMangaSt
 
 func parseLongMangaJSON[T any](response string) (T, error) {
 	var value T
+	payload := longMangaJSONPayload(response)
+	if err := json.Unmarshal([]byte(payload), &value); err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func longMangaJSONPayload(response string) string {
 	payload := strings.TrimSpace(response)
 	blocks := mdutil.ExtractCodeBlocksWithFilter(response, "json")
 	if len(blocks) > 0 {
 		payload = strings.TrimSpace(blocks[0].Content)
 	}
+	return payload
+}
 
-	if err := json.Unmarshal([]byte(payload), &value); err != nil {
-		return value, err
+func parseLongMangaBatchStoryboard(response string, outline domain.LongMangaOutline, validCharacters map[string]struct{}) ([]domain.LongMangaEpisodeScript, error) {
+	payload := longMangaJSONPayload(response)
+	var wrapped longMangaBatchStoryboardResponse
+	if err := json.Unmarshal([]byte(payload), &wrapped); err != nil {
+		var scripts []domain.LongMangaEpisodeScript
+		if arrayErr := json.Unmarshal([]byte(payload), &scripts); arrayErr != nil {
+			return nil, err
+		}
+		wrapped.Episodes = scripts
 	}
-	return value, nil
+	if len(wrapped.Episodes) == 0 {
+		return nil, fmt.Errorf("batch storyboard contains no episodes")
+	}
+
+	byEpisode := make(map[int]domain.LongMangaEpisodeScript, len(wrapped.Episodes))
+	for _, script := range wrapped.Episodes {
+		if script.Episode == 0 {
+			return nil, fmt.Errorf("batch storyboard contains episode without number")
+		}
+		if _, exists := byEpisode[script.Episode]; exists {
+			return nil, fmt.Errorf("batch storyboard contains duplicate episode %d", script.Episode)
+		}
+		byEpisode[script.Episode] = script
+	}
+
+	scripts := make([]domain.LongMangaEpisodeScript, 0, len(outline.Episodes))
+	for _, episode := range outline.Episodes {
+		script, ok := byEpisode[episode.Episode]
+		if !ok {
+			return nil, fmt.Errorf("batch storyboard missing episode %d", episode.Episode)
+		}
+		if err := normalizeEpisodeScript(&script, episode, validCharacters); err != nil {
+			return nil, err
+		}
+		if err := validateBatchCostumeStates(script); err != nil {
+			return nil, err
+		}
+		scripts = append(scripts, script)
+		delete(byEpisode, episode.Episode)
+	}
+	if len(byEpisode) > 0 {
+		extras := make([]int, 0, len(byEpisode))
+		for episode := range byEpisode {
+			extras = append(extras, episode)
+		}
+		sort.Ints(extras)
+		return nil, fmt.Errorf("batch storyboard contains extra episode(s): %v", extras)
+	}
+	return scripts, nil
+}
+
+func validateBatchCostumeStates(script domain.LongMangaEpisodeScript) error {
+	seen := make(map[string]struct{}, len(script.CostumeStates))
+	for _, state := range script.CostumeStates {
+		seen[state.CharacterID] = struct{}{}
+	}
+	for _, id := range script.CharacterIDs {
+		if _, ok := seen[id]; !ok {
+			return fmt.Errorf("episode %d missing costume state for %s", script.Episode, id)
+		}
+	}
+	return nil
 }
 
 func normalizeOutline(outline *domain.LongMangaOutline, validCharacters map[string]struct{}) error {

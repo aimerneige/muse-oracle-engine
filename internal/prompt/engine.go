@@ -63,6 +63,14 @@ type LongMangaEpisodeData struct {
 	StyleDescription  string
 }
 
+// LongMangaBatchStoryboardData contains data for one-shot long manga storyboard generation.
+type LongMangaBatchStoryboardData struct {
+	Characters       []domain.Character
+	FullOutline      domain.LongMangaOutline
+	Language         string
+	StyleDescription string
+}
+
 // FourPanelOutlineData contains data for the four-panel story candidate prompt.
 type FourPanelOutlineData struct {
 	Characters []domain.Character
@@ -94,6 +102,12 @@ func (e *Engine) RenderLongMangaOutline(data LongMangaOutlineData) (string, erro
 func (e *Engine) RenderLongMangaEpisode(data LongMangaEpisodeData) (string, error) {
 	data.Language = domain.NormalizeLanguage(data.Language)
 	return e.render("long_episode.md.tmpl", data)
+}
+
+// RenderLongMangaBatchStoryboard renders the one-shot long manga storyboard prompt.
+func (e *Engine) RenderLongMangaBatchStoryboard(data LongMangaBatchStoryboardData) (string, error) {
+	data.Language = domain.NormalizeLanguage(data.Language)
+	return e.render("long_batch_storyboard.md.tmpl", data)
 }
 
 // RenderFourPanelOutline renders the independent four-panel story candidate prompt.

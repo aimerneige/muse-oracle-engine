@@ -53,7 +53,9 @@
 	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "selectAllFourPanelStoriesBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "nextLongEpisodesBtn",
-      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
+      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longBatchStoryboardWrap", "longBatchStoryboardEnabledInput",
+      "longBatchStoryboardPanel", "longBatchStoryboardPrompt", "copyLongBatchStoryboardPromptBtn", "rawLongBatchStoryboard", "parseLongBatchStoryboardBtn",
+      "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog", "longEpisodeSequenceDialog", "longEpisodeSequenceMessage",
@@ -124,9 +126,18 @@
     els.selectAllFourPanelStoriesBtn.addEventListener("click", selectAllFourPanelStories);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
+    els.longBatchStoryboardEnabledInput.addEventListener("change", function () {
+      syncProjectFromForm();
+      renderLongManga();
+    });
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
     els.callLongEpisodesBtn.addEventListener("click", callLongEpisodes);
     els.nextLongEpisodesBtn.addEventListener("click", goToLongImagesStep);
+    els.copyLongBatchStoryboardPromptBtn.addEventListener("click", function () {
+      copyText(state.project.longBatchStoryboardPrompt || els.longBatchStoryboardPrompt.value || "");
+    });
+    els.rawLongBatchStoryboard.addEventListener("input", updateRawLongBatchStoryboardFromInput);
+    els.parseLongBatchStoryboardBtn.addEventListener("click", parseLongBatchStoryboardFromRaw);
     els.longStepOutlineTab.addEventListener("click", function () {
       setLongMangaStep("outline");
     });
@@ -185,6 +196,9 @@
       rawLongOutline: "",
       longOutline: null,
 	  selectedFourPanelStories: [],
+      longBatchStoryboardEnabled: false,
+      longBatchStoryboardPrompt: "",
+      rawLongBatchStoryboard: "",
       longEpisodePrompts: [],
       longEpisodeRaws: [],
       longEpisodes: [],
@@ -252,6 +266,9 @@
     els.rawStoryboard.value = state.project.rawStoryboard;
     setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
+    els.longBatchStoryboardEnabledInput.checked = !!state.project.longBatchStoryboardEnabled;
+    setGeneratedPromptValue(els.longBatchStoryboardPrompt, state.project.longBatchStoryboardPrompt || "");
+    els.rawLongBatchStoryboard.value = state.project.rawLongBatchStoryboard || "";
   }
 
   function fillModelSelect(select, provider, kind) {
@@ -341,6 +358,9 @@
     state.project.rawStoryboard = els.rawStoryboard.value;
     state.project.longOutlinePrompt = els.longOutlinePrompt.value;
     state.project.rawLongOutline = els.rawLongOutline.value;
+    state.project.longBatchStoryboardEnabled = state.project.storyMode === "long" && els.longBatchStoryboardEnabledInput.checked;
+    state.project.longBatchStoryboardPrompt = els.longBatchStoryboardPrompt.value;
+    state.project.rawLongBatchStoryboard = els.rawLongBatchStoryboard.value;
     state.project.updatedAt = new Date().toISOString();
     renderProjectStatus();
   }
@@ -353,6 +373,12 @@
 
   function updateRawLongOutlineFromInput() {
     state.project.rawLongOutline = els.rawLongOutline.value;
+    state.project.updatedAt = new Date().toISOString();
+    autoSaveProject();
+  }
+
+  function updateRawLongBatchStoryboardFromInput() {
+    state.project.rawLongBatchStoryboard = els.rawLongBatchStoryboard.value;
     state.project.updatedAt = new Date().toISOString();
     autoSaveProject();
   }
@@ -472,6 +498,11 @@
   }
 
   async function goToLongImagesStep() {
+    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled && state.project.longEpisodes.length === 0) {
+      if (!await parseLongBatchStoryboardFromRaw()) {
+        return false;
+      }
+    }
     if (state.project.storyMode === "four") {
       if (!await ensureLongEpisodesParsed()) {
         return false;
@@ -1141,6 +1172,9 @@
     }
 
 	var fourPanelMode = state.project.storyMode === "four";
+    if (!fourPanelMode && state.project.longBatchStoryboardEnabled) {
+      return buildLongBatchStoryboardPrompt();
+    }
 	var episodes = state.project.longOutline.episodes;
 	if (fourPanelMode) {
 	  var selected = new Set(state.project.selectedFourPanelStories || []);
@@ -1240,8 +1274,36 @@
     });
   }
 
+  async function buildLongBatchStoryboardPrompt() {
+    if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
+      return false;
+    }
+    var style = getStyle(state.project.style);
+    var prompt = renderTemplate(data.longBatchStoryboardTemplate, {
+      Characters: selectedCharacters(),
+      FullOutline: state.project.longOutline,
+      Language: normalizeLanguage(state.project.language),
+      StyleDescription: style.description
+    });
+	if (!await confirmContentOverwrite(state.project.longBatchStoryboardPrompt, "已有批量分镜 Prompt 会被覆盖。")) {
+      return false;
+    }
+    state.project.longBatchStoryboardPrompt = prompt;
+    setGeneratedPromptValue(els.longBatchStoryboardPrompt, prompt);
+    state.project.status = "long_batch_storyboard_prompt_ready";
+    state.longMangaUI.step = "episodes";
+    renderLongManga();
+    renderProjectStatus();
+    setActiveTab("longManga");
+    log("Built long manga batch storyboard prompt.");
+    return true;
+  }
+
   async function callLongEpisodes() {
     saveSettingsFromForm();
+    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled) {
+      return callLongBatchStoryboard();
+    }
     if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts()) {
       return false;
     }
@@ -1287,6 +1349,36 @@
     }
   }
 
+  async function callLongBatchStoryboard() {
+    if (!state.project.longBatchStoryboardPrompt && !await buildLongBatchStoryboardPrompt()) {
+      return false;
+    }
+    if (!state.settings.llmApiKey) {
+      log("LLM API key is required in settings.");
+      return false;
+    }
+
+    setBusy(els.callLongEpisodesBtn, true);
+    try {
+      if (!await confirmContentOverwrite(state.project.rawLongBatchStoryboard, "已有批量分镜结果会被覆盖。")) {
+        return false;
+      }
+      state.project.rawLongBatchStoryboard = "";
+      els.rawLongBatchStoryboard.value = "";
+      setActiveTab("longManga");
+      state.longMangaUI.step = "episodes";
+      var text = await generateText(state.project.longBatchStoryboardPrompt, appendLongBatchStoryboardDelta, resetLongBatchStoryboardOutput);
+      state.project.rawLongBatchStoryboard = text;
+      els.rawLongBatchStoryboard.value = text;
+      return parseLongBatchStoryboardFromRaw();
+    } catch (err) {
+      logError("Long manga batch storyboard request failed", err);
+      return false;
+    } finally {
+      setBusy(els.callLongEpisodesBtn, false);
+    }
+  }
+
   async function parseLongEpisodeFromRaw(episodeNumber) {
     var raw = getLongEpisodeRaw(episodeNumber);
     var outline = findLongOutlineEpisode(episodeNumber);
@@ -1324,18 +1416,51 @@
     }
   }
 
+  async function parseLongBatchStoryboardFromRaw() {
+    syncProjectFromForm();
+    try {
+      var scripts = normalizeLongBatchStoryboard(parseJSONBlock(state.project.rawLongBatchStoryboard));
+      state.project.longEpisodes = [];
+      state.project.characterCostumes = [];
+      scripts.forEach(function (script) {
+        upsertLongEpisode(script);
+        mergeCostumeStates(script.costume_states || []);
+      });
+      state.project.status = "long_episode_done";
+	  applyLongEpisodesToPanels();
+	  renderPanels();
+	  await buildImagePrompts({ navigate: false, confirmOverwrite: false });
+      state.longMangaUI.step = "episodes";
+      renderLongManga();
+      saveCurrentProject();
+      log("Parsed " + scripts.length + " long manga storyboard episode(s).");
+      return true;
+    } catch (err) {
+      logError("Failed to parse long manga batch storyboard", err);
+      return false;
+    }
+  }
+
   function renderLongManga() {
 	var fourPanelMode = state.project.storyMode === "four";
+    var batchMode = state.project.storyMode === "long" && !!state.project.longBatchStoryboardEnabled;
 	els.multiRoundTitle.textContent = fourPanelMode ? "四格漫画" : "长漫画";
 	els.multiRoundOutlineTitle.textContent = fourPanelMode ? "候选梗概与选择" : "梗概";
 	els.multiRoundOutlinePromptLabel.textContent = fourPanelMode ? "四格漫画候选梗概 Prompt" : "长漫画梗概 Prompt";
 	els.multiRoundOutlineResultLabel.textContent = fourPanelMode ? "四格漫画候选梗概结果" : "长漫画梗概结果";
-	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : "逐话分镜";
+	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : (batchMode ? "批量分镜" : "逐话分镜");
 	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "逐话分镜";
+    els.buildLongEpisodePromptsBtn.textContent = batchMode ? "生成批量分镜 Prompt" : "生成逐话 Prompt";
+    els.callLongEpisodesBtn.textContent = batchMode ? "调用 LLM 批量生成分镜" : "调用 LLM 生成逐话分镜";
+    els.longBatchStoryboardWrap.classList.toggle("is-hidden", fourPanelMode);
+    els.longBatchStoryboardEnabledInput.checked = batchMode;
+    els.longBatchStoryboardPanel.classList.toggle("is-hidden", !batchMode);
     els.selectAllFourPanelStoriesBtn.classList.toggle("is-hidden", !fourPanelMode);
     els.selectAllFourPanelStoriesBtn.disabled = !state.project.longOutline || !state.project.longOutline.episodes || state.project.longOutline.episodes.length === 0;
     setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
+    setGeneratedPromptValue(els.longBatchStoryboardPrompt, state.project.longBatchStoryboardPrompt || "");
+    els.rawLongBatchStoryboard.value = state.project.rawLongBatchStoryboard || "";
     renderLongMangaSections();
     renderLongOutlineSummary();
     renderLongEpisodeList();
@@ -1432,6 +1557,8 @@
   }
 
   function clearMultiRoundResults() {
+	state.project.longBatchStoryboardPrompt = "";
+	state.project.rawLongBatchStoryboard = "";
 	state.project.longEpisodePrompts = [];
 	state.project.longEpisodeRaws = [];
 	state.project.longEpisodes = [];
@@ -1442,6 +1569,11 @@
 
   function renderLongEpisodeList() {
     els.longEpisodeList.innerHTML = "";
+    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled) {
+      els.longEpisodeTabs.innerHTML = "";
+      els.longEpisodeOutlineSummary.classList.add("is-hidden");
+      return;
+    }
     renderLongEpisodeTabs();
     renderEpisodeOutlineSummary(els.longEpisodeOutlineSummary, state.longMangaUI.activeEpisode);
 
@@ -2098,6 +2230,55 @@
     return script;
   }
 
+  function normalizeLongBatchStoryboard(payload) {
+    var scripts = Array.isArray(payload) ? payload : payload && payload.episodes;
+    if (!Array.isArray(scripts) || scripts.length === 0) {
+      throw new Error("Long manga batch storyboard contains no episodes.");
+    }
+    if (!state.project.longOutline || !Array.isArray(state.project.longOutline.episodes)) {
+      throw new Error("Long manga outline is required before parsing batch storyboard.");
+    }
+    var byEpisode = {};
+    scripts.forEach(function (script) {
+      if (!script || !script.episode) {
+        throw new Error("Long manga batch storyboard contains episode without number.");
+      }
+      if (byEpisode[script.episode]) {
+        throw new Error("Long manga batch storyboard contains duplicate episode " + script.episode + ".");
+      }
+      byEpisode[script.episode] = script;
+    });
+    var normalized = state.project.longOutline.episodes.map(function (outline) {
+      var script = byEpisode[outline.episode];
+      if (!script) {
+        throw new Error("Long manga batch storyboard missing episode " + outline.episode + ".");
+      }
+      script = normalizeLongEpisode(script, outline);
+      validateBatchCostumeStates(script);
+      delete byEpisode[outline.episode];
+      return script;
+    });
+    var extraEpisodes = Object.keys(byEpisode);
+    if (extraEpisodes.length > 0) {
+      throw new Error("Long manga batch storyboard contains extra episode(s): " + extraEpisodes.join(", ") + ".");
+    }
+    return normalized;
+  }
+
+  function validateBatchCostumeStates(script) {
+    var seen = {};
+    (script.costume_states || []).forEach(function (costume) {
+      if (costume.character_id && costume.outfit) {
+        seen[costume.character_id] = true;
+      }
+    });
+    (script.character_ids || []).forEach(function (id) {
+      if (!seen[id]) {
+        throw new Error("Episode " + script.episode + " missing costume state for " + id + ".");
+      }
+    });
+  }
+
   function resolveCharacters(ids) {
     if (!ids || ids.length === 0) {
       return selectedCharacters();
@@ -2242,6 +2423,17 @@
   function resetLongOutlineOutput() {
     state.project.rawLongOutline = "";
     els.rawLongOutline.value = "";
+  }
+
+  function appendLongBatchStoryboardDelta(delta) {
+    state.project.rawLongBatchStoryboard += delta;
+    els.rawLongBatchStoryboard.value = state.project.rawLongBatchStoryboard;
+    els.rawLongBatchStoryboard.scrollTop = els.rawLongBatchStoryboard.scrollHeight;
+  }
+
+  function resetLongBatchStoryboardOutput() {
+    state.project.rawLongBatchStoryboard = "";
+    els.rawLongBatchStoryboard.value = "";
   }
 
   function appendLongEpisodeDelta(episodeNumber) {

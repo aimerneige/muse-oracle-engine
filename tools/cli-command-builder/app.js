@@ -56,6 +56,12 @@
 	if (config.longManga && config.fourPanelManga) {
 	  errors.push("长篇漫画与四格漫画流程不能同时启用");
 	}
+	if (config.longMangaBatchStoryboard && !config.longManga) {
+	  errors.push("批量生成分镜需要启用长篇漫画流程");
+	}
+	if (config.longMangaBatchStoryboard && config.fourPanelManga) {
+	  errors.push("批量生成分镜不能与四格漫画流程同时启用");
+	}
 	if (config.longManga && config.storyLengthEnabled && (!Number.isInteger(Number(config.storyLength)) || Number(config.storyLength) < 2)) {
 	  errors.push("剧情长度必须是大于等于 2 的整数");
 	}
@@ -109,6 +115,7 @@
       addValue("language", config.language);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  addFlag("long-manga-batch-storyboard", config.longMangaBatchStoryboard);
 	  if (config.longManga && config.storyLengthEnabled) addValue("story-length", config.storyLength);
 	  addFlag("four-panel-manga", config.fourPanelManga);
     } else if (config.mode === "resume") {
@@ -116,6 +123,7 @@
       addValue("retry-image", config.retryImage);
       addFlag("prompt-only", config.promptOnly);
       addFlag("long-manga", config.longManga);
+	  addFlag("long-manga-batch-storyboard", config.longMangaBatchStoryboard);
 	  if (config.longManga && config.storyLengthEnabled) addValue("story-length", config.storyLength);
 	  addFlag("four-panel-manga", config.fourPanelManga);
     } else {
@@ -271,6 +279,7 @@
         listType: selectedListType ? selectedListType.value : "list-characters",
         promptOnly: document.getElementById("promptOnly").checked,
 		longManga: document.getElementById("longManga").checked,
+		longMangaBatchStoryboard: document.getElementById("longMangaBatchStoryboard").checked,
 		storyLengthEnabled: document.getElementById("storyLengthEnabled").checked,
 		storyLength: document.getElementById("storyLength").value,
 		fourPanelManga: document.getElementById("fourPanelManga").checked
@@ -330,12 +339,16 @@
     document.getElementById("executable").addEventListener("change", render);
 	document.getElementById("longManga").addEventListener("change", function () {
 	  if (this.checked) document.getElementById("fourPanelManga").checked = false;
+	  if (!this.checked) document.getElementById("longMangaBatchStoryboard").checked = false;
 	});
 	document.getElementById("storyLengthEnabled").addEventListener("change", function () {
 	  document.getElementById("storyLength").disabled = !this.checked;
 	});
 	document.getElementById("fourPanelManga").addEventListener("change", function () {
-	  if (this.checked) document.getElementById("longManga").checked = false;
+	  if (this.checked) {
+		document.getElementById("longManga").checked = false;
+		document.getElementById("longMangaBatchStoryboard").checked = false;
+	  }
 	});
     document.getElementById("seriesFilter").addEventListener("change", renderCharacterList);
     document.getElementById("characterSearch").addEventListener("input", renderCharacterList);
@@ -362,6 +375,7 @@
       form.reset();
       selectedCharacterIDs = [];
       document.getElementById("language").value = "中文";
+	  document.getElementById("longMangaBatchStoryboard").checked = false;
 	  document.getElementById("storyLengthEnabled").checked = false;
 	  document.getElementById("storyLength").value = "4";
 	  document.getElementById("storyLength").disabled = true;

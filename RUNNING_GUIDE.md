@@ -116,6 +116,8 @@ go run cmd/generate/main.go \
 
 `--story-length` 是可选参数，接收大于等于 2 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 2` 对应 2 话 8 格，`--story-length 12` 对应 12 话 48 格；省略时由 LLM 根据剧情要求自主规划长度。只有提供该参数时，长度才会在第一阶段注入 outline Prompt。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
 
+需要减少多轮调用时，可以在长篇漫画流程中添加 `--long-manga-batch-storyboard`。该参数只适用于 `--long-manga`，会在梗概确认后使用批量分镜 Prompt 一次性生成全部话数的 JSON 分镜脚本；每话仍必须包含 `costume_states`，用于维护服饰连续性和后续绘图上下文。
+
 ## 6. 自定义角色
 
 设置 `CHARDB_DIR=./my-characters`，目录结构示例：

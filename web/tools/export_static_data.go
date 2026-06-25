@@ -20,6 +20,7 @@ type staticData struct {
 	StorybookTemplate           string                       `json:"storybookTemplate"`
 	LongOutlineTemplate         string                       `json:"longOutlineTemplate"`
 	LongEpisodeTemplate         string                       `json:"longEpisodeTemplate"`
+	LongBatchStoryboardTemplate string                       `json:"longBatchStoryboardTemplate"`
 	FourPanelOutlineTemplate    string                       `json:"fourPanelOutlineTemplate"`
 	FourPanelStoryboardTemplate string                       `json:"fourPanelStoryboardTemplate"`
 	ComicTemplates              map[domain.ComicStyle]string `json:"comicTemplates"`
@@ -68,6 +69,10 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
+	longBatchStoryboard, err := os.ReadFile("internal/prompt/templates/storybook/long_batch_storyboard.md.tmpl")
+	if err != nil {
+		fail(err)
+	}
 	fourPanelOutline, err := os.ReadFile("internal/prompt/templates/storybook/four_panel_outline.md.tmpl")
 	if err != nil {
 		fail(err)
@@ -94,6 +99,7 @@ func main() {
 		StorybookTemplate:           string(storybook),
 		LongOutlineTemplate:         string(longOutline),
 		LongEpisodeTemplate:         string(longEpisode),
+		LongBatchStoryboardTemplate: string(longBatchStoryboard),
 		FourPanelOutlineTemplate:    string(fourPanelOutline),
 		FourPanelStoryboardTemplate: string(fourPanelStoryboard),
 		ComicTemplates:              comicTemplates,

@@ -59,6 +59,9 @@ func (m *MockProvider) GenerateText(_ context.Context, prompt string) (string, e
 	if strings.Contains(prompt, "自动化长篇漫画剧情梗概引擎") {
 		return mockLongMangaOutlineResponse(prompt), nil
 	}
+	if strings.Contains(prompt, "自动化长篇漫画批量分镜脚本引擎") {
+		return mockLongMangaBatchStoryboardResponse(prompt), nil
+	}
 	if strings.Contains(prompt, "自动化长篇漫画单话分镜脚本引擎") {
 		return mockLongMangaEpisodeResponse(prompt), nil
 	}
@@ -116,6 +119,39 @@ func mockLongMangaEpisodeResponse(prompt string) string {
 		"  \"costume_states\": " + costumeStates + "\n" +
 		"}\n" +
 		"```"
+}
+
+func mockLongMangaBatchStoryboardResponse(prompt string) string {
+	ids := mockAvailableCharacterIDs(prompt)
+	if len(ids) == 0 {
+		ids = []string{"lovelive/honoka"}
+	}
+	return "```json\n" +
+		"{\n" +
+		"  \"episodes\": [\n" +
+		mockLongMangaEpisodeJSON(1, ids, "晨间约定", "主角们在清晨集合，发现今天的计划出现了意外阻碍。", "整洁校服与书包", "第1话建立初始服饰") + ",\n" +
+		mockLongMangaEpisodeJSON(2, ids, "黄昏回应", "众人把意外转化为新的舞台灵感，并在黄昏完成一次小小的约定。", "整洁校服与书包", "延续上一话") + "\n" +
+		"  ]\n" +
+		"}\n" +
+		"```"
+}
+
+func mockLongMangaEpisodeJSON(episode int, ids []string, title string, summary string, outfit string, reason string) string {
+	characterIDs := mockJSONStringArray(ids)
+	costumeStates := mockCostumeStatesJSON(ids, outfit, reason)
+	return fmt.Sprintf("    {\n"+
+		"      \"episode\": %d,\n"+
+		"      \"title\": %q,\n"+
+		"      \"summary\": %q,\n"+
+		"      \"character_ids\": %s,\n"+
+		"      \"panels\": [\n"+
+		"        {\"index\": 1, \"character_ids\": %s, \"content\": \"##### 第1格\\n* **【构图与景别】**：中景 / 平视 / 稳定构图\\n* **【可见场景与光影】**：清晨校门口，柔和阳光从画面左侧照入。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：%s] + [抬手打招呼] + [明亮笑容]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (普通圆形气泡)：\\\"早上好！\\\"\\n* **【漫符与特效】**：キラキラ\"},\n"+
+		"        {\"index\": 2, \"character_ids\": %s, \"content\": \"##### 第2格\\n* **【构图与景别】**：近景 / 平视 / 轻微推近\\n* **【可见场景与光影】**：公告栏前，纸张边缘被晨光照亮。\\n* **【动态视觉与定格姿势】**：\\n  - [画面左侧] 角色：[**当前完整穿搭**：%s] + [指向公告] + [惊讶表情]\\n* **【对白与气泡】**：\\n  - [画面左侧] 角色 (尖角气泡)：\\\"咦？计划变了？\\\"\\n* **【漫符与特效】**：ガーン\"},\n"+
+		"        {\"index\": 3, \"character_ids\": %s, \"content\": \"##### 第3格\\n* **【构图与景别】**：全景 / 平视 / 横向构图\\n* **【可见场景与光影】**：走廊延伸到远处，窗外光线形成明亮条纹。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：%s] + [快步向前] + [认真表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (普通圆形气泡)：\\\"那就换个办法。\\\"\\n* **【漫符与特效】**：タッタッ\"},\n"+
+		"        {\"index\": 4, \"character_ids\": %s, \"content\": \"##### 第4格\\n* **【构图与景别】**：中景 / 逆光 / 收束构图\\n* **【可见场景与光影】**：活动室门口，门缝透出温暖光线。\\n* **【动态视觉与定格姿势】**：\\n  - [画面中心] 角色：[**当前完整穿搭**：%s] + [推开门] + [期待表情]\\n* **【对白与气泡】**：\\n  - [画面中心] 角色 (小圆形气泡)：\\\"开始吧。\\\"\\n* **【漫符与特效】**：カチャ\"}\n"+
+		"      ],\n"+
+		"      \"costume_states\": %s\n"+
+		"    }", episode, title, summary, characterIDs, characterIDs, outfit, characterIDs, outfit, characterIDs, outfit, characterIDs, outfit, costumeStates)
 }
 
 func mockRequestedEpisode(prompt string) int {

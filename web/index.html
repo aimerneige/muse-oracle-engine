@@ -275,6 +275,26 @@
                 <button id="callLongEpisodesBtn" type="button" disabled>调用 LLM 生成逐话分镜</button>
               </div>
             </div>
+            <label id="longBatchStoryboardWrap" class="inline-check">
+              <input id="longBatchStoryboardEnabledInput" type="checkbox">
+              批量生成分镜
+            </label>
+            <div id="longBatchStoryboardPanel" class="flow-section is-hidden">
+              <label>
+                批量分镜 Prompt
+                <div class="prompt-field">
+                  <textarea id="longBatchStoryboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="开启批量生成分镜后，点击“生成批量分镜 Prompt”得到一次性生成全部话分镜的提示词。"></textarea>
+                  <button id="copyLongBatchStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button>
+                </div>
+              </label>
+              <label>
+                批量分镜结果
+                <textarea id="rawLongBatchStoryboard" class="code-area small" spellcheck="false" placeholder="将批量分镜 Prompt 交给 LLM 后，把返回的 JSON 结果粘贴到这里，再一次性解析全部分镜。"></textarea>
+              </label>
+              <div class="stage-actions result-actions">
+                <button id="parseLongBatchStoryboardBtn" type="button">解析批量分镜</button>
+              </div>
+            </div>
             <div id="longEpisodeOutlineSummary" class="story-card is-hidden"></div>
             <div id="longEpisodeTabs" class="sub-tabs"></div>
             <div id="longEpisodeList" class="panel-list compact"></div>

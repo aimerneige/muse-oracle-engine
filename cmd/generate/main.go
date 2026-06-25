@@ -37,6 +37,7 @@ func main() {
 	listModels := flag.Bool("list-models", false, "List all available models")
 	promptOnly := flag.Bool("prompt-only", false, "Output prompts instead of calling image generation API")
 	longManga := flag.Bool("long-manga", false, "Use multi-round long manga flow: outline, human confirmation, then all episode storyboards")
+	longMangaBatchStoryboard := flag.Bool("long-manga-batch-storyboard", false, "Use one LLM request to generate all long manga episode storyboards after outline confirmation")
 	storyLength := flag.Int("story-length", 0, "Optional long manga story length in episodes (minimum 2; omit to let the LLM decide)")
 	fourPanelManga := flag.Bool("four-panel-manga", false, "Generate four-panel story candidates, select by number, then build strict four-panel storyboards")
 	flag.Parse()
@@ -48,6 +49,12 @@ func main() {
 	})
 	if *longManga && *fourPanelManga {
 		log.Fatal("--long-manga and --four-panel-manga cannot be used together")
+	}
+	if *longMangaBatchStoryboard && !*longManga {
+		log.Fatal("--long-manga-batch-storyboard requires --long-manga")
+	}
+	if *longMangaBatchStoryboard && *fourPanelManga {
+		log.Fatal("--long-manga-batch-storyboard cannot be used with --four-panel-manga")
 	}
 	if storyLengthSet && *storyLength < domain.MinLongMangaStoryLength {
 		log.Fatalf("--story-length must be at least %d", domain.MinLongMangaStoryLength)
@@ -217,7 +224,7 @@ func main() {
 	}
 
 	if *longManga {
-		if err := runLongMangaFlow(ctx, project, store, longMangaStore, longMangaSvc); err != nil {
+		if err := runLongMangaFlow(ctx, project, store, longMangaStore, longMangaSvc, *longMangaBatchStoryboard); err != nil {
 			log.Printf("Long manga flow error: %v", err)
 			log.Printf("Project saved. Resume with: generate --resume %s --long-manga", project.ID)
 			os.Exit(1)
@@ -296,7 +303,7 @@ func createProject(reg *chardb.Registry, characterIDs, plotHint, styleName, lang
 	}, nil
 }
 
-func runLongMangaFlow(ctx context.Context, project *domain.Project, store storage.Store, longStore *storage.LongMangaStore, svc *service.LongMangaService) error {
+func runLongMangaFlow(ctx context.Context, project *domain.Project, store storage.Store, longStore *storage.LongMangaStore, svc *service.LongMangaService, batchStoryboard bool) error {
 	if err := store.Save(project); err != nil {
 		return fmt.Errorf("failed to save project: %w", err)
 	}
@@ -330,8 +337,14 @@ func runLongMangaFlow(ctx context.Context, project *domain.Project, store storag
 		}
 	}
 
-	log.Println("=== Generating all confirmed long manga episode storyboards ===")
-	if err := svc.GenerateAllEpisodes(ctx, project, state, longStore); err != nil {
+	if batchStoryboard {
+		log.Println("=== Generating all confirmed long manga episode storyboards in batch ===")
+		err = svc.GenerateAllEpisodesBatch(ctx, project, state, longStore)
+	} else {
+		log.Println("=== Generating all confirmed long manga episode storyboards ===")
+		err = svc.GenerateAllEpisodes(ctx, project, state, longStore)
+	}
+	if err != nil {
 		_ = longStore.Save(state)
 		return err
 	}

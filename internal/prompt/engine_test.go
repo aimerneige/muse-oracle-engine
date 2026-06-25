@@ -185,6 +185,26 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 	if !strings.Contains(episode, `"costume_states"`) {
 		t.Fatal("expected long manga episode prompt to require costume state output")
 	}
+
+	batch, err := engine.RenderLongMangaBatchStoryboard(LongMangaBatchStoryboardData{
+		Characters: []domain.Character{character},
+		FullOutline: domain.LongMangaOutline{
+			TotalEpisodes: 1,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "晨间约定", Summary: "确认计划", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
+		StyleDescription: "水彩画风格",
+	})
+	if err != nil {
+		t.Fatalf("RenderLongMangaBatchStoryboard returned error: %v", err)
+	}
+	if !strings.Contains(batch, "自动化长篇漫画批量分镜脚本引擎") {
+		t.Fatal("expected long manga batch storyboard prompt role")
+	}
+	if !strings.Contains(batch, `"episodes"`) || !strings.Contains(batch, `"costume_states"`) {
+		t.Fatal("expected batch storyboard prompt to require episodes and costume states")
+	}
 }
 
 func TestRenderFourPanelPrompts(t *testing.T) {

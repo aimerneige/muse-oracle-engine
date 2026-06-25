@@ -351,6 +351,54 @@ func TestGenerateAllLongMangaEpisodesCarriesCostumeStateForward(t *testing.T) {
 	}
 }
 
+func TestGenerateAllLongMangaEpisodesBatchSavesScriptsAndCostumes(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	project := testLongMangaProject()
+	state := &domain.LongMangaState{
+		ProjectID: "project-1",
+		Status:    domain.LongMangaStatusOutlineConfirmed,
+		CandidateCharacters: []domain.LongMangaCharacterRef{
+			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
+		},
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 2,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "第1话", Summary: "建立计划", CharacterIDs: []string{"lovelive/honoka"}},
+				{Episode: 2, Title: "第2话", Summary: "继续前进", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
+	}
+	response := "```json\n{\"episodes\":[" +
+		"{\"episode\":1,\"title\":\"第1话\",\"summary\":\"建立计划\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}],\"costume_states\":[{\"character_id\":\"lovelive/honoka\",\"outfit\":\"整洁校服与书包\",\"update_reason\":\"第1话建立初始服饰\"}]}," +
+		"{\"episode\":2,\"title\":\"第2话\",\"summary\":\"继续前进\",\"character_ids\":[\"lovelive/honoka\"],\"panels\":[{\"index\":1,\"character_ids\":[\"lovelive/honoka\"],\"content\":\"##### 第1格\"}],\"costume_states\":[{\"character_id\":\"lovelive/honoka\",\"outfit\":\"演出披风、白衬衫、红色领结、格子裙\",\"update_reason\":\"第2话第1格剧情触发\"}]}" +
+		"]}\n```"
+	store := &stubLongMangaProgressStore{}
+	svc := NewLongMangaService(&stubLLMProvider{response: response}, engine)
+
+	if err := svc.GenerateAllEpisodesBatch(context.Background(), project, state, store); err != nil {
+		t.Fatalf("GenerateAllEpisodesBatch returned error: %v", err)
+	}
+
+	if state.Status != domain.LongMangaStatusStoryboardDone {
+		t.Fatalf("expected storyboard_done status, got %s", state.Status)
+	}
+	if len(state.Episodes) != 2 || len(store.scripts) != 2 {
+		t.Fatalf("expected two generated scripts, state=%+v store=%+v", state.Episodes, store.scripts)
+	}
+	if _, ok := store.prompts["long_batch_storyboard_prompt"]; !ok {
+		t.Fatalf("expected batch storyboard prompt to be saved, got %+v", store.prompts)
+	}
+	if len(state.CharacterCostumes) != 1 || state.CharacterCostumes[0].Outfit != "演出披风、白衬衫、红色领结、格子裙" {
+		t.Fatalf("expected latest batch costume state, got %+v", state.CharacterCostumes)
+	}
+}
+
 type stubLLMProvider struct {
 	response string
 }
