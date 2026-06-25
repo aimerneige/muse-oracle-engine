@@ -19,7 +19,7 @@
 - **长篇漫画流程**：依次规划故事梗概、逐话分镜和图片 Prompt。
 - **多画风模板**：内置水彩、蜡笔、像素画、纸艺剪贴、布偶摄影等画风。
 - **本地项目管理**：设置、当前项目和最近历史保存在浏览器 `localStorage` 中，项目可导出为 JSON。
-- **单文件构建**：可将样式、脚本和筛选后的角色数据打包进一个 HTML 文件。
+- **发布目录构建**：可生成包含页面、图标和站点清单的 `web/dist/` 静态发布目录。
 
 ### Go CLI
 
@@ -48,34 +48,36 @@ python3 -m http.server 8080
 
 > **安全提示**：网页设置会保存在当前浏览器的 `localStorage` 中。不要在公共或不受信任的设备上保存 API Key。当前推荐使用复制 Prompt、手动调用模型并粘贴结果的流程。
 
-## 构建单文件网页
+## 构建 Web 发布目录
 
-构建工具需要 Node.js 和 npm。首次构建先安装依赖：
+构建工具需要 Node.js、npm 和 Just。首次构建先安装网页依赖：
 
 ```bash
 cd web
 npm install
-npm run build:single
 ```
 
-默认产物为 `web/dist/lovelive-engine.single.html`，包含全部内置作品数据。
-
-只打包指定作品：
+然后在仓库根目录构建 Web 发布目录：
 
 ```bash
-cd web
-npm run build:single -- \
-    --series lovelive,lovelive-sunshine,bocchi-the-rock \
-    --out web/dist/lovelive-engine.single.html
+just build_web
 ```
 
-仓库使用 Just 统一构建 CLI 与 Web 发布产物：
+默认产物位于 `web/dist/`，入口文件为 `web/dist/index.html`，并包含 favicon、manifest 等静态资源。
+
+如需同时构建 CLI 与 Web 发布产物：
 
 ```bash
 just build
 ```
 
-Web 产物位于 `web/dist/index.html`，CLI 产物位于 `bin/generate`。
+Web 产物位于 `web/dist/`，CLI 产物位于 `bin/generate`。
+
+如需限制 Web 打包的作品范围，可直接调用发布脚本并传入 `--series`：
+
+```bash
+./web/build_dist.sh --series lovelive,lovelive-sunshine,bocchi-the-rock
+```
 
 ## 同步网页静态数据
 
@@ -144,7 +146,7 @@ CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 
 ├── web/
 │   ├── index.html         # 静态网页入口
 │   ├── src/               # 页面样式、逻辑和生成数据
-│   └── tools/             # 静态数据导出与单文件构建工具
+│   └── tools/             # 静态数据导出与发布构建工具
 ├── justfile               # 项目开发与构建任务
 └── RUNNING_GUIDE.md       # CLI 详细运行指南
 ```
