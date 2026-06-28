@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -263,6 +264,51 @@ func TestApplyLongMangaStateToProjectCopiesPanelCharacterIDs(t *testing.T) {
 	}
 	if project.Status != domain.StatusStoryboardDone {
 		t.Fatalf("expected storyboard_done status, got %s", project.Status)
+	}
+}
+
+func TestApplyLongMangaStateToProjectKeepsEpisodeIndexes(t *testing.T) {
+	t.Parallel()
+
+	project := testLongMangaProject()
+	state := &domain.LongMangaState{
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 10,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "一", Summary: "起"},
+				{Episode: 2, Title: "二", Summary: "承"},
+				{Episode: 3, Title: "三", Summary: "转"},
+				{Episode: 4, Title: "四", Summary: "合"},
+				{Episode: 6, Title: "六", Summary: "续"},
+				{Episode: 9, Title: "九", Summary: "转"},
+				{Episode: 10, Title: "十", Summary: "收"},
+			},
+		},
+		Episodes: []domain.LongMangaEpisodeScript{
+			{Episode: 1, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第1话"}}},
+			{Episode: 2, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第2话"}}},
+			{Episode: 3, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第3话"}}},
+			{Episode: 4, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第4话"}}},
+			{Episode: 6, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第6话"}}},
+			{Episode: 9, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第9话"}}},
+			{Episode: 10, CharacterIDs: []string{"lovelive/honoka"}, Panels: []domain.LongMangaPanelScript{{Index: 1, Content: "第10话"}}},
+		},
+	}
+
+	if err := ApplyLongMangaStateToProject(project, state); err != nil {
+		t.Fatalf("ApplyLongMangaStateToProject returned error: %v", err)
+	}
+
+	if project.Storyboard == nil {
+		t.Fatal("expected storyboard to be set")
+	}
+	got := make([]int, 0, len(project.Storyboard.Panels))
+	for _, panel := range project.Storyboard.Panels {
+		got = append(got, panel.Index)
+	}
+	want := []int{1, 2, 3, 4, 6, 9, 10}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected storyboard panel indexes %v, got %v", want, got)
 	}
 }
 

@@ -459,7 +459,7 @@ func applyMangaStateToProject(project *domain.Project, state *domain.LongMangaSt
 	panels := make([]domain.StoryboardPanel, 0)
 	for _, episode := range state.Episodes {
 		panels = append(panels, domain.StoryboardPanel{
-			Index:        len(panels) + 1,
+			Index:        episode.Episode,
 			Content:      episodeContent(episode),
 			CharacterIDs: episode.CharacterIDs,
 		})
