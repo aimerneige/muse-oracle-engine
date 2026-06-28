@@ -354,6 +354,12 @@ func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *te
 	if len(store.prompts) != 3 {
 		t.Fatalf("expected all episode prompts to be saved, got %+v", store.prompts)
 	}
+	if len(store.diagnostics) != maxLongMangaStoryAttempts {
+		t.Fatalf("expected failed episode attempts to save diagnostics, got %+v", store.diagnostics)
+	}
+	if !strings.Contains(store.diagnostics[0].prompt, `"episode": 2`) || !strings.Contains(store.diagnostics[0].response, `"not":"an episode"`) {
+		t.Fatalf("expected diagnostic to contain AI input and output, got %+v", store.diagnostics[0])
+	}
 }
 
 func TestGenerateAllLongMangaEpisodesRetriesTransientFailures(t *testing.T) {
@@ -386,6 +392,9 @@ func TestGenerateAllLongMangaEpisodesRetriesTransientFailures(t *testing.T) {
 	}
 	if len(store.failures) != 0 {
 		t.Fatalf("expected no saved failures after retry success, got %+v", store.failures)
+	}
+	if len(store.diagnostics) != 2 {
+		t.Fatalf("expected two failed attempts to save diagnostics, got %+v", store.diagnostics)
 	}
 }
 
@@ -422,6 +431,9 @@ func TestGenerateAllLongMangaEpisodesSavesFailureAfterRetryLimit(t *testing.T) {
 	}
 	if _, ok := store.failures[1]; !ok {
 		t.Fatalf("expected episode 1 failure to be saved, got %+v", store.failures)
+	}
+	if len(store.diagnostics) != maxLongMangaStoryAttempts {
+		t.Fatalf("expected each failed attempt to save diagnostics, got %+v", store.diagnostics)
 	}
 }
 
@@ -594,11 +606,19 @@ func (s *costumeContinuityStubLLMProvider) Name() string {
 }
 
 type stubLongMangaProgressStore struct {
-	mu        sync.Mutex
-	scripts   map[int]domain.LongMangaEpisodeScript
-	failures  map[int]domain.LongMangaEpisodeOutline
-	prompts   map[string]string
-	saveCount int
+	mu          sync.Mutex
+	scripts     map[int]domain.LongMangaEpisodeScript
+	failures    map[int]domain.LongMangaEpisodeOutline
+	prompts     map[string]string
+	diagnostics []stubAIErrorContext
+	saveCount   int
+}
+
+type stubAIErrorContext struct {
+	name     string
+	prompt   string
+	response string
+	err      error
 }
 
 func (s *stubLongMangaProgressStore) Save(*domain.LongMangaState) error {
@@ -626,6 +646,18 @@ func (s *stubLongMangaProgressStore) SaveEpisodeFailure(_ string, episode domain
 	}
 	s.failures[episode.Episode] = episode
 	return fmt.Sprintf("storyboards/long_episode_%03d.md", episode.Episode), nil
+}
+
+func (s *stubLongMangaProgressStore) SaveLongMangaErrorContext(_ string, name string, prompt string, response string, generationErr error) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.diagnostics = append(s.diagnostics, stubAIErrorContext{
+		name:     name,
+		prompt:   prompt,
+		response: response,
+		err:      generationErr,
+	})
+	return fmt.Sprintf("ai_errors/%s.md", name), nil
 }
 
 func (s *stubLongMangaProgressStore) SaveLongMangaPrompt(_ string, name string, prompt string) (string, error) {

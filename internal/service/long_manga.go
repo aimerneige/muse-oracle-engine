@@ -38,6 +38,7 @@ type LongMangaProgressStore interface {
 	Save(state *domain.LongMangaState) error
 	SaveEpisodeScript(projectID string, script domain.LongMangaEpisodeScript) (string, error)
 	SaveEpisodeFailure(projectID string, episode domain.LongMangaEpisodeOutline, generationErr error) (string, error)
+	SaveLongMangaErrorContext(projectID string, name string, prompt string, response string, generationErr error) (string, error)
 	SaveLongMangaPrompt(projectID string, name string, prompt string) (string, error)
 }
 
@@ -77,14 +78,23 @@ func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.
 
 	response, err := s.llmProvider.GenerateText(ctx, promptText)
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, "", err); saveErr != nil {
+			return nil, fmt.Errorf("%s outline generation failed: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
+		}
 		return nil, fmt.Errorf("%s outline generation failed: %w", mode, err)
 	}
 
 	outline, err := parseLongMangaJSON[domain.LongMangaOutline](response)
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
+			return nil, fmt.Errorf("failed to parse %s outline: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
+		}
 		return nil, fmt.Errorf("failed to parse %s outline: %w", mode, err)
 	}
 	if err := normalizeOutline(&outline, candidateCharacterSet(project.Characters)); err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
+			return nil, fmt.Errorf("%w; additionally failed to save AI error context: %v", err, saveErr)
+		}
 		return nil, err
 	}
 
@@ -233,24 +243,44 @@ func (s *LongMangaService) generateEpisodeScriptForMode(ctx context.Context, pro
 
 	response, err := s.llmProvider.GenerateText(ctx, promptText)
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, episodePromptName(mode, episodeNumber), promptText, "", err); saveErr != nil {
+			return domain.LongMangaEpisodeScript{}, fmt.Errorf("%s story %d generation failed: %w; additionally failed to save AI error context: %v", mode, episodeNumber, err, saveErr)
+		}
 		return domain.LongMangaEpisodeScript{}, fmt.Errorf("%s story %d generation failed: %w", mode, episodeNumber, err)
 	}
 
 	script, err := parseLongMangaJSON[domain.LongMangaEpisodeScript](response)
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, episodePromptName(mode, episodeNumber), promptText, response, err); saveErr != nil {
+			return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to parse %s story %d: %w; additionally failed to save AI error context: %v", mode, episodeNumber, err, saveErr)
+		}
 		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to parse %s story %d: %w", mode, episodeNumber, err)
 	}
 	if err := normalizeEpisodeScript(&script, episode, candidateCharacterSet(project.Characters)); err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, episodePromptName(mode, episodeNumber), promptText, response, err); saveErr != nil {
+			return domain.LongMangaEpisodeScript{}, fmt.Errorf("%w; additionally failed to save AI error context: %v", err, saveErr)
+		}
 		return domain.LongMangaEpisodeScript{}, err
 	}
 	if mode == fourPanelGenerationMode {
 		if err := validateFourPanelScript(script); err != nil {
+			if saveErr := saveLongMangaAIErrorContext(store, project.ID, episodePromptName(mode, episodeNumber), promptText, response, err); saveErr != nil {
+				return domain.LongMangaEpisodeScript{}, fmt.Errorf("%w; additionally failed to save AI error context: %v", err, saveErr)
+			}
 			return domain.LongMangaEpisodeScript{}, err
 		}
 	}
 
 	script.RawResponse = response
 	return script, nil
+}
+
+func saveLongMangaAIErrorContext(store LongMangaProgressStore, projectID string, name string, promptText string, response string, generationErr error) error {
+	if store == nil {
+		return nil
+	}
+	_, err := store.SaveLongMangaErrorContext(projectID, name, promptText, response, generationErr)
+	return err
 }
 
 func validateFourPanelScript(script domain.LongMangaEpisodeScript) error {
@@ -331,11 +361,17 @@ func (s *LongMangaService) GenerateAllEpisodesBatch(ctx context.Context, project
 
 	response, err := s.llmProvider.GenerateText(ctx, promptText)
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, "long_batch_storyboard_prompt", promptText, "", err); saveErr != nil {
+			return fmt.Errorf("long manga batch storyboard generation failed: %w; additionally failed to save AI error context: %v", err, saveErr)
+		}
 		return fmt.Errorf("long manga batch storyboard generation failed: %w", err)
 	}
 
 	scripts, err := parseLongMangaBatchStoryboard(response, *state.ConfirmedOutline, candidateCharacterSet(project.Characters))
 	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, project.ID, "long_batch_storyboard_prompt", promptText, response, err); saveErr != nil {
+			return fmt.Errorf("failed to parse long manga batch storyboard: %w; additionally failed to save AI error context: %v", err, saveErr)
+		}
 		return fmt.Errorf("failed to parse long manga batch storyboard: %w", err)
 	}
 	for i := range scripts {

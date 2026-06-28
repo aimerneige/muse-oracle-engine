@@ -1,11 +1,14 @@
 package storage
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
@@ -117,6 +120,25 @@ func (s *LongMangaStore) SaveLongMangaPrompt(projectID string, name string, prom
 	return filepath.Join("prompts", filename), nil
 }
 
+func (s *LongMangaStore) SaveLongMangaErrorContext(projectID string, name string, prompt string, response string, generationErr error) (string, error) {
+	errorsDir := filepath.Join(s.projectDir(projectID), "ai_errors")
+	if err := os.MkdirAll(errorsDir, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create ai error directory: %w", err)
+	}
+
+	randomSuffix, err := randomHex(4)
+	if err != nil {
+		return "", fmt.Errorf("failed to create ai error filename suffix: %w", err)
+	}
+	timestamp := time.Now().UTC().Format("20060102T150405.000000000Z")
+	filename := fmt.Sprintf("%s_%s_%s.md", sanitizeDiagnosticFilename(name), timestamp, randomSuffix)
+	path := filepath.Join(errorsDir, filename)
+	if err := os.WriteFile(path, []byte(formatLongMangaErrorContext(name, prompt, response, generationErr)), 0o644); err != nil {
+		return "", fmt.Errorf("failed to write ai error context: %w", err)
+	}
+	return filepath.Join("ai_errors", filename), nil
+}
+
 func (s *LongMangaStore) Load(projectID string) (*domain.LongMangaState, error) {
 	data, err := os.ReadFile(s.stateFile(projectID))
 	if err != nil {
@@ -195,4 +217,43 @@ func formatLongMangaEpisodeFailure(episode domain.LongMangaEpisodeOutline, gener
 	out += fmt.Sprintf("**生成失败**：%v\n\n", generationErr)
 	out += "请根据本话梗概和对应 prompt 手动补全本话分镜内容。\n"
 	return out
+}
+
+func formatLongMangaErrorContext(name string, prompt string, response string, generationErr error) string {
+	var out string
+	out += fmt.Sprintf("# AI Error Context: %s\n\n", name)
+	out += fmt.Sprintf("**Error**: %v\n\n", generationErr)
+	out += "## AI Input\n\n"
+	out += "````text\n"
+	out += prompt
+	if !strings.HasSuffix(prompt, "\n") {
+		out += "\n"
+	}
+	out += "````\n\n"
+	out += "## AI Output\n\n"
+	out += "````text\n"
+	out += response
+	if response != "" && !strings.HasSuffix(response, "\n") {
+		out += "\n"
+	}
+	out += "````\n"
+	return out
+}
+
+func randomHex(byteCount int) (string, error) {
+	data := make([]byte, byteCount)
+	if _, err := rand.Read(data); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(data), nil
+}
+
+func sanitizeDiagnosticFilename(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "ai_error"
+	}
+
+	replacer := strings.NewReplacer("/", "_", "\\", "_", " ", "_", ":", "_")
+	return replacer.Replace(name)
 }
