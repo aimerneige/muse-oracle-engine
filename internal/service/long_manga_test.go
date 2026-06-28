@@ -71,6 +71,65 @@ func TestGenerateLongMangaOutlineRejectsUnknownCharacter(t *testing.T) {
 	}
 }
 
+func TestGenerateLongMangaOutlineRetriesTransientFailures(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	provider := &retryOutlineLLMProvider{failuresBeforeSuccess: 2}
+	svc := NewLongMangaService(provider, engine)
+	store := &stubLongMangaProgressStore{}
+
+	state, err := svc.GenerateOutlineWithStore(context.Background(), testLongMangaProject(), store)
+	if err != nil {
+		t.Fatalf("GenerateOutlineWithStore returned error: %v", err)
+	}
+
+	if provider.calls != maxLongMangaOutlineAttempts {
+		t.Fatalf("expected %d attempts, got %d", maxLongMangaOutlineAttempts, provider.calls)
+	}
+	if state.Status != domain.LongMangaStatusOutlineGenerated {
+		t.Fatalf("expected outline_generated status, got %s", state.Status)
+	}
+	if len(store.diagnostics) != 2 {
+		t.Fatalf("expected two failed outline attempts to save diagnostics, got %+v", store.diagnostics)
+	}
+}
+
+func TestGenerateLongMangaOutlineFailsAfterRetryLimit(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	provider := &retryOutlineLLMProvider{alwaysFail: true}
+	svc := NewLongMangaService(provider, engine)
+	store := &stubLongMangaProgressStore{}
+
+	_, err = svc.GenerateOutlineWithStore(context.Background(), testLongMangaProject(), store)
+	if err == nil {
+		t.Fatal("expected retry limit error")
+	}
+
+	if provider.calls != maxLongMangaOutlineAttempts {
+		t.Fatalf("expected %d attempts, got %d", maxLongMangaOutlineAttempts, provider.calls)
+	}
+	if !strings.Contains(err.Error(), "failed after 3 attempt") {
+		t.Fatalf("expected retry limit in error, got %v", err)
+	}
+	if len(store.diagnostics) != maxLongMangaOutlineAttempts {
+		t.Fatalf("expected each failed outline attempt to save diagnostics, got %+v", store.diagnostics)
+	}
+	if !strings.Contains(store.diagnostics[0].prompt, "自动化长篇漫画剧情梗概引擎") {
+		t.Fatalf("expected diagnostic to contain outline prompt, got %+v", store.diagnostics[0])
+	}
+}
+
 func TestSelectFourPanelStoriesKeepsRequestedCandidates(t *testing.T) {
 	t.Parallel()
 
@@ -540,6 +599,28 @@ func (s *stubLLMProvider) GenerateTextWithHistory(context.Context, llm.History) 
 
 func (s *stubLLMProvider) Name() string {
 	return "stub"
+}
+
+type retryOutlineLLMProvider struct {
+	calls                 int
+	failuresBeforeSuccess int
+	alwaysFail            bool
+}
+
+func (s *retryOutlineLLMProvider) GenerateText(context.Context, string) (string, error) {
+	s.calls++
+	if s.alwaysFail || s.calls <= s.failuresBeforeSuccess {
+		return "", fmt.Errorf("transient outline failure")
+	}
+	return `{"total_episodes":1,"episodes":[{"episode":1,"title":"晨间约定","summary":"确认计划","character_ids":["lovelive/honoka"]}]}`, nil
+}
+
+func (s *retryOutlineLLMProvider) GenerateTextWithHistory(context.Context, llm.History) (string, error) {
+	return "", nil
+}
+
+func (s *retryOutlineLLMProvider) Name() string {
+	return "retry-outline-stub"
 }
 
 type episodeStubLLMProvider struct{}

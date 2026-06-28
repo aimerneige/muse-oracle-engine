@@ -24,9 +24,10 @@ type LongMangaService struct {
 type mangaGenerationMode string
 
 const (
-	longMangaGenerationMode   mangaGenerationMode = "long manga"
-	fourPanelGenerationMode   mangaGenerationMode = "four-panel manga"
-	maxLongMangaStoryAttempts                     = 3
+	longMangaGenerationMode     mangaGenerationMode = "long manga"
+	fourPanelGenerationMode     mangaGenerationMode = "four-panel manga"
+	maxLongMangaOutlineAttempts                     = 3
+	maxLongMangaStoryAttempts                       = 3
 )
 
 type longMangaBatchStoryboardResponse struct {
@@ -76,25 +77,8 @@ func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.
 		}
 	}
 
-	response, err := s.llmProvider.GenerateText(ctx, promptText)
+	outline, response, err := s.generateOutlineWithRetry(ctx, project.ID, promptText, candidateCharacterSet(project.Characters), store, mode)
 	if err != nil {
-		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, "", err); saveErr != nil {
-			return nil, fmt.Errorf("%s outline generation failed: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
-		}
-		return nil, fmt.Errorf("%s outline generation failed: %w", mode, err)
-	}
-
-	outline, err := parseLongMangaJSON[domain.LongMangaOutline](response)
-	if err != nil {
-		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
-			return nil, fmt.Errorf("failed to parse %s outline: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
-		}
-		return nil, fmt.Errorf("failed to parse %s outline: %w", mode, err)
-	}
-	if err := normalizeOutline(&outline, candidateCharacterSet(project.Characters)); err != nil {
-		if saveErr := saveLongMangaAIErrorContext(store, project.ID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
-			return nil, fmt.Errorf("%w; additionally failed to save AI error context: %v", err, saveErr)
-		}
 		return nil, err
 	}
 
@@ -112,6 +96,46 @@ func (s *LongMangaService) generateOutline(ctx context.Context, project *domain.
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	}, nil
+}
+
+func (s *LongMangaService) generateOutlineWithRetry(ctx context.Context, projectID string, promptText string, validCharacters map[string]struct{}, store LongMangaProgressStore, mode mangaGenerationMode) (domain.LongMangaOutline, string, error) {
+	var lastErr error
+	for attempt := 1; attempt <= maxLongMangaOutlineAttempts; attempt++ {
+		outline, response, err := s.generateOutlineOnce(ctx, projectID, promptText, validCharacters, store, mode)
+		if err == nil {
+			return outline, response, nil
+		}
+		lastErr = err
+		if attempt < maxLongMangaOutlineAttempts {
+			log.Printf("%s outline attempt %d/%d failed: %v; retrying", mode, attempt, maxLongMangaOutlineAttempts, err)
+		}
+	}
+	return domain.LongMangaOutline{}, "", fmt.Errorf("%s outline generation failed after %d attempt(s): %w", mode, maxLongMangaOutlineAttempts, lastErr)
+}
+
+func (s *LongMangaService) generateOutlineOnce(ctx context.Context, projectID string, promptText string, validCharacters map[string]struct{}, store LongMangaProgressStore, mode mangaGenerationMode) (domain.LongMangaOutline, string, error) {
+	response, err := s.llmProvider.GenerateText(ctx, promptText)
+	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, projectID, outlinePromptName(mode), promptText, "", err); saveErr != nil {
+			return domain.LongMangaOutline{}, "", fmt.Errorf("%s outline generation failed: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
+		}
+		return domain.LongMangaOutline{}, "", fmt.Errorf("%s outline generation failed: %w", mode, err)
+	}
+
+	outline, err := parseLongMangaJSON[domain.LongMangaOutline](response)
+	if err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, projectID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
+			return domain.LongMangaOutline{}, response, fmt.Errorf("failed to parse %s outline: %w; additionally failed to save AI error context: %v", mode, err, saveErr)
+		}
+		return domain.LongMangaOutline{}, response, fmt.Errorf("failed to parse %s outline: %w", mode, err)
+	}
+	if err := normalizeOutline(&outline, validCharacters); err != nil {
+		if saveErr := saveLongMangaAIErrorContext(store, projectID, outlinePromptName(mode), promptText, response, err); saveErr != nil {
+			return domain.LongMangaOutline{}, response, fmt.Errorf("%w; additionally failed to save AI error context: %v", err, saveErr)
+		}
+		return domain.LongMangaOutline{}, response, err
+	}
+	return outline, response, nil
 }
 
 func (s *LongMangaService) renderOutlinePrompt(project *domain.Project, mode mangaGenerationMode) (string, error) {
