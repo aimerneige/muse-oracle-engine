@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/aimerneige/muse-oracle-engine/internal/provider/geminiapi"
 	"google.golang.org/genai"
 )
 
@@ -47,10 +48,11 @@ type GeminiAdapter struct {
 // NewGeminiAdapter creates a new Gemini LLM provider.
 func NewGeminiAdapter(apiKey string, model GeminiModel) (*GeminiAdapter, error) {
 	config := &genai.ClientConfig{
-		APIKey: apiKey,
+		APIKey:  apiKey,
+		Backend: genai.BackendGeminiAPI,
 	}
 	if baseURL := os.Getenv("GEMINI_BASE_URL"); baseURL != "" {
-		config.HTTPOptions = genai.HTTPOptions{BaseURL: baseURL}
+		config.HTTPOptions = genai.HTTPOptions{BaseURL: geminiapi.NormalizeBaseURL(baseURL)}
 	}
 
 	client, err := genai.NewClient(context.Background(), config)

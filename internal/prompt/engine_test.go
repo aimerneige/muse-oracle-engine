@@ -130,8 +130,8 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 	if !strings.Contains(outline, "`lovelive/honoka`") {
 		t.Fatal("expected long manga outline prompt to expose stable character ID")
 	}
-	if !strings.Contains(outline, "只输出 JSON 代码块") {
-		t.Fatal("expected long manga outline prompt to require JSON output")
+	if !strings.Contains(outline, "只输出 JSON 对象") || strings.Contains(outline, "```json") {
+		t.Fatal("expected long manga outline prompt to require raw JSON output")
 	}
 	if !strings.Contains(outline, "严格生成 12 话") || !strings.Contains(outline, "共 48 格") || !strings.Contains(outline, `"total_episodes": 12`) {
 		t.Fatal("expected long manga outline prompt to include the requested story length")
