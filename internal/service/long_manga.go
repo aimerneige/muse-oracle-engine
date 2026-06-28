@@ -24,8 +24,9 @@ type LongMangaService struct {
 type mangaGenerationMode string
 
 const (
-	longMangaGenerationMode mangaGenerationMode = "long manga"
-	fourPanelGenerationMode mangaGenerationMode = "four-panel manga"
+	longMangaGenerationMode   mangaGenerationMode = "long manga"
+	fourPanelGenerationMode   mangaGenerationMode = "four-panel manga"
+	maxLongMangaStoryAttempts                     = 3
 )
 
 type longMangaBatchStoryboardResponse struct {
@@ -368,6 +369,21 @@ func (s *LongMangaService) GenerateAllFourPanelStories(ctx context.Context, proj
 	return s.generateAllEpisodesForMode(ctx, project, state, store, fourPanelGenerationMode)
 }
 
+func (s *LongMangaService) generateEpisodeScriptForModeWithRetry(ctx context.Context, project *domain.Project, state *domain.LongMangaState, episodeNumber int, store LongMangaProgressStore, mode mangaGenerationMode) (domain.LongMangaEpisodeScript, error) {
+	var lastErr error
+	for attempt := 1; attempt <= maxLongMangaStoryAttempts; attempt++ {
+		script, err := s.generateEpisodeScriptForMode(ctx, project, state, episodeNumber, store, mode)
+		if err == nil {
+			return script, nil
+		}
+		lastErr = err
+		if attempt < maxLongMangaStoryAttempts {
+			log.Printf("%s story %d attempt %d/%d failed: %v; retrying", mode, episodeNumber, attempt, maxLongMangaStoryAttempts, err)
+		}
+	}
+	return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed after %d attempt(s): %w", maxLongMangaStoryAttempts, lastErr)
+}
+
 func (s *LongMangaService) generateAllEpisodesForMode(ctx context.Context, project *domain.Project, state *domain.LongMangaState, store LongMangaProgressStore, mode mangaGenerationMode) error {
 	if state.ConfirmedOutline == nil {
 		return fmt.Errorf("confirmed outline is required")
@@ -383,7 +399,7 @@ func (s *LongMangaService) generateAllEpisodesForMode(ctx context.Context, proje
 	var failedEpisodes []string
 	for _, episode := range jobs {
 		log.Printf("Generating %s story %d...", mode, episode.Episode)
-		script, err := s.generateEpisodeScriptForMode(ctx, project, state, episode.Episode, store, mode)
+		script, err := s.generateEpisodeScriptForModeWithRetry(ctx, project, state, episode.Episode, store, mode)
 		if err != nil {
 			failedEpisodes = append(failedEpisodes, fmt.Sprintf("episode %d: %v", episode.Episode, err))
 			state.Status = domain.LongMangaStatusStoryboardPartial

@@ -356,6 +356,75 @@ func TestGenerateAllLongMangaEpisodesContinuesAfterFailureAndSavesProgress(t *te
 	}
 }
 
+func TestGenerateAllLongMangaEpisodesRetriesTransientFailures(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	project := testLongMangaProject()
+	state := oneEpisodeLongMangaState()
+	provider := &retryEpisodeLLMProvider{failuresBeforeSuccess: 2}
+	store := &stubLongMangaProgressStore{}
+	svc := NewLongMangaService(provider, engine)
+
+	err = svc.GenerateAllEpisodes(context.Background(), project, state, store)
+	if err != nil {
+		t.Fatalf("GenerateAllEpisodes returned error: %v", err)
+	}
+
+	if provider.calls != maxLongMangaStoryAttempts {
+		t.Fatalf("expected %d attempts, got %d", maxLongMangaStoryAttempts, provider.calls)
+	}
+	if state.Status != domain.LongMangaStatusStoryboardDone {
+		t.Fatalf("expected storyboard_done status, got %s", state.Status)
+	}
+	if len(state.Episodes) != 1 || len(store.scripts) != 1 {
+		t.Fatalf("expected retried episode script to be saved, state=%+v store=%+v", state.Episodes, store.scripts)
+	}
+	if len(store.failures) != 0 {
+		t.Fatalf("expected no saved failures after retry success, got %+v", store.failures)
+	}
+}
+
+func TestGenerateAllLongMangaEpisodesSavesFailureAfterRetryLimit(t *testing.T) {
+	t.Parallel()
+
+	engine, err := prompt.NewEngine()
+	if err != nil {
+		t.Fatalf("failed to create prompt engine: %v", err)
+	}
+
+	project := testLongMangaProject()
+	state := oneEpisodeLongMangaState()
+	provider := &retryEpisodeLLMProvider{alwaysFail: true}
+	store := &stubLongMangaProgressStore{}
+	svc := NewLongMangaService(provider, engine)
+
+	err = svc.GenerateAllEpisodes(context.Background(), project, state, store)
+	if err != nil {
+		t.Fatalf("GenerateAllEpisodes returned error: %v", err)
+	}
+
+	if provider.calls != maxLongMangaStoryAttempts {
+		t.Fatalf("expected %d attempts, got %d", maxLongMangaStoryAttempts, provider.calls)
+	}
+	if state.Status != domain.LongMangaStatusStoryboardPartial {
+		t.Fatalf("expected storyboard_partial status, got %s", state.Status)
+	}
+	if !strings.Contains(state.Error, "failed after 3 attempt") {
+		t.Fatalf("expected retry limit in state error, got %q", state.Error)
+	}
+	if len(state.Episodes) != 0 || len(store.scripts) != 0 {
+		t.Fatalf("expected no scripts after retry exhaustion, state=%+v store=%+v", state.Episodes, store.scripts)
+	}
+	if _, ok := store.failures[1]; !ok {
+		t.Fatalf("expected episode 1 failure to be saved, got %+v", store.failures)
+	}
+}
+
 func TestGenerateAllLongMangaEpisodesCarriesCostumeStateForward(t *testing.T) {
 	t.Parallel()
 
@@ -482,6 +551,28 @@ func (s *episodeStubLLMProvider) Name() string {
 	return "episode-stub"
 }
 
+type retryEpisodeLLMProvider struct {
+	calls                 int
+	failuresBeforeSuccess int
+	alwaysFail            bool
+}
+
+func (s *retryEpisodeLLMProvider) GenerateText(context.Context, string) (string, error) {
+	s.calls++
+	if s.alwaysFail || s.calls <= s.failuresBeforeSuccess {
+		return "", fmt.Errorf("transient episode failure")
+	}
+	return `{"episode":1,"title":"第1话","summary":"确认计划","character_ids":["lovelive/honoka"],"panels":[{"index":1,"character_ids":["lovelive/honoka"],"content":"##### 第1格"}],"costume_states":[{"character_id":"lovelive/honoka","outfit":"整洁校服与书包","update_reason":"延续上一话"}]}`, nil
+}
+
+func (s *retryEpisodeLLMProvider) GenerateTextWithHistory(context.Context, llm.History) (string, error) {
+	return "", nil
+}
+
+func (s *retryEpisodeLLMProvider) Name() string {
+	return "retry-episode-stub"
+}
+
 type costumeContinuityStubLLMProvider struct {
 	calls int
 }
@@ -590,5 +681,21 @@ func testConfirmedLongMangaState() *domain.LongMangaState {
 			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
 		},
 		ConfirmedOutline: outline,
+	}
+}
+
+func oneEpisodeLongMangaState() *domain.LongMangaState {
+	return &domain.LongMangaState{
+		ProjectID: "project-1",
+		Status:    domain.LongMangaStatusOutlineConfirmed,
+		CandidateCharacters: []domain.LongMangaCharacterRef{
+			{ID: "lovelive/honoka", Name: "高坂穗乃果", Series: "lovelive"},
+		},
+		ConfirmedOutline: &domain.LongMangaOutline{
+			TotalEpisodes: 1,
+			Episodes: []domain.LongMangaEpisodeOutline{
+				{Episode: 1, Title: "第1话", Summary: "确认计划", CharacterIDs: []string{"lovelive/honoka"}},
+			},
+		},
 	}
 }
