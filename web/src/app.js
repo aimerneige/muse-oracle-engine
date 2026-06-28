@@ -126,8 +126,13 @@
     els.selectAllFourPanelStoriesBtn.addEventListener("click", selectAllFourPanelStories);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
-    els.longBatchStoryboardEnabledInput.addEventListener("change", function () {
+    els.longBatchStoryboardEnabledInput.addEventListener("change", async function () {
       syncProjectFromForm();
+      if (state.project.longBatchStoryboardEnabled && !state.project.longBatchStoryboardPrompt) {
+        if (await buildLongBatchStoryboardPrompt()) {
+          return;
+        }
+      }
       renderLongManga();
     });
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
