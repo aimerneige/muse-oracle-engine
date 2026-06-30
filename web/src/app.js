@@ -27,6 +27,8 @@
   };
 
   var els = {};
+  var workspaceActionDisabledSnapshot = null;
+  var workspaceActionsBusy = false;
 
   document.addEventListener("DOMContentLoaded", function () {
     bindElements();
@@ -40,6 +42,7 @@
   function bindElements() {
     [
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
+      "workStatus", "workStatusMessage",
       "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthEnabledInput", "storyLengthInput",
@@ -779,7 +782,8 @@
     renderSelectedCharacters();
   }
 
-  async function buildStoryboardPrompt() {
+  async function buildStoryboardPrompt(options) {
+    options = options || {};
     syncProjectFromForm();
     var characters = selectedCharacters();
     if (characters.length === 0) {
@@ -802,7 +806,7 @@
       Language: normalizeLanguage(state.project.language),
       StyleDescription: style.description
     });
-    if (!await confirmContentOverwrite(state.project.storyboardPrompt, "已有分镜 Prompt 会被覆盖。")) {
+    if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.storyboardPrompt, "已有分镜 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.storyboardPrompt = prompt;
@@ -815,10 +819,11 @@
     return true;
   }
 
-  async function callLLM() {
+  async function callLLM(options) {
+    options = options || {};
     saveSettingsFromForm();
     if (!state.project.storyboardPrompt) {
-      if (!await buildStoryboardPrompt()) {
+      if (!await buildStoryboardPrompt(options)) {
         return false;
       }
     }
@@ -831,10 +836,11 @@
 
     setBusy(els.callLLMBtn, true);
     try {
-      if (!await confirmContentOverwrite(state.project.rawStoryboard, "已有 LLM 原始输出会被覆盖。")) {
+      if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawStoryboard, "已有 LLM 原始输出会被覆盖。")) {
         return false;
       }
       log("Calling " + state.settings.llmProvider + " LLM: " + state.settings.llmModel);
+      showWorkStatus("LLM 正在生成分镜...");
       state.project.rawStoryboard = "";
       els.rawStoryboard.value = "";
       setActiveTab("storyPrompt");
@@ -853,7 +859,10 @@
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
-      setBusy(els.callLLMBtn, false);
+      if (!options.keepWorkStatus) {
+        hideWorkStatus();
+        setBusy(els.callLLMBtn, false);
+      }
     }
   }
 
@@ -1111,7 +1120,8 @@
     return false;
   }
 
-  async function buildLongOutlinePrompt() {
+  async function buildLongOutlinePrompt(options) {
+    options = options || {};
     syncProjectFromForm();
     var characters = selectedCharacters();
     if (characters.length === 0) {
@@ -1141,7 +1151,7 @@
       StoryLength: state.project.storyLengthEnabled ? state.project.storyLength : 0,
       TotalPanels: state.project.storyLengthEnabled ? state.project.storyLength * 4 : 0
     });
-	if (!await confirmContentOverwrite(state.project.longOutlinePrompt, "已有漫画梗概 Prompt 会被覆盖。")) {
+	if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.longOutlinePrompt, "已有漫画梗概 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.longOutlinePrompt = prompt;
@@ -1155,9 +1165,10 @@
     return true;
   }
 
-  async function callLongOutline() {
+  async function callLongOutline(options) {
+    options = options || {};
     saveSettingsFromForm();
-    if (!state.project.longOutlinePrompt && !await buildLongOutlinePrompt()) {
+    if (!state.project.longOutlinePrompt && !await buildLongOutlinePrompt(options)) {
       return false;
     }
     if (!ensureAPISettings("llm")) {
@@ -1166,12 +1177,13 @@
 
     setBusy(els.callLongOutlineBtn, true);
     try {
-      if (!await confirmContentOverwrite(state.project.rawLongOutline, "已有长漫画梗概结果会被覆盖。")) {
+      if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawLongOutline, "已有长漫画梗概结果会被覆盖。")) {
         return false;
       }
       state.project.rawLongOutline = "";
       els.rawLongOutline.value = "";
       setActiveTab("longManga");
+      showWorkStatus("LLM 正在生成梗概...");
       var text = await generateText(state.project.longOutlinePrompt, appendLongOutlineDelta, resetLongOutlineOutput);
       state.project.rawLongOutline = text;
       els.rawLongOutline.value = text;
@@ -1185,7 +1197,10 @@
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
-      setBusy(els.callLongOutlineBtn, false);
+      if (!options.keepWorkStatus) {
+        hideWorkStatus();
+        setBusy(els.callLongOutlineBtn, false);
+      }
     }
   }
 
@@ -1209,7 +1224,8 @@
     }
   }
 
-  async function buildLongEpisodePrompts() {
+  async function buildLongEpisodePrompts(options) {
+    options = options || {};
     syncProjectFromForm();
     if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
       return false;
@@ -1217,7 +1233,7 @@
 
 	var fourPanelMode = state.project.storyMode === "four";
     if (!fourPanelMode && state.project.longBatchStoryboardEnabled) {
-      return buildLongBatchStoryboardPrompt();
+      return buildLongBatchStoryboardPrompt(options);
     }
 	var episodes = state.project.longOutline.episodes;
 	if (fourPanelMode) {
@@ -1233,7 +1249,7 @@
       var prompts = episodes.map(function (episode) {
         return buildLongEpisodePromptItem(episode, fourPanelMode, style);
       });
-	  if (!await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
+	  if (options.confirmOverwrite !== false && !await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
         return false;
       }
       state.project.longEpisodePrompts = prompts;
@@ -1318,7 +1334,8 @@
     });
   }
 
-  async function buildLongBatchStoryboardPrompt() {
+  async function buildLongBatchStoryboardPrompt(options) {
+    options = options || {};
     if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
       return false;
     }
@@ -1329,7 +1346,7 @@
       Language: normalizeLanguage(state.project.language),
       StyleDescription: style.description
     });
-	if (!await confirmContentOverwrite(state.project.longBatchStoryboardPrompt, "已有批量分镜 Prompt 会被覆盖。")) {
+	if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.longBatchStoryboardPrompt, "已有批量分镜 Prompt 会被覆盖。")) {
       return false;
     }
     state.project.longBatchStoryboardPrompt = prompt;
@@ -1343,12 +1360,13 @@
     return true;
   }
 
-  async function callLongEpisodes() {
+  async function callLongEpisodes(options) {
+    options = options || {};
     saveSettingsFromForm();
     if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled) {
-      return callLongBatchStoryboard();
+      return callLongBatchStoryboard(options);
     }
-    if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts()) {
+    if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts(options)) {
       return false;
     }
     if (!ensureAPISettings("llm")) {
@@ -1358,7 +1376,7 @@
     setBusy(els.callLongEpisodesBtn, true);
     var allDone = true;
     try {
-      if (!await confirmContentOverwrite(rawListContent(state.project.longEpisodeRaws), "已有逐话结果会被覆盖。")) {
+      if (options.confirmOverwrite !== false && !await confirmContentOverwrite(rawListContent(state.project.longEpisodeRaws), "已有逐话结果会被覆盖。")) {
         return false;
       }
       for (var i = 0; i < state.project.longEpisodePrompts.length; i++) {
@@ -1371,6 +1389,7 @@
         renderLongManga();
         try {
           log("Generating manga storyboard " + item.episode + ".");
+          showWorkStatus("LLM 正在生成第 " + item.episode + " 话分镜...");
           var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
           setLongEpisodeRaw(item.episode, text);
           if (!await parseLongEpisodeFromRaw(item.episode)) {
@@ -1389,12 +1408,16 @@
       renderLongManga();
       return allDone;
     } finally {
-      setBusy(els.callLongEpisodesBtn, false);
+      if (!options.keepWorkStatus) {
+        hideWorkStatus();
+        setBusy(els.callLongEpisodesBtn, false);
+      }
     }
   }
 
-  async function callLongBatchStoryboard() {
-    if (!state.project.longBatchStoryboardPrompt && !await buildLongBatchStoryboardPrompt()) {
+  async function callLongBatchStoryboard(options) {
+    options = options || {};
+    if (!state.project.longBatchStoryboardPrompt && !await buildLongBatchStoryboardPrompt(options)) {
       return false;
     }
     if (!ensureAPISettings("llm")) {
@@ -1403,13 +1426,14 @@
 
     setBusy(els.callLongEpisodesBtn, true);
     try {
-      if (!await confirmContentOverwrite(state.project.rawLongBatchStoryboard, "已有批量分镜结果会被覆盖。")) {
+      if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawLongBatchStoryboard, "已有批量分镜结果会被覆盖。")) {
         return false;
       }
       state.project.rawLongBatchStoryboard = "";
       els.rawLongBatchStoryboard.value = "";
       setActiveTab("longManga");
       state.longMangaUI.step = "episodes";
+      showWorkStatus("LLM 正在批量生成分镜...");
       var text = await generateText(state.project.longBatchStoryboardPrompt, appendLongBatchStoryboardDelta, resetLongBatchStoryboardOutput);
       state.project.rawLongBatchStoryboard = text;
       els.rawLongBatchStoryboard.value = text;
@@ -1419,7 +1443,10 @@
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
-      setBusy(els.callLongEpisodesBtn, false);
+      if (!options.keepWorkStatus) {
+        hideWorkStatus();
+        setBusy(els.callLongEpisodesBtn, false);
+      }
     }
   }
 
@@ -1500,7 +1527,7 @@
     els.longBatchStoryboardEnabledInput.checked = batchMode;
     els.longBatchStoryboardPanel.classList.toggle("is-hidden", !batchMode);
     els.selectAllFourPanelStoriesBtn.classList.toggle("is-hidden", !fourPanelMode);
-    els.selectAllFourPanelStoriesBtn.disabled = !state.project.longOutline || !state.project.longOutline.episodes || state.project.longOutline.episodes.length === 0;
+    els.selectAllFourPanelStoriesBtn.disabled = workspaceActionsBusy || !state.project.longOutline || !state.project.longOutline.episodes || state.project.longOutline.episodes.length === 0;
     setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
     setGeneratedPromptValue(els.longBatchStoryboardPrompt, state.project.longBatchStoryboardPrompt || "");
@@ -1638,6 +1665,7 @@
     var parse = document.createElement("button");
     parse.type = "button";
     parse.textContent = "解析本话结果";
+    parse.disabled = workspaceActionsBusy;
     parse.addEventListener("click", function () {
       parseLongEpisodeFromRaw(item.episode);
     });
@@ -1978,7 +2006,8 @@
     }
   }
 
-  async function callImageAPI() {
+  async function callImageAPI(options) {
+    options = options || {};
     saveSettingsFromForm();
     if (state.project.imagePrompts.length === 0) {
       await buildImagePrompts();
@@ -1998,6 +2027,7 @@
         var item = state.project.imagePrompts[i];
         state.imageUI.activeIndex = item.index;
         log("Generating image " + item.index + " with " + state.settings.imageProvider + "/" + state.settings.imageModel);
+        showWorkStatus("图片 API 正在生成第 " + item.index + " 张图片...");
         try {
           var result = await generateImage(item.prompt);
           triggerImageDownload(item.index, result.dataUrl);
@@ -2028,50 +2058,60 @@
       }
       return allDone;
     } finally {
-      setBusy(els.callImageBtn, false);
-      setBusy(els.callLongImageBtn, false);
+      if (!options.keepWorkStatus) {
+        hideWorkStatus();
+        setBusy(els.callImageBtn, false);
+        setBusy(els.callLongImageBtn, false);
+      }
     }
   }
 
   async function runFullAuto() {
     setBusy(els.fullAutoBtn, true);
+    setWorkspaceActionsBusy(true);
+    showWorkStatus("全自动流程正在运行...");
     try {
       log("Full auto flow started.");
 	  if (state.project.storyMode === "long" || state.project.storyMode === "four") {
         await runLongMangaAuto();
         return;
       }
-      if (!await buildStoryboardPrompt()) {
+      var autoOptions = { confirmOverwrite: false, keepWorkStatus: true };
+      if (!await buildStoryboardPrompt(autoOptions)) {
         return;
       }
-      var llmOK = await callLLM();
+      var llmOK = await callLLM(autoOptions);
       if (!llmOK) {
         log("Full auto stopped at LLM step.");
         return;
       }
-      await buildImagePrompts();
+      await buildImagePrompts({ confirmOverwrite: false });
       if (state.project.imagePrompts.length === 0) {
         log("Full auto stopped before image generation.");
         return;
       }
-      var imageOK = await callImageAPI();
+      var imageOK = await callImageAPI(autoOptions);
       if (imageOK) {
         log("Full auto flow completed.");
       } else {
         log("Full auto flow completed with image errors.");
       }
     } finally {
+      hideWorkStatus();
+      setWorkspaceActionsBusy(false);
+      renderLongManga();
       setBusy(els.fullAutoBtn, false);
     }
   }
 
   async function runLongMangaAuto() {
+    var autoOptions = { confirmOverwrite: false, keepWorkStatus: true };
 	var fourPanelReady = state.project.storyMode === "four" && state.project.longOutline && (state.project.selectedFourPanelStories || []).length > 0;
 	if (!fourPanelReady) {
-	  if (!await buildLongOutlinePrompt()) {
+	  if (!await buildLongOutlinePrompt(autoOptions)) {
 		return;
 	  }
-	  var outlineOK = await callLongOutline();
+	  var outlineOK = await callLongOutline(autoOptions);
 	  if (!outlineOK) {
 		log("Full auto stopped at manga outline step.");
 		return;
@@ -2081,20 +2121,20 @@
 		return;
 	  }
 	}
-    if (!await buildLongEpisodePrompts()) {
+    if (!await buildLongEpisodePrompts(autoOptions)) {
       return;
     }
-    var episodesOK = await callLongEpisodes();
+    var episodesOK = await callLongEpisodes(autoOptions);
     if (!episodesOK) {
       log("Full auto stopped with long manga episode errors.");
       return;
     }
-    await buildImagePrompts();
+    await buildImagePrompts({ confirmOverwrite: false });
     if (state.project.imagePrompts.length === 0) {
       log("Full auto stopped before image generation.");
       return;
     }
-    var imageOK = await callImageAPI();
+    var imageOK = await callImageAPI(autoOptions);
     log(imageOK ? "Full auto long manga flow completed." : "Full auto long manga flow completed with image errors.");
   }
 
@@ -2733,10 +2773,10 @@
     if (!onDelta || !text) {
       return;
     }
-    var chunkSize = 8;
+    var chunkSize = 4;
     for (var i = 0; i < text.length; i += chunkSize) {
       onDelta(text.slice(i, i + chunkSize));
-      await delay(12);
+      await delay(18);
     }
   }
 
@@ -2771,6 +2811,60 @@
 
   function setBusy(button, busy) {
     button.disabled = busy;
+  }
+
+  function setWorkspaceActionsBusy(busy) {
+    workspaceActionsBusy = busy;
+    var buttons = workspaceActionButtons();
+    if (busy) {
+      workspaceActionDisabledSnapshot = buttons.map(function (button) {
+        return { button: button, disabled: button.disabled };
+      });
+      buttons.forEach(function (button) {
+        setBusy(button, true);
+      });
+      return;
+    }
+    (workspaceActionDisabledSnapshot || []).forEach(function (item) {
+      setBusy(item.button, item.disabled);
+    });
+    workspaceActionDisabledSnapshot = null;
+  }
+
+  function workspaceActionButtons() {
+    return [
+      els.buildStoryboardPromptBtn,
+      els.callLLMBtn,
+      els.parseStoryboardBtn,
+      els.buildImagePromptsBtn,
+      els.callImageBtn,
+      els.buildLongOutlinePromptBtn,
+      els.callLongOutlineBtn,
+      els.selectAllFourPanelStoriesBtn,
+      els.parseLongOutlineBtn,
+      els.nextLongOutlineBtn,
+      els.buildLongEpisodePromptsBtn,
+      els.callLongEpisodesBtn,
+      els.parseLongBatchStoryboardBtn,
+      els.nextLongEpisodesBtn,
+      els.buildLongImagePromptsBtn,
+      els.callLongImageBtn,
+      els.downloadProjectBtn
+    ].filter(Boolean);
+  }
+
+  function showWorkStatus(message) {
+    if (!els.workStatus) {
+      return;
+    }
+    els.workStatusMessage.textContent = message;
+    els.workStatus.classList.remove("is-hidden");
+  }
+
+  function hideWorkStatus() {
+    if (els.workStatus) {
+      els.workStatus.classList.add("is-hidden");
+    }
   }
 
   function confirmContentOverwrite(content, message) {

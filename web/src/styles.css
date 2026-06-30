@@ -498,6 +498,35 @@ label {
   padding-left: 9px;
 }
 
+.work-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #c9d8d2;
+  border-radius: 8px;
+  background: #eef7f3;
+  color: var(--accent-strong);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.work-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #b7d5ca;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: work-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes work-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .is-hidden {
   display: none !important;
 }
