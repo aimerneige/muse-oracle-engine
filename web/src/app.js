@@ -59,6 +59,7 @@
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
       "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
       "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog", "longEpisodeSequenceDialog", "longEpisodeSequenceMessage",
+      "apiConfigDialog", "apiConfigDialogTitle", "apiConfigDialogMessage",
       "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
       "characterSeriesInput", "characterIDInput", "characterNameInput", "characterNameEnInput",
       "characterHairStyleInput", "characterHairColorInput", "characterEyeShapeInput", "characterEyeColorInput",
@@ -824,8 +825,7 @@
     if (!state.project.storyboardPrompt) {
       return;
     }
-    if (!state.settings.llmApiKey) {
-      log("LLM API key is required in settings.");
+    if (!ensureAPISettings("llm")) {
       return false;
     }
 
@@ -850,6 +850,7 @@
       return true;
     } catch (err) {
       logError("LLM request failed", err);
+      showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
       setBusy(els.callLLMBtn, false);
@@ -1159,8 +1160,7 @@
     if (!state.project.longOutlinePrompt && !await buildLongOutlinePrompt()) {
       return false;
     }
-    if (!state.settings.llmApiKey) {
-      log("LLM API key is required in settings.");
+    if (!ensureAPISettings("llm")) {
       return false;
     }
 
@@ -1182,6 +1182,7 @@
       return true;
     } catch (err) {
       logError("Long manga outline request failed", err);
+      showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
       setBusy(els.callLongOutlineBtn, false);
@@ -1350,8 +1351,7 @@
     if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts()) {
       return false;
     }
-    if (!state.settings.llmApiKey) {
-      log("LLM API key is required in settings.");
+    if (!ensureAPISettings("llm")) {
       return false;
     }
 
@@ -1379,6 +1379,7 @@
         } catch (err) {
           allDone = false;
 		  logError("Manga storyboard " + item.episode + " failed", err);
+          showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
         }
       }
       applyLongEpisodesToPanels();
@@ -1396,8 +1397,7 @@
     if (!state.project.longBatchStoryboardPrompt && !await buildLongBatchStoryboardPrompt()) {
       return false;
     }
-    if (!state.settings.llmApiKey) {
-      log("LLM API key is required in settings.");
+    if (!ensureAPISettings("llm")) {
       return false;
     }
 
@@ -1416,6 +1416,7 @@
       return parseLongBatchStoryboardFromRaw();
     } catch (err) {
       logError("Long manga batch storyboard request failed", err);
+      showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
       setBusy(els.callLongEpisodesBtn, false);
@@ -1985,8 +1986,7 @@
     if (state.project.imagePrompts.length === 0) {
       return;
     }
-    if (!state.settings.imageApiKey) {
-      log("Image API key is required in settings.");
+    if (!ensureAPISettings("image")) {
       return false;
     }
 
@@ -2007,6 +2007,7 @@
           allDone = false;
           updateImageResult(item.index, { status: "failed", dataUrl: "", url: "", error: readableError(err) });
           logError("Image " + item.index + " failed", err);
+          showAPIConfigDialog("图片 API 调用失败", "请检查图片模型 API 配置后重试。\n\n" + readableError(err));
         }
         renderImagePrompts();
         renderImages();
@@ -2790,6 +2791,41 @@
       els.overwritePromptDialog.returnValue = "cancel";
       els.overwritePromptDialog.showModal();
     });
+  }
+
+  function ensureAPISettings(kind) {
+    var missing = [];
+    if (kind === "llm") {
+      if (!state.settings.llmEndpoint) missing.push("文本 Endpoint");
+      if (!state.settings.llmApiKey) missing.push("文本 API Key");
+      if (!state.settings.llmModel) missing.push("文本模型");
+    } else {
+      if (!state.settings.imageEndpoint) missing.push("图片 Endpoint");
+      if (!state.settings.imageApiKey) missing.push("图片 API Key");
+      if (!state.settings.imageModel) missing.push("图片模型");
+    }
+    if (missing.length === 0) {
+      return true;
+    }
+
+    var title = kind === "llm" ? "文本模型 API 配置不完整" : "图片模型 API 配置不完整";
+    var message = "请先在设置中补全：" + missing.join("、") + "。";
+    log(message);
+    setSettingsCollapsed(false);
+    showAPIConfigDialog(title, message);
+    return false;
+  }
+
+  function showAPIConfigDialog(title, message) {
+    if (!els.apiConfigDialog || typeof els.apiConfigDialog.showModal !== "function") {
+      window.alert(title + "\n\n" + message);
+      return;
+    }
+    els.apiConfigDialogTitle.textContent = title;
+    els.apiConfigDialogMessage.textContent = message;
+    if (!els.apiConfigDialog.open) {
+      els.apiConfigDialog.showModal();
+    }
   }
 
   function promptListContent(prompts) {
