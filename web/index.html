@@ -24,7 +24,7 @@
           </svg>
           开源仓库
         </a>
-        <button id="fullAutoBtn" type="button" class="primary" disabled>全自动执行</button>
+        <button id="fullAutoBtn" type="button" class="primary">全自动执行</button>
         <button id="saveProjectBtn" type="button">保存项目</button>
         <button id="newProjectBtn" type="button">新建</button>
       </div>
@@ -103,8 +103,8 @@
 
       <section class="workspace">
         <section class="notice-card" role="status">
-          <h2>生成功能暂未完成</h2>
-          <p>当前版本的 API 调用还在开发中，暂时无法自动生成分镜或图片。你仍然可以编辑项目、生成 Prompt、手动粘贴结果并导出 JSON。</p>
+          <h2>Gemini 文本调用实验性恢复</h2>
+          <p>当前版本优先恢复 Gemini LLM 分镜与梗概生成。你仍然可以手动复制 Prompt、粘贴结果并导出 JSON。</p>
         </section>
 
         <section class="panel project-panel">
@@ -192,7 +192,7 @@
             </div>
             <div class="stage-actions">
               <button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button>
-              <button id="callLLMBtn" type="button" disabled>调用 LLM 生成分镜</button>
+              <button id="callLLMBtn" type="button">调用 LLM 生成分镜</button>
             </div>
             <div class="prompt-field">
               <textarea id="storyboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成分镜 Prompt”生成给 LLM 使用的完整提示词。"></textarea>
@@ -243,7 +243,7 @@
               <h3 id="multiRoundOutlineTitle">梗概</h3>
               <div class="inline-actions">
                 <button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button>
-                <button id="callLongOutlineBtn" type="button" disabled>调用 LLM 生成梗概</button>
+                <button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button>
               </div>
             </div>
             <label>
@@ -272,7 +272,7 @@
               <h3 id="multiRoundStoryboardTitle">逐话分镜</h3>
               <div class="inline-actions">
                 <button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button>
-                <button id="callLongEpisodesBtn" type="button" disabled>调用 LLM 生成逐话分镜</button>
+                <button id="callLongEpisodesBtn" type="button">调用 LLM 生成逐话分镜</button>
               </div>
             </div>
             <label id="longBatchStoryboardWrap" class="inline-check">

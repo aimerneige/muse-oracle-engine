@@ -834,7 +834,7 @@
       if (!await confirmContentOverwrite(state.project.rawStoryboard, "已有 LLM 原始输出会被覆盖。")) {
         return false;
       }
-      log("Calling " + state.settings.llmProvider + " LLM in streaming mode: " + state.settings.llmModel);
+      log("Calling " + state.settings.llmProvider + " LLM: " + state.settings.llmModel);
       state.project.rawStoryboard = "";
       els.rawStoryboard.value = "";
       setActiveTab("storyPrompt");
@@ -843,7 +843,9 @@
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
-      await parseStoryboardFromRaw();
+      if (!await parseStoryboardFromRaw()) {
+        return false;
+      }
       setActiveTab("storyPrompt");
       return true;
     } catch (err) {
@@ -862,35 +864,69 @@
   }
 
   async function generateGeminiText(prompt, onDelta, onReset) {
-    var endpoint = applyModelToEndpoint(state.settings.llmEndpoint, state.settings.llmModel);
-    try {
-      return await generateGeminiTextStream(streamEndpoint(endpoint), prompt, onDelta);
-    } catch (err) {
-      log("Gemini streaming failed, falling back to normal request: " + readableError(err));
-      if (onReset) {
-        onReset();
-      }
-    }
+    var endpoint = geminiGenerateContentEndpoint();
     var response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-goog-api-key": state.settings.llmApiKey
       },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+      body: JSON.stringify(buildGeminiTextRequest(prompt))
     });
     var payload = await parseJSONResponse(response);
-    var parts = (((payload.candidates || [])[0] || {}).content || {}).parts || [];
-    var text = parts.map(function (part) {
-      return part.text || "";
-    }).join("");
-    if (!text) {
-      throw new Error("Gemini returned no text content.");
-    }
+    var text = extractGeminiText(payload);
     await appendTypewriter(text, onDelta);
     return text;
+  }
+
+  function buildGeminiTextRequest(prompt) {
+    return {
+      contents: [{ role: "user", parts: [{ text: prompt }] }]
+    };
+  }
+
+  function extractGeminiText(payload) {
+    var candidates = payload.candidates || [];
+    var text = candidates.map(function (candidate) {
+      var parts = (candidate.content || {}).parts || [];
+      return parts.map(function (part) {
+        return part.text || "";
+      }).join("");
+    }).join("");
+    if (text) {
+      return text;
+    }
+    throw new Error(geminiNoTextMessage(payload));
+  }
+
+  function geminiNoTextMessage(payload) {
+    var candidate = (payload.candidates || [])[0] || {};
+    var details = [];
+    if (candidate.finishReason) {
+      details.push("finishReason=" + candidate.finishReason);
+    }
+    if (candidate.safetyRatings && candidate.safetyRatings.length) {
+      details.push("safetyRatings=" + candidate.safetyRatings.map(function (rating) {
+        return rating.category + ":" + rating.probability;
+      }).join(","));
+    }
+    return details.length ? "Gemini returned no text content (" + details.join("; ") + ")." : "Gemini returned no text content.";
+  }
+
+  function geminiGenerateContentEndpoint() {
+    var endpoint = applyModelToEndpoint(state.settings.llmEndpoint, state.settings.llmModel);
+    endpoint = endpoint.replace(":streamGenerateContent", ":generateContent");
+    return removeQueryParam(endpoint, "alt");
+  }
+
+  function removeQueryParam(endpoint, name) {
+    try {
+      var url = new URL(endpoint);
+      url.searchParams.delete(name);
+      return url.toString();
+    } catch (err) {
+      return endpoint;
+    }
   }
 
   async function generateGeminiTextStream(endpoint, prompt, onDelta) {
@@ -1139,7 +1175,9 @@
       var text = await generateText(state.project.longOutlinePrompt, appendLongOutlineDelta, resetLongOutlineOutput);
       state.project.rawLongOutline = text;
       els.rawLongOutline.value = text;
-      parseLongOutlineFromRaw();
+      if (!parseLongOutlineFromRaw()) {
+        return false;
+      }
       state.longMangaUI.step = "outline";
       return true;
     } catch (err) {
