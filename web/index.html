@@ -107,11 +107,6 @@
           <p>当前版本优先恢复 Gemini LLM 分镜与梗概生成。你仍然可以手动复制 Prompt、粘贴结果并导出 JSON。</p>
         </section>
 
-        <section id="workStatus" class="work-status is-hidden" role="status" aria-live="polite">
-          <span class="work-spinner" aria-hidden="true"></span>
-          <span id="workStatusMessage">AI 正在工作</span>
-        </section>
-
         <section class="panel project-panel">
           <div class="panel-title">
             <h2>项目</h2>
@@ -179,6 +174,11 @@
             剧情要求
             <textarea id="plotHint" rows="5" placeholder="例如：二人在学校里的温馨日常，发糖向，轻百合向"></textarea>
           </label>
+        </section>
+
+        <section id="workStatus" class="work-status is-hidden" role="status" aria-live="polite">
+          <span class="work-spinner" aria-hidden="true"></span>
+          <span id="workStatusMessage">AI 正在工作</span>
         </section>
 
         <section id="storyPrompt" class="tab-panel active" data-route="standard">
