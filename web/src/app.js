@@ -1980,7 +1980,7 @@
       card.appendChild(img);
       var open = document.createElement("a");
       open.href = image.dataUrl;
-      open.download = "panel-" + String(image.index).padStart(3, "0") + ".png";
+      open.download = imageDownloadFilename(image.index);
       open.textContent = "重新下载";
       card.appendChild(open);
     }
@@ -3004,10 +3004,26 @@
   function triggerImageDownload(index, dataUrl) {
     var link = document.createElement("a");
     link.href = dataUrl;
-    link.download = "panel-" + String(index).padStart(3, "0") + ".png";
+    link.download = imageDownloadFilename(index);
     document.body.appendChild(link);
     link.click();
     link.remove();
+  }
+
+  function imageDownloadFilename(index) {
+    var now = new Date();
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return [
+      "LoveLive",
+      "Fan",
+      months[now.getMonth()],
+      String(now.getDate()).padStart(2, "0"),
+      String(now.getFullYear()),
+      String(now.getHours()).padStart(2, "0"),
+      String(now.getMinutes()).padStart(2, "0"),
+      String(now.getSeconds()).padStart(2, "0"),
+      String(index).padStart(3, "0")
+    ].join("_") + ".png";
   }
 
   function readJSON(key, fallback) {
