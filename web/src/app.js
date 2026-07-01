@@ -30,14 +30,20 @@
   var workspaceActionDisabledSnapshot = null;
   var workspaceActionsBusy = false;
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function initApp() {
     bindElements();
     loadState();
     bindEvents();
     hydrateControls();
     renderAll();
     log("Ready. Static app loaded with " + effectiveCharacters().length + " characters and " + data.styles.length + " styles.");
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initApp);
+  } else {
+    initApp();
+  }
 
   function bindElements() {
     [

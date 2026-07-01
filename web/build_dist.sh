@@ -5,24 +5,12 @@ WEB_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT_DIR=$(CDPATH= cd -- "$WEB_DIR/.." && pwd)
 
 cd "$ROOT_DIR"
-go run ./web/tools/export_static_data.go
+if [ "$#" -eq 0 ]; then
+  go run ./web/tools/export_static_data.go --series lovelive,lovelive-sunshine,bocchi-the-rock --out web/src/generated/data.js
+else
+  go run ./web/tools/export_static_data.go --out web/src/generated/data.js "$@"
+fi
 
 cd "$WEB_DIR"
 
-rm -rf "$WEB_DIR/dist"
-
-if [ "$#" -eq 0 ]; then
-  npm run build:single -- --series lovelive,lovelive-sunshine,bocchi-the-rock --external-favicons --out web/dist/index.html
-else
-  npm run build:single -- "$@" --external-favicons --out web/dist/index.html
-fi
-
-cp \
-  favicon.ico \
-  favicon-16x16.png \
-  favicon-32x32.png \
-  apple-touch-icon.png \
-  android-chrome-192x192.png \
-  android-chrome-512x512.png \
-  site.webmanifest \
-  dist/
+npm run build

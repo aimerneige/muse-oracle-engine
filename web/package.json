@@ -1,8 +1,13 @@
 {
   "scripts": {
-    "build:single": "node tools/build_single_html.mjs"
+    "build": "vite build",
+    "dev": "vite --host 0.0.0.0"
   },
-  "devDependencies": {
-    "terser": "^5.43.1"
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.2"
   }
 }

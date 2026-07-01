@@ -4,10 +4,12 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/aimerneige/muse-oracle-engine/internal/chardb"
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
@@ -31,6 +33,10 @@ type staticData struct {
 }
 
 func main() {
+	seriesFilter := flag.String("series", "", "comma-separated series IDs to include")
+	outputPath := flag.String("out", "web/src/data.js", "output JavaScript data file")
+	flag.Parse()
+
 	reg, err := chardb.NewEmbeddedRegistry()
 	if err != nil {
 		fail(err)
@@ -48,6 +54,10 @@ func main() {
 		}
 		return characters[i].Series < characters[j].Series
 	})
+	series, characters, err = filterSeries(series, characters, splitSeries(*seriesFilter))
+	if err != nil {
+		fail(err)
+	}
 
 	styles := make([]domain.StyleMeta, 0, len(domain.StyleRegistry))
 	for _, style := range domain.StyleRegistry {
@@ -146,9 +156,64 @@ func main() {
 	}
 
 	output := "window.LLE_DATA = " + string(jsonData) + ";\n"
-	if err := os.WriteFile("web/src/data.js", []byte(output), 0o644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(*outputPath), 0o755); err != nil {
 		fail(err)
 	}
+	if err := os.WriteFile(*outputPath, []byte(output), 0o644); err != nil {
+		fail(err)
+	}
+}
+
+func splitSeries(value string) []string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	seriesIDs := make([]string, 0, len(parts))
+	for _, part := range parts {
+		seriesID := strings.TrimSpace(part)
+		if seriesID != "" {
+			seriesIDs = append(seriesIDs, seriesID)
+		}
+	}
+	return seriesIDs
+}
+
+func filterSeries(series []domain.Series, characters []domain.Character, seriesIDs []string) ([]domain.Series, []domain.Character, error) {
+	if len(seriesIDs) == 0 {
+		return series, characters, nil
+	}
+
+	selected := make(map[string]bool, len(seriesIDs))
+	for _, seriesID := range seriesIDs {
+		selected[seriesID] = true
+	}
+
+	known := make(map[string]bool, len(series))
+	for _, item := range series {
+		known[item.ID] = true
+	}
+	for _, seriesID := range seriesIDs {
+		if !known[seriesID] {
+			return nil, nil, fmt.Errorf("unknown series: %s", seriesID)
+		}
+	}
+
+	filteredSeries := make([]domain.Series, 0, len(seriesIDs))
+	for _, item := range series {
+		if selected[item.ID] {
+			filteredSeries = append(filteredSeries, item)
+		}
+	}
+
+	filteredCharacters := make([]domain.Character, 0, len(characters))
+	for _, character := range characters {
+		if selected[character.Series] {
+			filteredCharacters = append(filteredCharacters, character)
+		}
+	}
+
+	return filteredSeries, filteredCharacters, nil
 }
 
 func fail(err error) {
