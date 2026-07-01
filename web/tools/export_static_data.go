@@ -119,6 +119,7 @@ func main() {
 		ImageModels: map[string][]string{
 			"gemini": {
 				"gemini-3.1-flash-image",
+				"gemini-3.1-flash-lite-image",
 				"gemini-3-pro-image",
 				"gemini-2.5-flash-image",
 			},

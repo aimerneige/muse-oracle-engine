@@ -567,6 +567,8 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 		switch cfg.ImageModel {
 		case "gemini-3.1-flash-image-preview":
 			model = image.GeminiImage31Flash
+		case "gemini-3.1-flash-lite-image":
+			model = image.GeminiImage31FlashLite
 		case "gemini-3-pro-image-preview":
 			model = image.GeminiImage3Pro
 		case "gemini-2.5-flash-image":
@@ -632,6 +634,7 @@ func printModels() {
 	fmt.Println("\n🖼️  图像生成模型:")
 	fmt.Println("  Provider: gemini")
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
+	fmt.Println("   ├─ gemini-3.1-flash-lite-image   (Gemini 3.1 Flash Lite Image)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
 	fmt.Println("   分辨率可通过 GEMINI_IMAGE_SIZE 配置: 1K / 2K / 4K (默认: 1K)")

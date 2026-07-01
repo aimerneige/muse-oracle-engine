@@ -15,6 +15,7 @@ type GeminiImageModel int
 
 const (
 	GeminiImage31Flash GeminiImageModel = iota
+	GeminiImage31FlashLite
 	GeminiImage3Pro
 	GeminiImage25Flash
 )
@@ -23,6 +24,8 @@ func (m GeminiImageModel) String() string {
 	switch m {
 	case GeminiImage31Flash:
 		return "gemini-3.1-flash-image-preview"
+	case GeminiImage31FlashLite:
+		return "gemini-3.1-flash-lite-image"
 	case GeminiImage3Pro:
 		return "gemini-3-pro-image-preview"
 	case GeminiImage25Flash:

@@ -291,6 +291,9 @@
     if (provider === "gemini" && kind === "image" && model === "gemini-3.1-flash-image") {
       return "nano-banana-2 (" + model + ")";
     }
+    if (provider === "gemini" && kind === "image" && model === "gemini-3.1-flash-lite-image") {
+      return "nano-banana-2-lite (" + model + ")";
+    }
     return model;
   }
 
