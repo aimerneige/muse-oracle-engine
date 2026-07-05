@@ -139,8 +139,8 @@ func main() {
 		},
 		DefaultEndpoints: map[string]map[string]string{
 			"gemini": {
-				"llm":   "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-				"image": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+				"llm":   "",
+				"image": "",
 			},
 			"openai": {
 				"llm":   "https://api.openai.com/v1/chat/completions",

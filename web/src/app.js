@@ -2,6 +2,7 @@
   "use strict";
 
   var data = window.LLE_DATA;
+  var officialGeminiBaseURL = "https://generativelanguage.googleapis.com";
   var settingsKey = "lovelive-engine-web-settings";
   var projectKey = "lovelive-engine-web-project";
   var historyKey = "lovelive-engine-web-history";
@@ -49,8 +50,8 @@
     [
       "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
       "workStatus", "workStatusMessage",
-      "llmProvider", "llmEndpoint", "llmApiKey", "llmModel",
-      "imageProvider", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
+      "llmProvider", "llmOfficialApiWrap", "llmUseOfficialApi", "llmEndpointWrap", "llmEndpoint", "llmApiKey", "llmModel",
+      "imageProvider", "imageOfficialApiWrap", "imageUseOfficialApi", "imageEndpointWrap", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthEnabledInput", "storyLengthInput",
       "addCharacterBtn", "importCharactersBtn", "exportCharactersBtn", "characterFileInput",
       "standardStepPromptTab", "standardStepImagesTab",
@@ -87,6 +88,8 @@
     els.clearHistoryBtn.addEventListener("click", clearHistory);
     els.llmProvider.addEventListener("change", onLLMProviderChange);
     els.imageProvider.addEventListener("change", onImageProviderChange);
+    els.llmUseOfficialApi.addEventListener("change", updateLLMEndpointUI);
+    els.imageUseOfficialApi.addEventListener("change", updateImageEndpointUI);
     els.seriesFilter.addEventListener("change", renderCharacters);
     els.characterSearch.addEventListener("input", renderCharacters);
     els.addCharacterBtn.addEventListener("click", openNewCharacterDialog);
@@ -180,11 +183,13 @@
   function defaultSettings() {
     return {
       llmProvider: "gemini",
-      llmEndpoint: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+      llmUseOfficialApi: true,
+      llmEndpoint: "",
       llmApiKey: "",
       llmModel: "gemini-3.1-pro-preview",
       imageProvider: "gemini",
-      imageEndpoint: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+      imageUseOfficialApi: true,
+      imageEndpoint: "",
       imageApiKey: "",
       imageModel: "gemini-3.1-flash-image",
       geminiImageSize: "1K"
@@ -256,17 +261,20 @@
   function applySettingsToForm() {
     els.llmProvider.value = state.settings.llmProvider;
     fillModelSelect(els.llmModel, state.settings.llmProvider, "llm");
+    els.llmUseOfficialApi.checked = !!state.settings.llmUseOfficialApi;
     els.llmEndpoint.value = state.settings.llmEndpoint;
     els.llmApiKey.value = state.settings.llmApiKey;
     els.llmModel.value = state.settings.llmModel;
 
     els.imageProvider.value = state.settings.imageProvider;
     fillModelSelect(els.imageModel, state.settings.imageProvider, "image");
+    els.imageUseOfficialApi.checked = !!state.settings.imageUseOfficialApi;
     els.imageEndpoint.value = state.settings.imageEndpoint;
     els.imageApiKey.value = state.settings.imageApiKey;
     els.imageModel.value = state.settings.imageModel;
     els.geminiImageSize.value = state.settings.geminiImageSize;
-    els.geminiImageSizeWrap.style.display = state.settings.imageProvider === "gemini" ? "grid" : "none";
+    updateLLMEndpointUI();
+    updateImageEndpointUI();
   }
 
   function applyProjectToForm() {
@@ -338,6 +346,8 @@
     fillModelSelect(els.llmModel, provider, "llm");
     els.llmEndpoint.value = data.defaultEndpoints[provider].llm;
     els.llmModel.value = data.llmModels[provider][0];
+    els.llmUseOfficialApi.checked = provider === "gemini";
+    updateLLMEndpointUI();
   }
 
   function onImageProviderChange() {
@@ -345,16 +355,32 @@
     fillModelSelect(els.imageModel, provider, "image");
     els.imageEndpoint.value = data.defaultEndpoints[provider].image;
     els.imageModel.value = data.imageModels[provider][0];
-    els.geminiImageSizeWrap.style.display = provider === "gemini" ? "grid" : "none";
+    els.imageUseOfficialApi.checked = provider === "gemini";
+    updateImageEndpointUI();
+  }
+
+  function updateLLMEndpointUI() {
+    var isGemini = els.llmProvider.value === "gemini";
+    els.llmOfficialApiWrap.classList.toggle("is-hidden", !isGemini);
+    els.llmEndpointWrap.classList.toggle("is-hidden", isGemini && els.llmUseOfficialApi.checked);
+  }
+
+  function updateImageEndpointUI() {
+    var isGemini = els.imageProvider.value === "gemini";
+    els.imageOfficialApiWrap.classList.toggle("is-hidden", !isGemini);
+    els.imageEndpointWrap.classList.toggle("is-hidden", isGemini && els.imageUseOfficialApi.checked);
+    els.geminiImageSizeWrap.style.display = isGemini ? "grid" : "none";
   }
 
   function saveSettingsFromForm() {
     state.settings = {
       llmProvider: els.llmProvider.value,
+      llmUseOfficialApi: els.llmUseOfficialApi.checked,
       llmEndpoint: els.llmEndpoint.value.trim(),
       llmApiKey: els.llmApiKey.value.trim(),
       llmModel: els.llmModel.value,
       imageProvider: els.imageProvider.value,
+      imageUseOfficialApi: els.imageUseOfficialApi.checked,
       imageEndpoint: els.imageEndpoint.value.trim(),
       imageApiKey: els.imageApiKey.value.trim(),
       imageModel: els.imageModel.value,
@@ -933,19 +959,7 @@
   }
 
   function geminiGenerateContentEndpoint() {
-    var endpoint = applyModelToEndpoint(state.settings.llmEndpoint, state.settings.llmModel);
-    endpoint = endpoint.replace(":streamGenerateContent", ":generateContent");
-    return removeQueryParam(endpoint, "alt");
-  }
-
-  function removeQueryParam(endpoint, name) {
-    try {
-      var url = new URL(endpoint);
-      url.searchParams.delete(name);
-      return url.toString();
-    } catch (err) {
-      return endpoint;
-    }
+    return geminiEndpoint(state.settings.llmUseOfficialApi, state.settings.llmEndpoint, state.settings.llmModel);
   }
 
   async function generateGeminiTextStream(endpoint, prompt, onDelta) {
@@ -2155,7 +2169,7 @@
   }
 
   async function generateGeminiImage(prompt) {
-    var endpoint = applyModelToEndpoint(state.settings.imageEndpoint, state.settings.imageModel);
+    var endpoint = geminiEndpoint(state.settings.imageUseOfficialApi, state.settings.imageEndpoint, state.settings.imageModel);
     var response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -2800,11 +2814,13 @@
     els.rawStoryboard.value = "";
   }
 
-  function applyModelToEndpoint(endpoint, model) {
-    if (endpoint.indexOf("{model}") !== -1) {
-      return endpoint.replace(/\{model\}/g, encodeURIComponent(model));
-    }
-    return endpoint;
+  function geminiEndpoint(useOfficialApi, baseURL, model) {
+    var base = useOfficialApi ? officialGeminiBaseURL : baseURL;
+    return trimTrailingSlashes(base) + "/v1beta/models/" + encodeURIComponent(model) + ":generateContent";
+  }
+
+  function trimTrailingSlashes(value) {
+    return String(value || "").trim().replace(/\/+$/g, "");
   }
 
   function streamEndpoint(endpoint) {
@@ -2899,11 +2915,13 @@
   function ensureAPISettings(kind) {
     var missing = [];
     if (kind === "llm") {
-      if (!state.settings.llmEndpoint) missing.push("文本 Endpoint");
+      if (state.settings.llmProvider === "gemini" && !state.settings.llmUseOfficialApi && !state.settings.llmEndpoint) missing.push("文本 Base URL");
+      if (state.settings.llmProvider !== "gemini" && !state.settings.llmEndpoint) missing.push("文本 Endpoint");
       if (!state.settings.llmApiKey) missing.push("文本 API Key");
       if (!state.settings.llmModel) missing.push("文本模型");
     } else {
-      if (!state.settings.imageEndpoint) missing.push("图片 Endpoint");
+      if (state.settings.imageProvider === "gemini" && !state.settings.imageUseOfficialApi && !state.settings.imageEndpoint) missing.push("图片 Base URL");
+      if (state.settings.imageProvider !== "gemini" && !state.settings.imageEndpoint) missing.push("图片 Endpoint");
       if (!state.settings.imageApiKey) missing.push("图片 API Key");
       if (!state.settings.imageModel) missing.push("图片模型");
     }

@@ -637,8 +637,8 @@ window.LLE_DATA = {
   },
   "defaultEndpoints": {
     "gemini": {
-      "image": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-      "llm": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+      "image": "",
+      "llm": ""
     },
     "openai": {
       "image": "https://api.openai.com/v1/images/generations",

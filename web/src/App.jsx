@@ -35,12 +35,14 @@ const workspaceMarkup = String.raw`
       </div>
       <div id="settingsBody" class="settings-body">
         <label>文本模型提供商<select id="llmProvider"></select></label>
-        <label>文本 Endpoint<input id="llmEndpoint" type="url" autocomplete="off"></label>
+        <label id="llmOfficialApiWrap" class="inline-check"><input id="llmUseOfficialApi" type="checkbox">使用官方 API</label>
+        <label id="llmEndpointWrap">文本 Base URL<input id="llmEndpoint" type="url" autocomplete="off" placeholder="例如：https://api.302.ai/"></label>
         <label>文本 API Key<input id="llmApiKey" type="password" autocomplete="off"></label>
         <label>文本模型<select id="llmModel"></select></label>
         <div class="divider"></div>
         <label>图片模型提供商<select id="imageProvider"></select></label>
-        <label>图片 Endpoint<input id="imageEndpoint" type="url" autocomplete="off"></label>
+        <label id="imageOfficialApiWrap" class="inline-check"><input id="imageUseOfficialApi" type="checkbox">使用官方 API</label>
+        <label id="imageEndpointWrap">图片 Base URL<input id="imageEndpoint" type="url" autocomplete="off" placeholder="例如：https://api.302.ai/"></label>
         <label>图片 API Key<input id="imageApiKey" type="password" autocomplete="off"></label>
         <label>图片模型<select id="imageModel"></select></label>
         <label id="geminiImageSizeWrap">Gemini 图片尺寸<select id="geminiImageSize"></select></label>
