@@ -6,6 +6,10 @@ export default {
     fullAuto: "全自动执行",
     saveProject: "保存项目",
     newProject: "新建",
-    language: "界面语言"
+    language: "界面语言",
+    theme: "主题",
+    themeSystem: "跟随系统",
+    themeLight: "浅色",
+    themeDark: "深色"
   }
 };

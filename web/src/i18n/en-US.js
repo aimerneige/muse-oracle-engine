@@ -6,7 +6,11 @@ export default {
     fullAuto: "Run Full Auto",
     saveProject: "Save Project",
     newProject: "New",
-    language: "UI Language"
+    language: "UI Language",
+    theme: "Theme",
+    themeSystem: "System",
+    themeLight: "Light",
+    themeDark: "Dark"
   },
   dom: {
     text: {

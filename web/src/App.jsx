@@ -1,8 +1,26 @@
+import { useEffect, useState } from "react";
 import { getInitialLocale, locales, setDocumentLocale } from "./i18n";
 
 const locale = getInitialLocale();
 setDocumentLocale(locale);
 const t = locales[locale];
+const themeStorageKey = "lovelive-engine-web-theme";
+const themeModes = ["system", "light", "dark"];
+
+function getInitialThemeMode() {
+  var saved = localStorage.getItem(themeStorageKey);
+  return themeModes.indexOf(saved) === -1 ? "system" : saved;
+}
+
+function applyThemeMode(mode) {
+  if (mode === "system") {
+    document.documentElement.removeAttribute("data-theme");
+    return;
+  }
+  document.documentElement.dataset.theme = mode;
+}
+
+applyThemeMode(getInitialThemeMode());
 
 const workspaceMarkup = String.raw`
 <main class="layout">
@@ -179,9 +197,20 @@ function GithubIcon() {
 }
 
 export default function App() {
+  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
+
+  useEffect(function () {
+    applyThemeMode(themeMode);
+    localStorage.setItem(themeStorageKey, themeMode);
+  }, [themeMode]);
+
   function changeLocale(event) {
     setDocumentLocale(event.target.value);
     window.location.reload();
+  }
+
+  function changeTheme(event) {
+    setThemeMode(event.target.value);
   }
 
   return (
@@ -197,6 +226,14 @@ export default function App() {
             <select defaultValue={locale} onChange={changeLocale}>
               <option value="zh-CN">中文</option>
               <option value="en-US">English</option>
+            </select>
+          </label>
+          <label className="theme-control">
+            <span>{t.app.theme}</span>
+            <select value={themeMode} onChange={changeTheme}>
+              <option value="system">{t.app.themeSystem}</option>
+              <option value="light">{t.app.themeLight}</option>
+              <option value="dark">{t.app.themeDark}</option>
             </select>
           </label>
           <a className="button-link" href="https://github.com/aimerneige/muse-oracle-engine" target="_blank" rel="noopener noreferrer">
