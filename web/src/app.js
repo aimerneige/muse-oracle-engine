@@ -293,6 +293,7 @@
     els.longBatchStoryboardEnabledInput.checked = !!state.project.longBatchStoryboardEnabled;
     setGeneratedPromptValue(els.longBatchStoryboardPrompt, state.project.longBatchStoryboardPrompt || "");
     els.rawLongBatchStoryboard.value = state.project.rawLongBatchStoryboard || "";
+    updateImageActionAvailability();
   }
 
   function fillModelSelect(select, provider, kind) {
@@ -325,6 +326,12 @@
     if (sizes.indexOf(els.geminiImageSize.value) === -1) {
       els.geminiImageSize.value = "1K";
     }
+  }
+
+  function updateImageActionAvailability() {
+    var hasPrompts = !!(state.project.imagePrompts && state.project.imagePrompts.length > 0);
+    if (els.callImageBtn) els.callImageBtn.disabled = !hasPrompts;
+    if (els.callLongImageBtn) els.callLongImageBtn.disabled = !hasPrompts;
   }
 
   function fillSelect(select, options) {
@@ -1130,6 +1137,7 @@
       }) || { index: prompt.index, status: "pending", dataUrl: "", error: "" };
     });
     state.project.status = "image_prompt_ready";
+    updateImageActionAvailability();
     renderImagePrompts();
     renderImages();
     renderProjectStatus();
