@@ -621,6 +621,22 @@ label {
   flex: 0 0 auto;
 }
 
+.stop-ai-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 1px solid var(--work-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stop-ai-btn:hover {
+  background: var(--work-bg);
+}
+
 @keyframes work-spin {
   to {
     transform: rotate(360deg);

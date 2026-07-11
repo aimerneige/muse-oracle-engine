@@ -30,6 +30,30 @@
   var els = {};
   var workspaceActionDisabledSnapshot = null;
   var workspaceActionsBusy = false;
+  var aiAbortController = null;
+
+  function startAbortable() {
+    aiAbortController = new AbortController();
+    return aiAbortController.signal;
+  }
+
+  function currentAbortSignal() {
+    return aiAbortController ? aiAbortController.signal : null;
+  }
+
+  function stopAI() {
+    if (aiAbortController) {
+      aiAbortController.abort();
+    }
+  }
+
+  function endAbortable() {
+    aiAbortController = null;
+  }
+
+  function isAbortError(err) {
+    return !!(err && err.name === "AbortError");
+  }
 
   function initApp() {
     bindElements();
@@ -48,8 +72,8 @@
 
   function bindElements() {
     [
-      "fullAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
-      "workStatus", "workStatusMessage",
+      "fullAutoBtn", "continueAutoBtn", "saveProjectBtn", "newProjectBtn", "settingsPanel", "settingsToggleBtn", "settingsBody", "saveSettingsBtn", "clearHistoryBtn",
+      "workStatus", "workStatusMessage", "stopAIBtn",
       "llmProvider", "llmOfficialApiWrap", "llmUseOfficialApi", "llmEndpointWrap", "llmEndpoint", "llmApiKey", "llmModel",
       "imageProvider", "imageOfficialApiWrap", "imageUseOfficialApi", "imageEndpointWrap", "imageEndpoint", "imageApiKey", "imageModel", "geminiImageSize", "geminiImageSizeWrap",
       "historyList", "projectStatus", "seriesFilter", "characterSearch", "characterListSummary", "styleSelect", "storyMode", "languageInput", "storyLengthWrap", "storyLengthEnabledInput", "storyLengthInput",
@@ -83,6 +107,8 @@
     els.saveSettingsBtn.addEventListener("click", saveSettingsFromForm);
     els.settingsToggleBtn.addEventListener("click", toggleSettingsPanel);
     els.fullAutoBtn.addEventListener("click", runFullAuto);
+    els.continueAutoBtn.addEventListener("click", continueAuto);
+    els.stopAIBtn.addEventListener("click", onStopAIClick);
     els.saveProjectBtn.addEventListener("click", saveProject);
     els.newProjectBtn.addEventListener("click", newProject);
     els.clearHistoryBtn.addEventListener("click", clearHistory);
@@ -894,6 +920,7 @@
     }
 
     setBusy(els.callLLMBtn, true);
+    var signal = startAbortable();
     try {
       if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawStoryboard, "已有 LLM 原始输出会被覆盖。")) {
         return false;
@@ -904,7 +931,7 @@
       els.rawStoryboard.value = "";
       setActiveTab("storyPrompt");
       setStandardStep("prompt");
-      var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta, resetStoryboardOutput);
+      var text = await generateText(state.project.storyboardPrompt, appendStoryboardDelta, resetStoryboardOutput, signal);
       state.project.rawStoryboard = text;
       state.project.status = "storyboard_done";
       els.rawStoryboard.value = text;
@@ -914,10 +941,15 @@
       setActiveTab("storyPrompt");
       return true;
     } catch (err) {
+      if (isAbortError(err)) {
+        log("LLM 生成已停止。");
+        return false;
+      }
       logError("LLM request failed", err);
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
+      endAbortable();
       if (!options.keepWorkStatus) {
         hideWorkStatus();
         setBusy(els.callLLMBtn, false);
@@ -925,14 +957,14 @@
     }
   }
 
-  async function generateText(prompt, onDelta, onReset) {
+  async function generateText(prompt, onDelta, onReset, signal) {
     if (state.settings.llmProvider === "gemini") {
-      return generateGeminiText(prompt, onDelta, onReset);
+      return generateGeminiText(prompt, onDelta, onReset, signal);
     }
-    return generateOpenAIText(prompt, onDelta, onReset);
+    return generateOpenAIText(prompt, onDelta, onReset, signal);
   }
 
-  async function generateGeminiText(prompt, onDelta, onReset) {
+  async function generateGeminiText(prompt, onDelta, onReset, signal) {
     var endpoint = geminiGenerateContentEndpoint();
     var response = await fetch(endpoint, {
       method: "POST",
@@ -940,7 +972,8 @@
         "Content-Type": "application/json",
         "x-goog-api-key": state.settings.llmApiKey
       },
-      body: JSON.stringify(buildGeminiTextRequest(prompt))
+      body: JSON.stringify(buildGeminiTextRequest(prompt)),
+      signal: signal
     });
     var payload = await parseJSONResponse(response);
     var text = extractGeminiText(payload);
@@ -986,7 +1019,7 @@
     return geminiEndpoint(state.settings.llmUseOfficialApi, state.settings.llmEndpoint, state.settings.llmModel);
   }
 
-  async function generateGeminiTextStream(endpoint, prompt, onDelta) {
+  async function generateGeminiTextStream(endpoint, prompt, onDelta, signal) {
     var response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -995,19 +1028,20 @@
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
-      })
+      }),
+      signal: signal
     });
     return readSSEText(response, function (payload) {
       var parts = (((payload.candidates || [])[0] || {}).content || {}).parts || [];
       return parts.map(function (part) {
         return part.text || "";
       }).join("");
-    }, onDelta);
+    }, onDelta, signal);
   }
 
-  async function generateOpenAIText(prompt, onDelta, onReset) {
+  async function generateOpenAIText(prompt, onDelta, onReset, signal) {
     try {
-      return await generateOpenAITextStream(prompt, onDelta);
+      return await generateOpenAITextStream(prompt, onDelta, signal);
     } catch (err) {
       log("OpenAI streaming failed, falling back to normal request: " + readableError(err));
       if (onReset) {
@@ -1023,7 +1057,8 @@
       body: JSON.stringify({
         model: state.settings.llmModel,
         messages: [{ role: "user", content: prompt }]
-      })
+      }),
+      signal: signal
     });
     var payload = await parseJSONResponse(response);
     var choice = (payload.choices || [])[0];
@@ -1035,7 +1070,7 @@
     return text;
   }
 
-  async function generateOpenAITextStream(prompt, onDelta) {
+  async function generateOpenAITextStream(prompt, onDelta, signal) {
     var response = await fetch(state.settings.llmEndpoint, {
       method: "POST",
       headers: {
@@ -1046,12 +1081,13 @@
         model: state.settings.llmModel,
         messages: [{ role: "user", content: prompt }],
         stream: true
-      })
+      }),
+      signal: signal
     });
     return readSSEText(response, function (payload) {
       var choice = (payload.choices || [])[0] || {};
       return choice.delta ? choice.delta.content || "" : "";
-    }, onDelta);
+    }, onDelta, signal);
   }
 
   async function parseStoryboardFromRaw(skipImagePrompts) {
@@ -1224,6 +1260,7 @@
     }
 
     setBusy(els.callLongOutlineBtn, true);
+    var signal = startAbortable();
     try {
       if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawLongOutline, "已有长漫画梗概结果会被覆盖。")) {
         return false;
@@ -1232,7 +1269,7 @@
       els.rawLongOutline.value = "";
       setActiveTab("longManga");
       showWorkStatus("LLM 正在生成梗概...");
-      var text = await generateText(state.project.longOutlinePrompt, appendLongOutlineDelta, resetLongOutlineOutput);
+      var text = await generateText(state.project.longOutlinePrompt, appendLongOutlineDelta, resetLongOutlineOutput, signal);
       state.project.rawLongOutline = text;
       els.rawLongOutline.value = text;
       if (!parseLongOutlineFromRaw()) {
@@ -1241,10 +1278,15 @@
       state.longMangaUI.step = "outline";
       return true;
     } catch (err) {
+      if (isAbortError(err)) {
+        log("长漫画梗概生成已停止。");
+        return false;
+      }
       logError("Long manga outline request failed", err);
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
+      endAbortable();
       if (!options.keepWorkStatus) {
         hideWorkStatus();
         setBusy(els.callLongOutlineBtn, false);
@@ -1422,12 +1464,18 @@
     }
 
     setBusy(els.callLongEpisodesBtn, true);
+    var signal = startAbortable();
     var allDone = true;
+    var stopped = false;
     try {
       if (options.confirmOverwrite !== false && !await confirmContentOverwrite(rawListContent(state.project.longEpisodeRaws), "已有逐话结果会被覆盖。")) {
         return false;
       }
       for (var i = 0; i < state.project.longEpisodePrompts.length; i++) {
+        if (signal.aborted) {
+          stopped = true;
+          break;
+        }
         var item = state.project.longEpisodePrompts[i];
         if (findLongEpisode(item.episode)) {
           continue;
@@ -1438,14 +1486,18 @@
         try {
           log("Generating manga storyboard " + item.episode + ".");
           showWorkStatus("LLM 正在生成第 " + item.episode + " 话分镜...");
-          var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode));
+          var text = await generateText(item.prompt, appendLongEpisodeDelta(item.episode), resetLongEpisodeOutput(item.episode), signal);
           setLongEpisodeRaw(item.episode, text);
           if (!await parseLongEpisodeFromRaw(item.episode)) {
             allDone = false;
           }
         } catch (err) {
+          if (isAbortError(err)) {
+            stopped = true;
+            break;
+          }
           allDone = false;
-		  logError("Manga storyboard " + item.episode + " failed", err);
+          logError("Manga storyboard " + item.episode + " failed", err);
           showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
         }
       }
@@ -1454,8 +1506,12 @@
       renderProjectStatus();
       state.longMangaUI.step = "episodes";
       renderLongManga();
-      return allDone;
+      if (stopped) {
+        log("长漫画分镜生成已停止。");
+      }
+      return stopped ? false : allDone;
     } finally {
+      endAbortable();
       if (!options.keepWorkStatus) {
         hideWorkStatus();
         setBusy(els.callLongEpisodesBtn, false);
@@ -1473,6 +1529,7 @@
     }
 
     setBusy(els.callLongEpisodesBtn, true);
+    var signal = startAbortable();
     try {
       if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.rawLongBatchStoryboard, "已有批量分镜结果会被覆盖。")) {
         return false;
@@ -1482,15 +1539,20 @@
       setActiveTab("longManga");
       state.longMangaUI.step = "episodes";
       showWorkStatus("LLM 正在批量生成分镜...");
-      var text = await generateText(state.project.longBatchStoryboardPrompt, appendLongBatchStoryboardDelta, resetLongBatchStoryboardOutput);
+      var text = await generateText(state.project.longBatchStoryboardPrompt, appendLongBatchStoryboardDelta, resetLongBatchStoryboardOutput, signal);
       state.project.rawLongBatchStoryboard = text;
       els.rawLongBatchStoryboard.value = text;
       return parseLongBatchStoryboardFromRaw();
     } catch (err) {
+      if (isAbortError(err)) {
+        log("长漫画批量分镜生成已停止。");
+        return false;
+      }
       logError("Long manga batch storyboard request failed", err);
       showAPIConfigDialog("LLM 调用失败", "请检查文本模型 API 配置后重试。\n\n" + readableError(err));
       return false;
     } finally {
+      endAbortable();
       if (!options.keepWorkStatus) {
         hideWorkStatus();
         setBusy(els.callLongEpisodesBtn, false);
@@ -2069,23 +2131,39 @@
 
     setBusy(els.callImageBtn, true);
     setBusy(els.callLongImageBtn, true);
-    var allDone = true;
+    var signal = startAbortable();
+    var failedIndexes = [];
+    var stopped = false;
     try {
       for (var i = 0; i < state.project.imagePrompts.length; i++) {
+        if (signal.aborted) {
+          stopped = true;
+          break;
+        }
         var item = state.project.imagePrompts[i];
+        var existing = state.project.images.find(function (image) {
+          return image.index === item.index;
+        });
+        if (existing && existing.status === "downloaded") {
+          log("Image " + item.index + " already downloaded, skipping.");
+          continue;
+        }
         state.imageUI.activeIndex = item.index;
         log("Generating image " + item.index + " with " + state.settings.imageProvider + "/" + state.settings.imageModel);
         showWorkStatus("图片 API 正在生成第 " + item.index + " 张图片...");
         try {
-          var result = await generateImage(item.prompt);
+          var result = await generateImage(item.prompt, signal);
           triggerImageDownload(item.index, result.dataUrl);
           updateImageResult(item.index, { status: "downloaded", dataUrl: result.dataUrl, url: result.url || "", error: "" });
           log("Image " + item.index + " generated and download started.");
         } catch (err) {
-          allDone = false;
+          if (isAbortError(err)) {
+            stopped = true;
+            break;
+          }
+          failedIndexes.push(item.index);
           updateImageResult(item.index, { status: "failed", dataUrl: "", url: "", error: readableError(err) });
           logError("Image " + item.index + " failed", err);
-          showAPIConfigDialog("图片 API 调用失败", "请检查图片模型 API 配置后重试。\n\n" + readableError(err));
         }
         renderImagePrompts();
         renderImages();
@@ -2104,8 +2182,14 @@
         setActiveTab("storyPrompt");
         setStandardStep("images");
       }
-      return allDone;
+      if (stopped) {
+        log("图片生成已停止。");
+      } else if (failedIndexes.length > 0) {
+        showAPIConfigDialog("图片生成部分失败", "共有 " + failedIndexes.length + " 张图片生成失败（第 " + failedIndexes.join(", ") + " 张）。可点击「继续」重试失败项。");
+      }
+      return stopped ? false : failedIndexes.length === 0;
     } finally {
+      endAbortable();
       if (!options.keepWorkStatus) {
         hideWorkStatus();
         setBusy(els.callImageBtn, false);
@@ -2186,14 +2270,95 @@
     log(imageOK ? "Full auto long manga flow completed." : "Full auto long manga flow completed with image errors.");
   }
 
-  async function generateImage(prompt) {
-    if (state.settings.imageProvider === "gemini") {
-      return generateGeminiImage(prompt);
+  async function continueAuto() {
+    setBusy(els.continueAutoBtn, true);
+    setWorkspaceActionsBusy(true);
+    showWorkStatus("继续流程...");
+    try {
+      log("Continue flow started.");
+      if (state.project.storyMode === "long" || state.project.storyMode === "four") {
+        await continueLongMangaAuto();
+        return;
+      }
+      var autoOptions = { confirmOverwrite: false, keepWorkStatus: true };
+      if (!state.project.storyboardPrompt) {
+        if (!await buildStoryboardPrompt(autoOptions)) {
+          return;
+        }
+      }
+      if (state.project.panels.length === 0) {
+        if (!await callLLM(autoOptions)) {
+          log("Continue stopped at LLM step.");
+          return;
+        }
+      }
+      if (state.project.imagePrompts.length === 0) {
+        await buildImagePrompts({ confirmOverwrite: false });
+      }
+      if (state.project.imagePrompts.length === 0) {
+        log("Continue stopped before image generation.");
+        return;
+      }
+      await callImageAPI(autoOptions);
+      log("Continue flow completed.");
+    } finally {
+      hideWorkStatus();
+      setWorkspaceActionsBusy(false);
+      renderLongManga();
+      setBusy(els.continueAutoBtn, false);
     }
-    return generateOpenAIImage(prompt);
   }
 
-  async function generateGeminiImage(prompt) {
+  async function continueLongMangaAuto() {
+    var autoOptions = { confirmOverwrite: false, keepWorkStatus: true };
+    var fourPanelReady = state.project.storyMode === "four" && state.project.longOutline && (state.project.selectedFourPanelStories || []).length > 0;
+    if (!fourPanelReady) {
+      if (!state.project.longOutlinePrompt) {
+        if (!await buildLongOutlinePrompt(autoOptions)) {
+          return;
+        }
+      }
+      if (!state.project.longOutline) {
+        if (!await callLongOutline(autoOptions)) {
+          log("Continue stopped at outline step.");
+          return;
+        }
+      }
+      if (state.project.storyMode === "four") {
+        log("Select four-panel stories, then continue the flow.");
+        return;
+      }
+    }
+    if (state.project.longEpisodePrompts.length === 0 && !state.project.longBatchStoryboardPrompt) {
+      if (!await buildLongEpisodePrompts(autoOptions)) {
+        return;
+      }
+    }
+    if (state.project.panels.length === 0) {
+      if (!await callLongEpisodes(autoOptions)) {
+        log("Continue stopped at episodes step.");
+        return;
+      }
+    }
+    if (state.project.imagePrompts.length === 0) {
+      await buildImagePrompts({ confirmOverwrite: false });
+    }
+    if (state.project.imagePrompts.length === 0) {
+      log("Continue stopped before image generation.");
+      return;
+    }
+    await callImageAPI(autoOptions);
+    log("Continue long manga flow completed.");
+  }
+
+  async function generateImage(prompt, signal) {
+    if (state.settings.imageProvider === "gemini") {
+      return generateGeminiImage(prompt, signal);
+    }
+    return generateOpenAIImage(prompt, signal);
+  }
+
+  async function generateGeminiImage(prompt, signal) {
     var endpoint = geminiEndpoint(state.settings.imageUseOfficialApi, state.settings.imageEndpoint, state.settings.imageModel);
     var response = await fetch(endpoint, {
       method: "POST",
@@ -2210,7 +2375,8 @@
             imageSize: state.settings.geminiImageSize
           }
         }
-      })
+      }),
+      signal: signal
     });
     var payload = await parseJSONResponse(response);
     var parts = (((payload.candidates || [])[0] || {}).content || {}).parts || [];
@@ -2225,7 +2391,7 @@
     throw new Error("Gemini returned no inline image data.");
   }
 
-  async function generateOpenAIImage(prompt) {
+  async function generateOpenAIImage(prompt, signal) {
     var response = await fetch(state.settings.imageEndpoint, {
       method: "POST",
       headers: {
@@ -2239,7 +2405,8 @@
         quality: "high",
         output_format: "png",
         n: 1
-      })
+      }),
+      signal: signal
     });
     var payload = await parseJSONResponse(response);
     var image = (payload.data || [])[0];
@@ -2769,7 +2936,7 @@
     return payload;
   }
 
-  async function readSSEText(response, extractDelta, onDelta) {
+  async function readSSEText(response, extractDelta, onDelta, signal) {
     if (!response.ok) {
       await parseJSONResponse(response);
     }
@@ -2783,6 +2950,9 @@
     var fullText = "";
 
     while (true) {
+      if (signal && signal.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
       var result = await reader.read();
       if (result.done) {
         break;
@@ -2915,6 +3085,11 @@
     if (els.workStatus) {
       els.workStatus.classList.add("is-hidden");
     }
+  }
+
+  function onStopAIClick() {
+    stopAI();
+    log("正在停止 AI 任务...");
   }
 
   function confirmContentOverwrite(content, message) {

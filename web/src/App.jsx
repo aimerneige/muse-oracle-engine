@@ -95,6 +95,7 @@ const workspaceMarkup = String.raw`
 
     <section id="workStatus" class="work-status is-hidden" role="status" aria-live="polite">
       <span class="work-spinner" aria-hidden="true"></span><span id="workStatusMessage">AI 正在工作</span>
+      <button id="stopAIBtn" type="button" class="stop-ai-btn">停止</button>
     </section>
 
     <section id="storyPrompt" class="tab-panel active" data-route="standard">
@@ -243,6 +244,7 @@ export default function App() {
             {t.app.repository}
           </a>
           <button id="fullAutoBtn" type="button" className="primary">{t.app.fullAuto}</button>
+          <button id="continueAutoBtn" type="button">继续</button>
           <button id="saveProjectBtn" type="button">{t.app.saveProject}</button>
           <button id="newProjectBtn" type="button">{t.app.newProject}</button>
         </div>
