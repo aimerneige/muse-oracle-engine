@@ -649,5 +649,10 @@ window.LLE_DATA = {
     "1K",
     "2K",
     "4K"
-  ]
+  ],
+  "imageModelSizes": {
+    "gemini-3.1-flash-lite-image": [
+      "1K"
+    ]
+  }
 };

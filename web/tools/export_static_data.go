@@ -30,6 +30,7 @@ type staticData struct {
 	ImageModels                 map[string][]string          `json:"imageModels"`
 	DefaultEndpoints            map[string]map[string]string `json:"defaultEndpoints"`
 	ImageSizes                  []string                     `json:"imageSizes"`
+	ImageModelSizes             map[string][]string          `json:"imageModelSizes"`
 }
 
 func main() {
@@ -148,6 +149,9 @@ func main() {
 			},
 		},
 		ImageSizes: []string{"1K", "2K", "4K"},
+		ImageModelSizes: map[string][]string{
+			"gemini-3.1-flash-lite-image": {"1K"},
+		},
 	}
 
 	jsonData, err := json.MarshalIndent(data, "", "  ")

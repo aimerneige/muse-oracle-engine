@@ -88,6 +88,7 @@
     els.clearHistoryBtn.addEventListener("click", clearHistory);
     els.llmProvider.addEventListener("change", onLLMProviderChange);
     els.imageProvider.addEventListener("change", onImageProviderChange);
+    els.imageModel.addEventListener("change", updateImageSizeOptions);
     els.llmUseOfficialApi.addEventListener("change", updateLLMEndpointUI);
     els.imageUseOfficialApi.addEventListener("change", updateImageEndpointUI);
     els.seriesFilter.addEventListener("change", renderCharacters);
@@ -245,9 +246,7 @@
       { value: "gemini", label: "Gemini Nano Banana" },
       { value: "openai", label: "GPT Image" }
     ]);
-    fillSelect(els.geminiImageSize, data.imageSizes.map(function (size) {
-      return { value: size, label: size };
-    }));
+    updateImageSizeOptions();
 
     fillSeriesFilter();
     fillSelect(els.styleSelect, data.styles.map(function (style) {
@@ -272,7 +271,9 @@
     els.imageEndpoint.value = state.settings.imageEndpoint;
     els.imageApiKey.value = state.settings.imageApiKey;
     els.imageModel.value = state.settings.imageModel;
-    els.geminiImageSize.value = state.settings.geminiImageSize;
+    updateImageSizeOptions();
+    var savedSize = state.settings.geminiImageSize;
+    els.geminiImageSize.value = supportedImageSizes(els.imageModel.value).indexOf(savedSize) !== -1 ? savedSize : "1K";
     updateLLMEndpointUI();
     updateImageEndpointUI();
   }
@@ -309,6 +310,21 @@
       return "nano-banana-2-lite (" + model + ")";
     }
     return model;
+  }
+
+  function supportedImageSizes(model) {
+    var restricted = data.imageModelSizes && data.imageModelSizes[model];
+    return restricted && restricted.length ? restricted : data.imageSizes;
+  }
+
+  function updateImageSizeOptions() {
+    var sizes = supportedImageSizes(els.imageModel.value);
+    fillSelect(els.geminiImageSize, sizes.map(function (size) {
+      return { value: size, label: size };
+    }));
+    if (sizes.indexOf(els.geminiImageSize.value) === -1) {
+      els.geminiImageSize.value = "1K";
+    }
   }
 
   function fillSelect(select, options) {
@@ -355,6 +371,7 @@
     fillModelSelect(els.imageModel, provider, "image");
     els.imageEndpoint.value = data.defaultEndpoints[provider].image;
     els.imageModel.value = data.imageModels[provider][0];
+    updateImageSizeOptions();
     els.imageUseOfficialApi.checked = provider === "gemini";
     updateImageEndpointUI();
   }

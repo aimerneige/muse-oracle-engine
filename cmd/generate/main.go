@@ -574,7 +574,12 @@ func createImageProvider(cfg *config.Config) (image.Provider, error) {
 		case "gemini-2.5-flash-image":
 			model = image.GeminiImage25Flash
 		}
-		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model, cfg.GeminiImageSize)
+		imageSize := cfg.GeminiImageSize
+		if model == image.GeminiImage31FlashLite && imageSize != "1K" {
+			log.Printf("Warning: nano-banana-2-lite (gemini-3.1-flash-lite-image) only supports 1K resolution, forcing 1K (ignoring configured %s)", imageSize)
+			imageSize = "1K"
+		}
+		return image.NewGeminiImageAdapter(cfg.GeminiAPIKey, model, imageSize)
 	case "gemini-bridge":
 		timeout := time.Duration(cfg.GeminiBridgeTimeoutSeconds) * time.Second
 		return image.NewGeminiBridgeAdapter(cfg.GeminiBridgeEndpoint, cfg.GeminiBridgeModel, timeout), nil
@@ -634,7 +639,7 @@ func printModels() {
 	fmt.Println("\n🖼️  图像生成模型:")
 	fmt.Println("  Provider: gemini")
 	fmt.Println("   ├─ gemini-3.1-flash-image-preview (Gemini 3.1 Flash Image)")
-	fmt.Println("   ├─ gemini-3.1-flash-lite-image   (Gemini 3.1 Flash Lite Image)")
+	fmt.Println("   ├─ gemini-3.1-flash-lite-image   (Gemini 3.1 Flash Lite Image, 仅支持 1K)")
 	fmt.Println("   ├─ gemini-3-pro-image-preview     (Gemini 3 Pro Image)")
 	fmt.Println("   └─ gemini-2.5-flash-image         (Gemini 2.5 Flash Image)")
 	fmt.Println("   分辨率可通过 GEMINI_IMAGE_SIZE 配置: 1K / 2K / 4K (默认: 1K)")
