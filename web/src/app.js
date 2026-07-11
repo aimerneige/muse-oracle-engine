@@ -1,3 +1,5 @@
+import JSZip from "jszip";
+
 (function () {
   "use strict";
 
@@ -91,7 +93,7 @@
       "longBatchStoryboardPanel", "longBatchStoryboardPrompt", "copyLongBatchStoryboardPromptBtn", "rawLongBatchStoryboard", "parseLongBatchStoryboardBtn",
       "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
-      "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn",
+      "panelList", "imagePromptTabs", "imagePromptList", "callImageBtn", "imageList", "downloadProjectBtn", "exportImagePromptsBtn", "exportLongImagePromptsBtn",
       "clearLogBtn", "logOutput", "overwritePromptDialog", "overwritePromptMessage", "fourPanelSelectionDialog", "longEpisodeSequenceDialog", "longEpisodeSequenceMessage",
       "apiConfigDialog", "apiConfigDialogTitle", "apiConfigDialogMessage",
       "characterDialog", "characterForm", "characterDialogTitle", "closeCharacterDialogBtn", "cancelCharacterBtn", "characterFormError",
@@ -196,6 +198,8 @@
     els.callLongImageBtn.addEventListener("click", callImageAPI);
     els.callImageBtn.addEventListener("click", callImageAPI);
     els.downloadProjectBtn.addEventListener("click", downloadProject);
+    els.exportImagePromptsBtn.addEventListener("click", exportImagePromptsZip);
+    els.exportLongImagePromptsBtn.addEventListener("click", exportImagePromptsZip);
     els.clearLogBtn.addEventListener("click", function () {
       state.logs = [];
       renderLogs();
@@ -3255,6 +3259,28 @@
   function downloadProject() {
     syncProjectFromForm();
     downloadJSON(persistableProject(state.project), "lovelive-engine-project-" + state.project.id + ".json");
+  }
+
+  async function exportImagePromptsZip() {
+    syncProjectFromForm();
+    if (state.project.imagePrompts.length === 0) {
+      showAPIConfigDialog("无法导出", "还没有图片 Prompt，请先生成图片 Prompt。");
+      return;
+    }
+    var zip = new JSZip();
+    state.project.imagePrompts.forEach(function (item) {
+      var name = "image-" + String(item.index).padStart(3, "0") + ".md";
+      var content = "# 图片 " + item.index + " Prompt\n\n" + (item.prompt || "") + "\n";
+      zip.file(name, content);
+    });
+    var blob = await zip.generateAsync({ type: "blob" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "lovelive-engine-image-prompts-" + state.project.id + ".zip";
+    link.click();
+    URL.revokeObjectURL(url);
+    log("Exported " + state.project.imagePrompts.length + " image prompt(s) to ZIP.");
   }
 
   function downloadJSON(value, filename) {

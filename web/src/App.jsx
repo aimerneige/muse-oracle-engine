@@ -119,7 +119,7 @@ const workspaceMarkup = String.raw`
         <div id="imagePromptList" class="prompt-list"></div>
         <div class="stage-actions"><button id="callImageBtn" type="button" class="primary" disabled>调用图片 API</button></div>
         <div id="imageList" class="image-list"></div>
-        <div class="stage-actions result-actions"><button id="downloadProjectBtn" type="button">导出 JSON</button></div>
+        <div class="stage-actions result-actions"><button id="exportImagePromptsBtn" type="button">导出图片 Prompt</button><button id="downloadProjectBtn" type="button">导出 JSON</button></div>
       </div>
     </section>
 
@@ -159,6 +159,7 @@ const workspaceMarkup = String.raw`
         <div id="longImagePromptList" class="prompt-list"></div>
         <div class="stage-actions"><button id="callLongImageBtn" class="primary" type="button" disabled>调用图片 API</button></div>
         <div id="longImageList" class="image-list"></div>
+        <div class="stage-actions result-actions"><button id="exportLongImagePromptsBtn" type="button">导出图片 Prompt</button></div>
       </div>
     </section>
   </section>
