@@ -637,6 +637,22 @@ label {
   background: var(--work-bg);
 }
 
+.regenerate-image-btn {
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--work-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.regenerate-image-btn:hover {
+  background: var(--work-bg);
+}
+
 @keyframes work-spin {
   to {
     transform: rotate(360deg);

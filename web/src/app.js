@@ -2094,6 +2094,14 @@
       open.textContent = "重新下载";
       card.appendChild(open);
     }
+    var regen = document.createElement("button");
+    regen.type = "button";
+    regen.className = "regenerate-image-btn";
+    regen.textContent = "重新生成";
+    regen.addEventListener("click", function () {
+      regenerateImage(image.index);
+    });
+    card.appendChild(regen);
     if (image.error) {
       var error = document.createElement("div");
       error.className = "error";
@@ -2356,6 +2364,56 @@
       return generateGeminiImage(prompt, signal);
     }
     return generateOpenAIImage(prompt, signal);
+  }
+
+  async function regenerateImage(index) {
+    if (currentAbortSignal()) {
+      log("已有 AI 任务正在进行，请稍候再试。");
+      return;
+    }
+    saveSettingsFromForm();
+    if (!ensureAPISettings("image")) {
+      return;
+    }
+    var promptItem = state.project.imagePrompts.find(function (item) {
+      return item.index === index;
+    });
+    if (!promptItem) {
+      log("未找到第 " + index + " 张图片的 Prompt，尝试生成图片 Prompt...");
+      await buildImagePrompts({ confirmOverwrite: false, navigate: false });
+      promptItem = state.project.imagePrompts.find(function (item) {
+        return item.index === index;
+      });
+    }
+    if (!promptItem) {
+      showAPIConfigDialog("无法重新生成", "第 " + index + " 张图片缺少对应的图片 Prompt，请先生成图片 Prompt。");
+      return;
+    }
+    var signal = startAbortable();
+    try {
+      state.imageUI.activeIndex = index;
+      showWorkStatus("正在重新生成第 " + index + " 张图片...");
+      var result = await generateImage(promptItem.prompt, signal);
+      triggerImageDownload(index, result.dataUrl);
+      updateImageResult(index, { status: "downloaded", dataUrl: result.dataUrl, url: result.url || "", error: "" });
+      renderImages();
+      renderLongImages();
+      renderImagePrompts();
+      autoSaveProject();
+      log("Image " + index + " regenerated.");
+    } catch (err) {
+      if (isAbortError(err)) {
+        log("Image " + index + " regeneration stopped.");
+        return;
+      }
+      updateImageResult(index, { status: "failed", dataUrl: "", url: "", error: readableError(err) });
+      logError("Image " + index + " regeneration failed", err);
+      renderImages();
+      renderLongImages();
+    } finally {
+      endAbortable();
+      hideWorkStatus();
+    }
   }
 
   async function generateGeminiImage(prompt, signal) {
