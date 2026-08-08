@@ -356,9 +356,9 @@ func createLLMProvider(cfg *config.Config) (llm.Provider, error) {
 		switch cfg.LLMModel {
 		case "gemini-3.1-pro-preview":
 			model = llm.Gemini3Pro
-		case "gemini-3-flash-preview":
+		case "gemini-3.6-flash":
 			model = llm.Gemini3Flash
-		case "gemini-3.1-flash-lite-preview":
+		case "gemini-3.5-flash-lite":
 			model = llm.Gemini3FlashLite
 		case "gemini-2.5-pro":
 			model = llm.Gemini2Pro
@@ -438,8 +438,8 @@ func printModels() {
 	fmt.Println("\n🤖 LLM 模型:")
 	fmt.Println("  Provider: gemini")
 	fmt.Println("   ├─ gemini-3.1-pro-preview      (Gemini 3.1 Pro)")
-	fmt.Println("   ├─ gemini-3-flash-preview       (Gemini 3 Flash)")
-	fmt.Println("   ├─ gemini-3.1-flash-lite-preview (Gemini 3.1 Flash Lite)")
+	fmt.Println("   ├─ gemini-3.6-flash             (Gemini 3.6 Flash)")
+	fmt.Println("   ├─ gemini-3.5-flash-lite         (Gemini 3.5 Flash Lite)")
 	fmt.Println("   ├─ gemini-2.5-pro               (Gemini 2.5 Pro)")
 	fmt.Println("   ├─ gemini-2.5-flash             (Gemini 2.5 Flash)")
 	fmt.Println("   └─ gemini-2.5-flash-lite        (Gemini 2.5 Flash Lite)")

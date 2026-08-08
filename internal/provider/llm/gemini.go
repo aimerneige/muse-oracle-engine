@@ -24,9 +24,9 @@ func (m GeminiModel) String() string {
 	case Gemini3Pro:
 		return "gemini-3.1-pro-preview"
 	case Gemini3Flash:
-		return "gemini-3-flash-preview"
+		return "gemini-3.6-flash"
 	case Gemini3FlashLite:
-		return "gemini-3.1-flash-lite-preview"
+		return "gemini-3.5-flash-lite"
 	case Gemini2Pro:
 		return "gemini-2.5-pro"
 	case Gemini2Flash:
