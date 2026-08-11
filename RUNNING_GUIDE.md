@@ -77,7 +77,8 @@ go run cmd/generate/main.go \
 | `--list-styles` | 查看支持的画风 |
 | `--list-models` | 查看程序已知模型 |
 | `--prompt-only` | 只输出图像提示词，不调用图像生成 API |
-| `--long-manga` | 启用多集长篇漫画流程 |
+| `--long-manga` | 启用长篇漫画流程，默认批量生成全部分镜 |
+| `--long-manga-episode-by-episode` | 显式启用旧的逐话分镜流程，必须配合 `--long-manga` |
 
 ## 4. 断点续跑和重试
 
@@ -114,9 +115,9 @@ go run cmd/generate/main.go \
     --long-manga
 ```
 
-`--story-length` 是可选参数，接收大于等于 2 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 2` 对应 2 话 8 格，`--story-length 12` 对应 12 话 48 格；省略时由 LLM 根据剧情要求自主规划长度。只有提供该参数时，长度才会在第一阶段注入 outline Prompt。确认 outline 后，程序会生成所有 episode 的分镜并继续进入图片生成。
+`--story-length` 是可选参数，接收大于等于 2 的整数，表示剧情话数，每话固定生成 4 格。比如 `--story-length 2` 对应 2 话 8 格，`--story-length 12` 对应 12 话 48 格；省略时由 LLM 根据剧情要求自主规划长度。只有提供该参数时，长度才会在第一阶段注入 outline Prompt。确认 outline 后，程序会通过一次 LLM 请求批量生成所有 episode 的 JSON 分镜脚本，再继续进入图片生成。
 
-需要减少多轮调用时，可以在长篇漫画流程中添加 `--long-manga-batch-storyboard`。该参数只适用于 `--long-manga`，会在梗概确认后使用批量分镜 Prompt 一次性生成全部话数的 JSON 分镜脚本；每话仍必须包含 `costume_states`，用于维护服饰连续性和后续绘图上下文。
+旧的逐话生成流程不再作为默认维护方向，仅在 CLI 中保留兼容入口。如确有需要，可显式添加 `--long-manga-episode-by-episode`；网页和 CLI 指令生成器均不提供该选项。
 
 ## 6. 自定义角色
 

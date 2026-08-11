@@ -127,22 +127,21 @@ const workspaceMarkup = String.raw`
       <div class="panel-title"><h2 id="multiRoundTitle">长漫画</h2></div>
       <div class="sub-tabs flow-tabs">
         <button id="longStepOutlineTab" class="active" type="button">梗概</button>
-        <button id="longStepEpisodesTab" type="button">逐话分镜</button>
+        <button id="longStepEpisodesTab" type="button">批量分镜</button>
         <button id="longStepImagesTab" type="button">图片</button>
       </div>
       <div id="longStepOutlinePanel" class="flow-section">
         <div class="card-head"><h3 id="multiRoundOutlineTitle">梗概</h3><div class="inline-actions"><button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button><button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button></div></div>
         <label><span id="multiRoundOutlinePromptLabel">长漫画梗概 Prompt</span><div class="prompt-field"><textarea id="longOutlinePrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成梗概 Prompt”生成用于规划长漫画结构的提示词。"></textarea><button id="copyLongOutlinePromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div></label>
-        <label><span id="multiRoundOutlineResultLabel">长漫画梗概结果</span><textarea id="rawLongOutline" class="code-area small" spellcheck="false" placeholder="将梗概 Prompt 交给 LLM 后，把返回的长漫画梗概粘贴到这里，再解析并进入逐话分镜。"></textarea></label>
+        <label><span id="multiRoundOutlineResultLabel">长漫画梗概结果</span><textarea id="rawLongOutline" class="code-area small" spellcheck="false" placeholder="将梗概 Prompt 交给 LLM 后，把返回的长漫画梗概粘贴到这里，再解析并进入批量分镜。"></textarea></label>
         <div class="stage-actions result-actions"><button id="selectAllFourPanelStoriesBtn" class="is-hidden" type="button">全选</button><button id="parseLongOutlineBtn" type="button">解析梗概</button></div>
         <div id="longOutlineSummary" class="summary-list"></div>
         <div class="stage-actions navigation-actions"><button id="nextLongOutlineBtn" class="primary" type="button">下一步</button></div>
       </div>
       <div id="longStepEpisodesPanel" class="flow-section">
-        <div class="card-head"><h3 id="multiRoundStoryboardTitle">逐话分镜</h3><div class="inline-actions"><button id="buildLongEpisodePromptsBtn" type="button">生成逐话 Prompt</button><button id="callLongEpisodesBtn" type="button">调用 LLM 生成逐话分镜</button></div></div>
-        <label id="longBatchStoryboardWrap" class="inline-check"><input id="longBatchStoryboardEnabledInput" type="checkbox">批量生成分镜</label>
+        <div class="card-head"><h3 id="multiRoundStoryboardTitle">批量分镜</h3><div class="inline-actions"><button id="buildLongEpisodePromptsBtn" type="button">生成批量分镜 Prompt</button><button id="callLongEpisodesBtn" type="button">调用 LLM 批量生成分镜</button></div></div>
         <div id="longBatchStoryboardPanel" class="flow-section is-hidden">
-          <label>批量分镜 Prompt<div class="prompt-field"><textarea id="longBatchStoryboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="开启批量生成分镜后，点击“生成批量分镜 Prompt”得到一次性生成全部话分镜的提示词。"></textarea><button id="copyLongBatchStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div></label>
+          <label>批量分镜 Prompt<div class="prompt-field"><textarea id="longBatchStoryboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="点击“生成批量分镜 Prompt”得到一次性生成全部话分镜的提示词。"></textarea><button id="copyLongBatchStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div></label>
           <label>批量分镜结果<textarea id="rawLongBatchStoryboard" class="code-area small" spellcheck="false" placeholder="将批量分镜 Prompt 交给 LLM 后，把返回的 JSON 结果粘贴到这里，再一次性解析全部分镜。"></textarea></label>
           <div class="stage-actions result-actions"><button id="parseLongBatchStoryboardBtn" type="button">解析批量分镜</button></div>
         </div>

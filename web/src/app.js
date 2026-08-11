@@ -89,7 +89,7 @@ import JSZip from "jszip";
 	  "multiRoundTitle", "multiRoundOutlineTitle", "multiRoundOutlinePromptLabel", "multiRoundOutlineResultLabel", "multiRoundStoryboardTitle",
       "buildLongOutlinePromptBtn", "callLongOutlineBtn", "selectAllFourPanelStoriesBtn", "parseLongOutlineBtn", "nextLongOutlineBtn",
       "buildLongEpisodePromptsBtn", "callLongEpisodesBtn", "nextLongEpisodesBtn",
-      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary", "longBatchStoryboardWrap", "longBatchStoryboardEnabledInput",
+      "longOutlinePrompt", "copyLongOutlinePromptBtn", "rawLongOutline", "longOutlineSummary",
       "longBatchStoryboardPanel", "longBatchStoryboardPrompt", "copyLongBatchStoryboardPromptBtn", "rawLongBatchStoryboard", "parseLongBatchStoryboardBtn",
       "longEpisodeOutlineSummary", "longEpisodeTabs", "longEpisodeList",
       "buildLongImagePromptsBtn", "callLongImageBtn", "longImageOutlineSummary", "longImageTabs", "longImagePromptList", "longImageList",
@@ -168,15 +168,6 @@ import JSZip from "jszip";
     els.selectAllFourPanelStoriesBtn.addEventListener("click", selectAllFourPanelStories);
     els.parseLongOutlineBtn.addEventListener("click", parseLongOutlineFromRaw);
     els.nextLongOutlineBtn.addEventListener("click", goToLongEpisodesStep);
-    els.longBatchStoryboardEnabledInput.addEventListener("change", async function () {
-      syncProjectFromForm();
-      if (state.project.longBatchStoryboardEnabled && !state.project.longBatchStoryboardPrompt) {
-        if (await buildLongBatchStoryboardPrompt()) {
-          return;
-        }
-      }
-      renderLongManga();
-    });
     els.buildLongEpisodePromptsBtn.addEventListener("click", buildLongEpisodePrompts);
     els.callLongEpisodesBtn.addEventListener("click", callLongEpisodes);
     els.nextLongEpisodesBtn.addEventListener("click", goToLongImagesStep);
@@ -320,7 +311,6 @@ import JSZip from "jszip";
     els.rawStoryboard.value = state.project.rawStoryboard;
     setGeneratedPromptValue(els.longOutlinePrompt, state.project.longOutlinePrompt || "");
     els.rawLongOutline.value = state.project.rawLongOutline || "";
-    els.longBatchStoryboardEnabledInput.checked = !!state.project.longBatchStoryboardEnabled;
     setGeneratedPromptValue(els.longBatchStoryboardPrompt, state.project.longBatchStoryboardPrompt || "");
     els.rawLongBatchStoryboard.value = state.project.rawLongBatchStoryboard || "";
     updateImageActionAvailability();
@@ -456,7 +446,7 @@ import JSZip from "jszip";
     state.project.rawStoryboard = els.rawStoryboard.value;
     state.project.longOutlinePrompt = els.longOutlinePrompt.value;
     state.project.rawLongOutline = els.rawLongOutline.value;
-    state.project.longBatchStoryboardEnabled = state.project.storyMode === "long" && els.longBatchStoryboardEnabledInput.checked;
+    state.project.longBatchStoryboardEnabled = state.project.storyMode === "long";
     state.project.longBatchStoryboardPrompt = els.longBatchStoryboardPrompt.value;
     state.project.rawLongBatchStoryboard = els.rawLongBatchStoryboard.value;
     state.project.updatedAt = new Date().toISOString();
@@ -596,7 +586,7 @@ import JSZip from "jszip";
   }
 
   async function goToLongImagesStep() {
-    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled && state.project.longEpisodes.length === 0) {
+    if (state.project.storyMode === "long" && state.project.longEpisodes.length === 0) {
       if (!await parseLongBatchStoryboardFromRaw()) {
         return false;
       }
@@ -1326,7 +1316,7 @@ import JSZip from "jszip";
     }
 
 	var fourPanelMode = state.project.storyMode === "four";
-    if (!fourPanelMode && state.project.longBatchStoryboardEnabled) {
+    if (state.project.storyMode === "long") {
       return buildLongBatchStoryboardPrompt(options);
     }
 	var episodes = state.project.longOutline.episodes;
@@ -1457,7 +1447,7 @@ import JSZip from "jszip";
   async function callLongEpisodes(options) {
     options = options || {};
     saveSettingsFromForm();
-    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled) {
+    if (state.project.storyMode === "long") {
       return callLongBatchStoryboard(options);
     }
     if (state.project.longEpisodePrompts.length === 0 && !await buildLongEpisodePrompts(options)) {
@@ -1628,17 +1618,15 @@ import JSZip from "jszip";
 
   function renderLongManga() {
 	var fourPanelMode = state.project.storyMode === "four";
-    var batchMode = state.project.storyMode === "long" && !!state.project.longBatchStoryboardEnabled;
+    var batchMode = state.project.storyMode === "long";
 	els.multiRoundTitle.textContent = fourPanelMode ? "四格漫画" : "长漫画";
 	els.multiRoundOutlineTitle.textContent = fourPanelMode ? "候选梗概与选择" : "梗概";
 	els.multiRoundOutlinePromptLabel.textContent = fourPanelMode ? "四格漫画候选梗概 Prompt" : "长漫画梗概 Prompt";
 	els.multiRoundOutlineResultLabel.textContent = fourPanelMode ? "四格漫画候选梗概结果" : "长漫画梗概结果";
-	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : (batchMode ? "批量分镜" : "逐话分镜");
-	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "逐话分镜";
-    els.buildLongEpisodePromptsBtn.textContent = batchMode ? "生成批量分镜 Prompt" : "生成逐话 Prompt";
-    els.callLongEpisodesBtn.textContent = batchMode ? "调用 LLM 批量生成分镜" : "调用 LLM 生成逐话分镜";
-    els.longBatchStoryboardWrap.classList.toggle("is-hidden", fourPanelMode);
-    els.longBatchStoryboardEnabledInput.checked = batchMode;
+	els.multiRoundStoryboardTitle.textContent = fourPanelMode ? "严格四格分镜" : "批量分镜";
+	els.longStepEpisodesTab.textContent = fourPanelMode ? "四格分镜" : "批量分镜";
+    els.buildLongEpisodePromptsBtn.textContent = fourPanelMode ? "生成四格分镜 Prompt" : "生成批量分镜 Prompt";
+    els.callLongEpisodesBtn.textContent = fourPanelMode ? "调用 LLM 生成四格分镜" : "调用 LLM 批量生成分镜";
     els.longBatchStoryboardPanel.classList.toggle("is-hidden", !batchMode);
     els.selectAllFourPanelStoriesBtn.classList.toggle("is-hidden", !fourPanelMode);
     els.selectAllFourPanelStoriesBtn.disabled = workspaceActionsBusy || !state.project.longOutline || !state.project.longOutline.episodes || state.project.longOutline.episodes.length === 0;
@@ -1754,7 +1742,7 @@ import JSZip from "jszip";
 
   function renderLongEpisodeList() {
     els.longEpisodeList.innerHTML = "";
-    if (state.project.storyMode === "long" && state.project.longBatchStoryboardEnabled) {
+    if (state.project.storyMode === "long") {
       els.longEpisodeTabs.innerHTML = "";
       els.longEpisodeOutlineSummary.classList.add("is-hidden");
       return;
@@ -3302,6 +3290,7 @@ import JSZip from "jszip";
     if (project && !Object.prototype.hasOwnProperty.call(project, "storyLengthEnabled") && project.storyLength > 0) {
       hydrated.storyLengthEnabled = true;
     }
+    hydrated.longBatchStoryboardEnabled = hydrated.storyMode === "long";
     hydrated.images = [];
     return hydrated;
   }

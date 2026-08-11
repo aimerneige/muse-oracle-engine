@@ -24,7 +24,6 @@ function config(overrides = {}) {
     listType: "list-characters",
     promptOnly: false,
     longManga: false,
-	longMangaBatchStoryboard: false,
 	storyLengthEnabled: false,
 	storyLength: "4",
 	fourPanelManga: false,
@@ -78,13 +77,6 @@ test("adds long manga story length only when enabled", () => {
   assert.deepEqual(result.errors, []);
 });
 
-test("adds batch storyboard flag for long manga", () => {
-  const result = buildCommand(config({ longManga: true, longMangaBatchStoryboard: true }));
-
-  assert.match(result.command, /--long-manga --long-manga-batch-storyboard$/);
-  assert.deepEqual(result.errors, []);
-});
-
 test("builds resume and retry command without create parameters", () => {
   const result = buildCommand(config({
     mode: "resume",
@@ -111,12 +103,6 @@ test("rejects conflicting multi-round manga modes", () => {
 	const result = buildCommand(config({ longManga: true, fourPanelManga: true }));
 
 	assert.deepEqual(result.errors, ["长篇漫画与四格漫画流程不能同时启用"]);
-});
-
-test("rejects batch storyboard without long manga", () => {
-	const result = buildCommand(config({ longMangaBatchStoryboard: true }));
-
-	assert.deepEqual(result.errors, ["批量生成分镜需要启用长篇漫画流程"]);
 });
 
 test("rejects an invalid long manga story length", () => {

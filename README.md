@@ -18,7 +18,7 @@
 - **无需后端服务**：页面由 HTML、CSS 和原生 JavaScript 构成，不依赖项目后端 API。
 - **多 IP 角色库**：内置 LoveLive 系列、孤独摇滚、轻音少女、间谍过家家、原神等角色资料，并支持筛选和搜索。
 - **标准漫画流程**：生成分镜 Prompt、解析 LLM 返回结果，再按分镜生成图片 Prompt。
-- **长篇漫画流程**：依次规划故事梗概、逐话分镜和图片 Prompt。
+- **长篇漫画流程**：依次规划故事梗概、批量生成全部分镜和图片 Prompt。
 - **四格漫画流程**：生成多个四格故事候选，按编号选择后生成严格的四格分镜与图片 Prompt。
 - **多画风模板**：内置动漫 3D 引擎、Q 版粘土人、Figma 手办、水彩、粉彩蜡笔涂鸦、立体剪纸拼贴、复古像素、毛绒娃娃微距摄影、美漫波普艺术等画风。
 - **本地项目管理**：设置、当前项目和最近历史保存在浏览器 `localStorage` 中，项目可导出为 JSON。
@@ -127,11 +127,11 @@ go run cmd/generate/main.go --four-panel-manga --characters 'lovelive/honoka' --
 
 CLI 的环境变量、长篇漫画、自定义角色和自定义画风说明见 [RUNNING_GUIDE.md](./RUNNING_GUIDE.md)。该文档专门描述命令行工作流。
 
-CLI 使用 `--long-manga` 启用长篇漫画流程：先生成故事梗概并等待人工确认，再逐话生成分镜。使用 `--story-length` 可指定话数，每话固定 4 格：例如 `--story-length 2` 生成 2 话 8 格，`--story-length 12` 生成 12 话 48 格；未提供时由 LLM 根据剧情要求自主规划长度。添加 `--long-manga-batch-storyboard` 后，会在梗概确认后一次性生成全部长漫画分镜。
+CLI 使用 `--long-manga` 启用长篇漫画流程：先生成故事梗概并等待人工确认，再通过一次 LLM 请求批量生成全部分镜。使用 `--story-length` 可指定话数，每话固定 4 格：例如 `--story-length 2` 生成 2 话 8 格，`--story-length 12` 生成 12 话 48 格；未提供时由 LLM 根据剧情要求自主规划长度。旧的逐话生成方式仅供 CLI 兼容使用，需要显式添加 `--long-manga-episode-by-episode`。
 
 CLI 使用 `--four-panel-manga` 启用四格漫画流程：先生成多个四格故事候选，按编号选择后生成严格的四格分镜，再进入图片生成。
 
-Web 页面切换到“长漫画”后，可开启“使用剧情长度”和“批量生成分镜”；切换到“四格漫画”后，可生成候选并按编号选择。
+Web 页面切换到“长漫画”后，只提供批量分镜生成，并可选择是否启用“使用剧情长度”；切换到“四格漫画”后，可生成候选并按编号选择。
 
 不熟悉 CLI 参数时，可以打开 [`tools/cli-command-builder/index.html`](./tools/cli-command-builder/index.html)，通过可视化选项生成完整指令。该工具是零依赖的独立静态项目，不连接后端，也不会执行命令。
 
