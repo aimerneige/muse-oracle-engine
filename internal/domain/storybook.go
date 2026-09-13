@@ -20,6 +20,16 @@ type StoryboardPanel struct {
 	CharacterIDs []string `json:"character_ids,omitempty"` // optional per-panel character references
 }
 
+// StoryboardEpisodeScript is one episode of a standard storyboard.
+// Each episode holds exactly LongMangaPanelsPerEpisode panels and renders as one 9:16 four-panel image.
+type StoryboardEpisodeScript struct {
+	Episode      int               `json:"episode"`
+	Title        string            `json:"title"`
+	Summary      string            `json:"summary"`
+	CharacterIDs []string          `json:"character_ids"`
+	Panels       []StoryboardPanel `json:"panels"`
+}
+
 // Storyboard holds the output of storyboard generation (pipeline step 2).
 type Storyboard struct {
 	// Panels contains all panel descriptions, each ready to be sent to the image generator.

@@ -545,14 +545,14 @@ func applyMangaStateToProject(project *domain.Project, state *domain.LongMangaSt
 
 func parseLongMangaJSON[T any](response string) (T, error) {
 	var value T
-	payload := longMangaJSONPayload(response)
+	payload := jsonPayload(response)
 	if err := json.Unmarshal([]byte(payload), &value); err != nil {
 		return value, err
 	}
 	return value, nil
 }
 
-func longMangaJSONPayload(response string) string {
+func jsonPayload(response string) string {
 	payload := strings.TrimSpace(response)
 	blocks := mdutil.ExtractCodeBlocksWithFilter(response, "json")
 	if len(blocks) > 0 {
@@ -562,7 +562,7 @@ func longMangaJSONPayload(response string) string {
 }
 
 func parseLongMangaBatchStoryboard(response string, outline domain.LongMangaOutline, validCharacters map[string]struct{}) ([]domain.LongMangaEpisodeScript, error) {
-	payload := longMangaJSONPayload(response)
+	payload := jsonPayload(response)
 	var wrapped longMangaBatchStoryboardResponse
 	if err := json.Unmarshal([]byte(payload), &wrapped); err != nil {
 		var scripts []domain.LongMangaEpisodeScript

@@ -108,7 +108,7 @@ const workspaceMarkup = String.raw`
         <div class="card-head"><h3>分镜</h3></div>
         <div class="stage-actions"><button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button><button id="callLLMBtn" type="button">调用 LLM 生成分镜</button></div>
         <div class="prompt-field"><textarea id="storyboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成分镜 Prompt”生成给 LLM 使用的完整提示词。"></textarea><button id="copyStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div>
-        <label>LLM 原始输出<textarea id="rawStoryboard" class="code-area small" spellcheck="false" placeholder="将分镜 Prompt 交给 LLM 后，把返回的分镜结果粘贴到这里；API 可用时也可以由按钮自动填入。"></textarea></label>
+        <label>LLM 原始输出<textarea id="rawStoryboard" class="code-area small" spellcheck="false" placeholder="将分镜 Prompt 交给 LLM 后，把返回的 JSON 分镜结果粘贴到这里；API 可用时也可以由按钮自动填入。"></textarea></label>
         <div class="stage-actions result-actions"><button id="parseStoryboardBtn" type="button">解析 LLM 输出</button></div>
       </div>
       <div id="standardStepImagesPanel" class="flow-section">

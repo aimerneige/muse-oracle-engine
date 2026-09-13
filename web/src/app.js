@@ -1084,30 +1084,54 @@ import JSZip from "jszip";
 
   async function parseStoryboardFromRaw(skipImagePrompts) {
     syncProjectFromForm();
-    var blocks = extractCodeBlocks(state.project.rawStoryboard);
-    if (blocks.length === 0 && state.project.rawStoryboard.trim()) {
-      blocks = [state.project.rawStoryboard.trim()];
+    var episodes;
+    try {
+      episodes = normalizeStandardStoryboard(parseJSONBlock(state.project.rawStoryboard));
+    } catch (err) {
+      logError("Failed to parse storyboard", err);
+      return false;
     }
-    state.project.panels = blocks.map(function (content, index) {
+    state.project.panels = episodes.map(function (episode, index) {
       return {
         index: index + 1,
-        content: content,
-        characterIds: []
+        content: longMangaEpisodeContent(episode, false),
+        characterIds: episode.character_ids || []
       };
     });
-    state.project.status = blocks.length > 0 ? "storyboard_done" : state.project.status;
+    state.project.status = "storyboard_done";
     renderPanels();
     renderProjectStatus();
-    if (blocks.length > 0) {
-      if (!skipImagePrompts) {
-        await buildImagePrompts();
-      } else {
-        setStandardStep("images");
-      }
-      saveCurrentProject();
+    if (!skipImagePrompts) {
+      await buildImagePrompts();
+    } else {
+      setStandardStep("images");
     }
-    log("Parsed " + blocks.length + " storyboard block(s).");
-    return blocks.length > 0;
+    saveCurrentProject();
+    log("Parsed " + episodes.length + " storyboard episode(s).");
+    return true;
+  }
+
+  function normalizeStandardStoryboard(payload) {
+    var episodes = Array.isArray(payload) ? payload : payload && payload.episodes;
+    if (!Array.isArray(episodes) || episodes.length === 0) {
+      throw new Error("Storyboard contains no episodes.");
+    }
+    return episodes.map(function (episode, index) {
+      if (!episode || !Array.isArray(episode.panels)) {
+        throw new Error("Storyboard episode " + (index + 1) + " contains no panels.");
+      }
+      if (episode.panels.length !== 4) {
+        throw new Error("Storyboard episode " + (index + 1) + " must contain exactly 4 panels, got " + episode.panels.length + ".");
+      }
+      episode.episode = episode.episode || index + 1;
+      episode.panels = episode.panels.map(function (panel, panelIndex) {
+        return {
+          index: panel.index || panelIndex + 1,
+          content: panel.content || ""
+        };
+      });
+      return episode;
+    });
   }
 
   function renderPanels() {
@@ -2797,10 +2821,8 @@ import JSZip from "jszip";
   }
 
   function charactersForPanel(panel) {
-    if (!panel.characterIds || panel.characterIds.length === 0) {
-      return selectedCharacters();
-    }
-    return panel.characterIds.map(getCharacter).filter(Boolean);
+    var characters = (panel.characterIds || []).map(getCharacter).filter(Boolean);
+    return characters.length > 0 ? characters : selectedCharacters();
   }
 
   function getCharacter(fullID) {
@@ -2933,16 +2955,6 @@ import JSZip from "jszip";
       .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
       .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
       .toLowerCase();
-  }
-
-  function extractCodeBlocks(markdown) {
-    var blocks = [];
-    var re = /```[^\n]*\n([\s\S]*?)```/g;
-    var match;
-    while ((match = re.exec(markdown)) !== null) {
-      blocks.push(match[1].replace(/\n$/, ""));
-    }
-    return blocks;
   }
 
   function extractCodeBlocksWithLanguage(markdown, language) {
