@@ -224,10 +224,10 @@ import JSZip from "jszip";
       status: "draft",
       characterIds: [],
       plotHint: "",
-      storyLengthEnabled: false,
-      storyLength: 0,
+      storyLengthEnabled: true,
+      storyLength: 4,
       style: "watercolor",
-      storyMode: "standard",
+      storyMode: "long",
       language: "中文",
       storyboardPrompt: "",
       rawStoryboard: "",
@@ -238,7 +238,7 @@ import JSZip from "jszip";
       rawLongOutline: "",
       longOutline: null,
 	  selectedFourPanelStories: [],
-      longBatchStoryboardEnabled: false,
+      longBatchStoryboardEnabled: true,
       longBatchStoryboardPrompt: "",
       rawLongBatchStoryboard: "",
       longEpisodePrompts: [],
@@ -3286,8 +3286,11 @@ import JSZip from "jszip";
 
   function hydrateProject(project) {
     var hydrated = merge(defaultProject(), project);
-    if (project && !Object.prototype.hasOwnProperty.call(project, "storyLengthEnabled") && project.storyLength > 0) {
-      hydrated.storyLengthEnabled = true;
+    if (project && !Object.prototype.hasOwnProperty.call(project, "storyMode")) {
+      hydrated.storyMode = "standard";
+    }
+    if (project && !Object.prototype.hasOwnProperty.call(project, "storyLengthEnabled")) {
+      hydrated.storyLengthEnabled = project.storyLength > 0;
     }
     hydrated.longBatchStoryboardEnabled = hydrated.storyMode === "long";
     hydrated.images = [];
