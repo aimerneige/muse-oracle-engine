@@ -878,12 +878,10 @@ import JSZip from "jszip";
       return false;
     }
 
-    var style = getStyle(state.project.style);
     var prompt = renderTemplate(data.storybookTemplate, {
       Characters: characters,
       PlotHint: state.project.plotHint,
-      Language: normalizeLanguage(state.project.language),
-      StyleDescription: style.description
+      Language: normalizeLanguage(state.project.language)
     });
     if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.storyboardPrompt, "已有分镜 Prompt 会被覆盖。")) {
       return false;
@@ -1329,9 +1327,8 @@ import JSZip from "jszip";
 		log("Select at least one four-panel story candidate before building storyboard prompts.");
 		return false;
 	  }
-      var style = getStyle(state.project.style);
       var prompts = episodes.map(function (episode) {
-        return buildLongEpisodePromptItem(episode, fourPanelMode, style);
+        return buildLongEpisodePromptItem(episode, fourPanelMode);
       });
 	  if (options.confirmOverwrite !== false && !await confirmContentOverwrite(promptListContent(state.project.longEpisodePrompts), "已有分镜 Prompt 会被覆盖。")) {
         return false;
@@ -1360,7 +1357,7 @@ import JSZip from "jszip";
     return true;
   }
 
-  function buildLongEpisodePromptItem(episode, fourPanelMode, style) {
+  function buildLongEpisodePromptItem(episode, fourPanelMode) {
     var characters = resolveCharacters(episode.character_ids);
     return {
       episode: episode.episode,
@@ -1369,8 +1366,7 @@ import JSZip from "jszip";
         CharacterCostumes: costumeStatesForEpisode(episode.character_ids),
         FullOutline: state.project.longOutline,
         Episode: episode,
-        Language: normalizeLanguage(state.project.language),
-        StyleDescription: style.description
+        Language: normalizeLanguage(state.project.language)
       })
     };
   }
@@ -1378,7 +1374,6 @@ import JSZip from "jszip";
   function buildNextLongEpisodePrompt(options) {
     options = options || {};
     var episodes = orderedLongOutlineEpisodes();
-    var style = getStyle(state.project.style);
     for (var i = 0; i < episodes.length; i++) {
       var episode = episodes[i];
       if (findLongEpisode(episode.episode)) {
@@ -1398,7 +1393,7 @@ import JSZip from "jszip";
         }
         return null;
       }
-      var prompt = buildLongEpisodePromptItem(episode, false, style);
+      var prompt = buildLongEpisodePromptItem(episode, false);
       state.project.longEpisodePrompts.push(prompt);
       state.longMangaUI.activeEpisode = prompt.episode;
       return prompt;
@@ -1423,12 +1418,10 @@ import JSZip from "jszip";
     if (!state.project.longOutline && !parseLongOutlineFromRaw()) {
       return false;
     }
-    var style = getStyle(state.project.style);
     var prompt = renderTemplate(data.longBatchStoryboardTemplate, {
       Characters: selectedCharacters(),
       FullOutline: state.project.longOutline,
-      Language: normalizeLanguage(state.project.language),
-      StyleDescription: style.description
+      Language: normalizeLanguage(state.project.language)
     });
 	if (options.confirmOverwrite !== false && !await confirmContentOverwrite(state.project.longBatchStoryboardPrompt, "已有批量分镜 Prompt 会被覆盖。")) {
       return false;
@@ -2828,12 +2821,6 @@ import JSZip from "jszip";
     return Object.keys(byID).sort().map(function (fullID) {
       return byID[fullID];
     });
-  }
-
-  function getStyle(styleID) {
-    return data.styles.find(function (style) {
-      return style.id === styleID;
-    }) || data.styles[0];
   }
 
   function buildCharacterSetting(characters) {

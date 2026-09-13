@@ -245,17 +245,12 @@ func (s *LongMangaService) generateEpisodeScriptForMode(ctx context.Context, pro
 		return domain.LongMangaEpisodeScript{}, fmt.Errorf("episode %d not found in confirmed outline", episodeNumber)
 	}
 
-	styleDescription, err := storyboardStyleDescription(project.Style)
-	if err != nil {
-		return domain.LongMangaEpisodeScript{}, err
-	}
-
 	characters, err := resolveEpisodeCharacters(project.Characters, episode.CharacterIDs)
 	if err != nil {
 		return domain.LongMangaEpisodeScript{}, err
 	}
 
-	promptText, err := s.renderEpisodePrompt(project, state, episode, characters, styleDescription, mode)
+	promptText, err := s.renderEpisodePrompt(project, state, episode, characters, mode)
 	if err != nil {
 		return domain.LongMangaEpisodeScript{}, fmt.Errorf("failed to render %s storyboard prompt: %w", mode, err)
 	}
@@ -323,13 +318,12 @@ func validateFourPanelScript(script domain.LongMangaEpisodeScript) error {
 	return nil
 }
 
-func (s *LongMangaService) renderEpisodePrompt(project *domain.Project, state *domain.LongMangaState, episode domain.LongMangaEpisodeOutline, characters []domain.Character, styleDescription string, mode mangaGenerationMode) (string, error) {
+func (s *LongMangaService) renderEpisodePrompt(project *domain.Project, state *domain.LongMangaState, episode domain.LongMangaEpisodeOutline, characters []domain.Character, mode mangaGenerationMode) (string, error) {
 	if mode == fourPanelGenerationMode {
 		return s.promptEngine.RenderFourPanelStoryboard(prompt.FourPanelStoryboardData{
-			Characters:       characters,
-			Episode:          episode,
-			Language:         domain.NormalizeLanguage(project.Language),
-			StyleDescription: styleDescription,
+			Characters: characters,
+			Episode:    episode,
+			Language:   domain.NormalizeLanguage(project.Language),
 		})
 	}
 	return s.promptEngine.RenderLongMangaEpisode(prompt.LongMangaEpisodeData{
@@ -338,7 +332,6 @@ func (s *LongMangaService) renderEpisodePrompt(project *domain.Project, state *d
 		FullOutline:       *state.ConfirmedOutline,
 		Episode:           episode,
 		Language:          domain.NormalizeLanguage(project.Language),
-		StyleDescription:  styleDescription,
 	})
 }
 
@@ -364,15 +357,10 @@ func (s *LongMangaService) GenerateAllEpisodesBatch(ctx context.Context, project
 		return nil
 	}
 
-	styleDescription, err := storyboardStyleDescription(project.Style)
-	if err != nil {
-		return err
-	}
 	promptText, err := s.promptEngine.RenderLongMangaBatchStoryboard(prompt.LongMangaBatchStoryboardData{
-		Characters:       project.Characters,
-		FullOutline:      *state.ConfirmedOutline,
-		Language:         domain.NormalizeLanguage(project.Language),
-		StyleDescription: styleDescription,
+		Characters:  project.Characters,
+		FullOutline: *state.ConfirmedOutline,
+		Language:    domain.NormalizeLanguage(project.Language),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to render long manga batch storyboard prompt: %w", err)

@@ -38,10 +38,9 @@ func NewEngine() (*Engine, error) {
 
 // StorybookData contains the data needed to render the storybook generation prompt.
 type StorybookData struct {
-	Characters       []domain.Character
-	PlotHint         string
-	Language         string
-	StyleDescription string
+	Characters []domain.Character
+	PlotHint   string
+	Language   string
 }
 
 // LongMangaOutlineData contains data for the first multi-round outline prompt.
@@ -60,15 +59,13 @@ type LongMangaEpisodeData struct {
 	FullOutline       domain.LongMangaOutline
 	Episode           domain.LongMangaEpisodeOutline
 	Language          string
-	StyleDescription  string
 }
 
 // LongMangaBatchStoryboardData contains data for one-shot long manga storyboard generation.
 type LongMangaBatchStoryboardData struct {
-	Characters       []domain.Character
-	FullOutline      domain.LongMangaOutline
-	Language         string
-	StyleDescription string
+	Characters  []domain.Character
+	FullOutline domain.LongMangaOutline
+	Language    string
 }
 
 // FourPanelOutlineData contains data for the four-panel story candidate prompt.
@@ -80,10 +77,9 @@ type FourPanelOutlineData struct {
 
 // FourPanelStoryboardData contains data for one selected four-panel story prompt.
 type FourPanelStoryboardData struct {
-	Characters       []domain.Character
-	Episode          domain.LongMangaEpisodeOutline
-	Language         string
-	StyleDescription string
+	Characters []domain.Character
+	Episode    domain.LongMangaEpisodeOutline
+	Language   string
 }
 
 // RenderStorybook renders the storybook generation prompt with character data and plot hint.

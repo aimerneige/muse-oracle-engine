@@ -7,31 +7,6 @@ import (
 	"github.com/aimerneige/muse-oracle-engine/internal/domain"
 )
 
-func TestRenderStorybookIncludesStyleDescription(t *testing.T) {
-	t.Parallel()
-
-	engine, err := NewEngine()
-	if err != nil {
-		t.Fatalf("failed to create prompt engine: %v", err)
-	}
-
-	description := "水彩画风格，柔和色调与纸张质感"
-	got, err := engine.RenderStorybook(StorybookData{
-		StyleDescription: description,
-		PlotHint:         "温馨日常",
-	})
-	if err != nil {
-		t.Fatalf("RenderStorybook returned error: %v", err)
-	}
-
-	if !strings.Contains(got, "## 画风设计参考：") {
-		t.Fatal("expected storybook prompt to contain style reference section")
-	}
-	if !strings.Contains(got, description) {
-		t.Fatalf("expected storybook prompt to contain style description %q", description)
-	}
-}
-
 func TestRenderStorybookIncludesDialogueLanguage(t *testing.T) {
 	t.Parallel()
 
@@ -165,7 +140,6 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 			Summary:      "确认计划",
 			CharacterIDs: []string{"lovelive/honoka"},
 		},
-		StyleDescription: "水彩画风格",
 	})
 	if err != nil {
 		t.Fatalf("RenderLongMangaEpisode returned error: %v", err)
@@ -194,7 +168,6 @@ func TestRenderLongMangaPromptsUseSeparateJSONFlow(t *testing.T) {
 				{Episode: 1, Title: "晨间约定", Summary: "确认计划", CharacterIDs: []string{"lovelive/honoka"}},
 			},
 		},
-		StyleDescription: "水彩画风格",
 	})
 	if err != nil {
 		t.Fatalf("RenderLongMangaBatchStoryboard returned error: %v", err)
@@ -235,8 +208,7 @@ func TestRenderFourPanelPrompts(t *testing.T) {
 		Episode: domain.LongMangaEpisodeOutline{
 			Episode: 1, Title: "点心危机", Summary: "起承转合", CharacterIDs: []string{"lovelive/honoka"},
 		},
-		Language:         "中文",
-		StyleDescription: "水彩风格",
+		Language: "中文",
 	})
 	if err != nil {
 		t.Fatalf("failed to render four-panel storyboard prompt: %v", err)
