@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { getInitialLocale, locales, setDocumentLocale } from "./i18n";
 
 const locale = getInitialLocale();
@@ -24,7 +24,22 @@ applyThemeMode(getInitialThemeMode());
 
 const workspaceMarkup = String.raw`
 <main class="layout">
-  <aside class="sidebar">
+  <nav class="studio-nav" aria-label="创作流程">
+    <div class="studio-wordmark">MUSE <span>STUDIO</span></div>
+    <p class="nav-caption">你的漫画工作台</p>
+    <button type="button" data-studio-step="setup"><span class="step-number">01</span><span>创意设定<small>角色、画风与故事灵感</small></span></button>
+    <button type="button" data-studio-step="story"><span class="step-number">02</span><span>剧情分镜<small>把灵感变成画面脚本</small></span></button>
+    <button type="button" data-studio-step="images"><span class="step-number">03</span><span>图片成稿<small>生成、检查与导出</small></span></button>
+    <div class="nav-tools">
+      <button type="button" data-studio-tool="settings">模型设置 <span>↗</span></button>
+      <button type="button" data-studio-tool="history">项目历史 <span>↗</span></button>
+      <button type="button" data-studio-tool="logs">运行日志 <span>↗</span></button>
+    </div>
+    <p class="local-note">创作保存在此浏览器<br>请及时导出重要作品</p>
+  </nav>
+  <dialog id="studioToolsDialog" class="studio-tools-dialog">
+    <div class="panel-title"><h2 id="studioToolTitle">模型设置</h2><button id="closeStudioToolsBtn" type="button" aria-label="关闭">×</button></div>
+    <div class="sidebar">
     <section id="settingsPanel" class="panel collapsed">
       <div class="panel-title">
         <h2>设置</h2>
@@ -48,24 +63,25 @@ const workspaceMarkup = String.raw`
         <label id="geminiImageSizeWrap">Gemini 图片尺寸<select id="geminiImageSize"></select></label>
       </div>
     </section>
-    <section class="panel log-panel">
+    <section class="panel log-panel" data-tool-panel="logs">
       <div class="panel-title"><h2>日志</h2><button id="clearLogBtn" type="button">清空</button></div>
       <pre id="logOutput" class="log-output"></pre>
     </section>
-    <section class="panel">
+    <section class="panel" data-tool-panel="history">
       <div class="panel-title"><h2>历史</h2><button id="clearHistoryBtn" type="button">清空</button></div>
       <div id="historyList" class="history-list"></div>
     </section>
-  </aside>
+    </div>
+  </dialog>
 
   <section class="workspace">
-    <section class="notice-card" role="status">
-      <h2>Gemini 文本调用实验性恢复</h2>
-      <p>当前版本优先恢复 Gemini LLM 分镜与梗概生成。你仍然可以手动复制 Prompt、粘贴结果并导出 JSON。</p>
-    </section>
+    <header class="studio-heading"><div><p class="eyebrow" id="studioEyebrow">从一个灵感开始</p><h2 id="studioTitle">今天，想画一个怎样的故事？</h2><p id="studioDescription">选择主角，写下灵感。接下来，我们一起把它变成漫画。</p></div><span class="studio-mark" aria-hidden="true">✳</span></header>
+    <div id="studioFeedback" class="studio-feedback" role="status" aria-live="polite" hidden></div>
 
     <section class="panel project-panel">
-      <div class="panel-title"><h2>项目</h2><span id="projectStatus" class="status-pill">草稿</span></div>
+      <div class="panel-title"><h2>故事设定</h2><span id="projectStatus" class="status-pill">草稿</span></div>
+      <label class="plot-field">你的故事灵感<textarea id="plotHint" rows="4" placeholder="谁，在什么地方，发生了什么？例如：放学后的雨天，两个人共撑一把伞，却都悄悄把伞偏向对方。"></textarea></label>
+      <div class="inspiration-actions"><span>试试这些灵感</span><button type="button" data-inspiration="雨天共伞">雨天共伞</button><button type="button" data-inspiration="意外的礼物">意外的礼物</button><button type="button" data-inspiration="冒险的开端">冒险的开端</button></div>
       <div class="character-settings-head">
         <div>
           <h3>角色设定</h3>
@@ -90,7 +106,6 @@ const workspaceMarkup = String.raw`
       <div id="characterList" class="character-list"></div>
       <div class="character-list-head"><h3>已选角色</h3></div>
       <div id="selectedCharacters" class="selected-list"></div>
-      <label>剧情要求<textarea id="plotHint" rows="5" placeholder="例如：二人在学校里的温馨日常，发糖向，轻百合向"></textarea></label>
     </section>
 
     <section id="workStatus" class="work-status is-hidden" role="status" aria-live="polite">
@@ -161,6 +176,7 @@ const workspaceMarkup = String.raw`
         <div class="stage-actions result-actions"><button id="exportLongImagePromptsBtn" type="button">导出图片 Prompt</button></div>
       </div>
     </section>
+    <footer class="studio-footer"><div><strong id="studioProgress">先完成故事设定</strong><p id="studioProgressHint">选好角色后，进入分镜创作。</p></div><div class="inline-actions"><button id="studioBackBtn" type="button">上一步</button><button id="studioNextBtn" class="primary" type="button">开始分镜 →</button></div></footer>
   </section>
 </main>
 
@@ -191,6 +207,11 @@ const workspaceMarkup = String.raw`
   </form>
 </dialog>`;
 
+// The generation engine owns this DOM subtree. Theme changes must not replace it.
+const Workspace = memo(function Workspace() {
+  return <div dangerouslySetInnerHTML={{ __html: workspaceMarkup }} />;
+});
+
 function GithubIcon() {
   return (
     <svg className="button-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -220,8 +241,8 @@ export default function App() {
     <>
       <header className="app-header">
         <div>
-          <h1>{t.app.title}</h1>
-          <p>{t.app.subtitle}</p>
+          <h1>Muse Oracle <span className="header-studio">/ Studio</span></h1>
+          <p>{locale === "zh-CN" ? "让故事，发生。" : "Make your story happen."}</p>
         </div>
         <div className="header-actions">
           <label className="locale-control">
@@ -243,13 +264,13 @@ export default function App() {
             <GithubIcon />
             {t.app.repository}
           </a>
-          <button id="fullAutoBtn" type="button" className="primary">{t.app.fullAuto}</button>
+          <button id="fullAutoBtn" type="button">{t.app.fullAuto}</button>
           <button id="continueAutoBtn" type="button">继续</button>
           <button id="saveProjectBtn" type="button">{t.app.saveProject}</button>
           <button id="newProjectBtn" type="button">{t.app.newProject}</button>
         </div>
       </header>
-      <div dangerouslySetInnerHTML={{ __html: workspaceMarkup }} />
+      <Workspace />
     </>
   );
 }

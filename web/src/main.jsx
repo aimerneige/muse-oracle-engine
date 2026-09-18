@@ -4,6 +4,7 @@ import App from "./App";
 import { getInitialLocale } from "./i18n";
 import { startDOMTranslations } from "./i18n/dom";
 import "./styles.css";
+import "./studio.css";
 import "./generated/data.js";
 
 flushSync(function () {
