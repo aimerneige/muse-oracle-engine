@@ -33,6 +33,130 @@ import JSZip from "jszip";
   var workspaceActionDisabledSnapshot = null;
   var workspaceActionsBusy = false;
   var aiAbortController = null;
+  var studioStep = "setup";
+
+  function studioText(zh, en) {
+    return document.documentElement.lang === "zh-CN" ? zh : en;
+  }
+
+  function studioFeedback(message) {
+    var target = document.getElementById("studioFeedback");
+    target.textContent = message;
+    target.hidden = !message;
+  }
+
+  function openStudioTool(tool) {
+    var dialog = document.getElementById("studioToolsDialog");
+    els.settingsPanel.hidden = tool !== "settings";
+    dialog.querySelectorAll("[data-tool-panel]").forEach(function (panel) {
+      panel.hidden = panel.dataset.toolPanel !== tool;
+    });
+    document.getElementById("studioToolTitle").textContent = {
+      settings: studioText("模型设置", "Model settings"),
+      history: studioText("项目历史", "Project history"),
+      logs: studioText("运行日志", "Activity log")
+    }[tool];
+    if (tool === "settings") setSettingsCollapsed(false);
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function navigateStudio(step) {
+    if (workspaceActionsBusy || aiAbortController) {
+      studioFeedback(studioText("生成正在进行，你可以等待完成或停止任务。", "Generation is running. Wait for it to finish or stop the task."));
+      return;
+    }
+    syncProjectFromForm();
+    if (step !== "setup" && (!state.project.characterIds.length || !state.project.plotHint)) {
+      studioStep = "setup";
+      renderStudio();
+      studioFeedback(studioText("请先选择至少一位角色，并写下故事灵感。", "Choose at least one character and describe your story first."));
+      els.plotHint.focus();
+      return;
+    }
+    if (step === "images" && !state.project.panels.length) {
+      studioFeedback(studioText("先生成或粘贴分镜结果并解析，再进入图片成稿。", "Generate or paste a storyboard and parse it before creating images."));
+      return;
+    }
+    studioFeedback("");
+    studioStep = step;
+    if (step !== "setup") {
+      if (state.project.storyMode === "standard") {
+        state.standardUI.step = step === "images" ? "images" : "prompt";
+        renderStandardFlow();
+      } else {
+        state.longMangaUI.step = step === "images" ? "images" : (state.project.longOutline ? "episodes" : "outline");
+        renderLongManga();
+      }
+    }
+    renderStudio();
+    document.getElementById("studioTitle").focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderStudio() {
+    var layout = document.querySelector(".layout");
+    if (!layout) return;
+    layout.dataset.step = studioStep;
+    var copy = {
+      setup: [studioText("从一个灵感开始", "EVERY STORY STARTS HERE"), studioText("今天，想画一个怎样的故事？", "What story will you tell today?"), studioText("选择主角，写下灵感。接下来，我们一起把它变成漫画。", "Choose your cast and capture an idea. Let's turn it into a comic.")],
+      story: [studioText("让故事逐格展开", "GIVE YOUR STORY SHAPE"), studioText("把灵感，变成分镜。", "Bring your scenes to life."), studioText("使用模型生成，或展开提示词交给其他工具，再粘贴结果解析。", "Generate with your model, or open the prompt, use another tool and paste the result.")],
+      images: [studioText("属于你的漫画，即将登场", "FROM SCRIPT TO COMIC"), studioText("让每一格，都有画面。", "Make every panel count."), studioText("检查分镜，生成图片提示词，然后绘制并导出你的作品。", "Review the storyboard, prepare image prompts, then generate and export your comic.")]
+    }[studioStep];
+    ["studioEyebrow", "studioTitle", "studioDescription"].forEach(function (id, index) {
+      document.getElementById(id).textContent = copy[index];
+    });
+    document.querySelectorAll("[data-studio-step]").forEach(function (button) {
+      if (button.dataset.studioStep === studioStep) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    });
+    document.getElementById("studioBackBtn").hidden = studioStep === "setup";
+    document.getElementById("studioNextBtn").textContent = studioStep === "setup" ? studioText("开始分镜 →", "Create storyboard →") : studioStep === "story" ? studioText("进入图片成稿 →", "Create images →") : studioText("导出项目 JSON", "Export project JSON");
+    if (studioStep === "story" && state.project.storyMode !== "standard" && state.longMangaUI.step === "outline") {
+      document.getElementById("studioNextBtn").textContent = studioText("确认梗概，进入分镜 →", "Confirm outline →");
+    }
+    document.getElementById("studioProgress").textContent = studioText("已选 " + state.project.characterIds.length + " 位角色 · " + state.project.panels.length + " 格分镜", state.project.characterIds.length + " characters · " + state.project.panels.length + " panels");
+    document.getElementById("studioProgressHint").textContent = studioText("草稿自动保存在当前浏览器；图片请单独下载。", "Drafts save in this browser. Download generated images separately.");
+  }
+
+  function initStudio() {
+    document.getElementById("studioTitle").tabIndex = -1;
+    document.querySelectorAll("[data-studio-step]").forEach(function (button) {
+      button.addEventListener("click", function () { navigateStudio(button.dataset.studioStep); });
+    });
+    document.querySelectorAll("[data-studio-tool]").forEach(function (button) {
+      button.addEventListener("click", function () { openStudioTool(button.dataset.studioTool); });
+    });
+    document.getElementById("closeStudioToolsBtn").addEventListener("click", function () { document.getElementById("studioToolsDialog").close(); });
+    document.getElementById("studioBackBtn").addEventListener("click", function () { navigateStudio(studioStep === "images" ? "story" : "setup"); });
+    document.getElementById("studioNextBtn").addEventListener("click", function () {
+      if (studioStep === "images") downloadProject();
+      else if (studioStep === "story" && state.project.storyMode !== "standard") {
+        if (workspaceActionsBusy || aiAbortController) return;
+        if (state.longMangaUI.step === "outline") goToLongEpisodesStep();
+        else goToLongImagesStep();
+      }
+      else navigateStudio(studioStep === "setup" ? "story" : "images");
+    });
+    document.querySelectorAll("[data-inspiration]").forEach(function (button, index) {
+      button.addEventListener("click", function () {
+        var ideas = [studioText("放学后的雨天，两个人共撑一把伞，却都悄悄把伞偏向对方。", "After school, two friends share an umbrella, each secretly tilting it toward the other."), studioText("一份送错的礼物，引发了一连串误会，最后却成为最温暖的惊喜。", "A gift delivered to the wrong person leads to misunderstandings and an unexpectedly warm surprise."), studioText("整理旧物时发现一张神秘地图，两位伙伴决定踏上一次小小的冒险。", "Two friends discover a mysterious map while sorting old belongings and set off on a little adventure.")];
+        if (els.plotHint.value.trim() && !window.confirm(studioText("用这个灵感替换当前剧情要求？", "Replace your current story idea?"))) return;
+        els.plotHint.value = ideas[index];
+        syncProjectFromForm();
+        els.plotHint.focus();
+      });
+    });
+    document.querySelectorAll(".prompt-field").forEach(function (field) {
+      var details = document.createElement("details");
+      details.className = "prompt-details";
+      var summary = document.createElement("summary");
+      summary.textContent = studioText("查看 / 复制提示词 · 手动工作流", "View / copy prompt · manual workflow");
+      field.before(details);
+      details.append(summary, field);
+    });
+    document.querySelectorAll("#callLLMBtn, #callLongOutlineBtn, #callLongEpisodesBtn").forEach(function (button) { button.classList.add("primary"); });
+    renderStudio();
+  }
 
   function startAbortable() {
     aiAbortController = new AbortController();
@@ -63,6 +187,7 @@ import JSZip from "jszip";
     bindEvents();
     hydrateControls();
     renderAll();
+    initStudio();
     log("Ready. Static app loaded with " + effectiveCharacters().length + " characters and " + data.styles.length + " styles.");
   }
 
@@ -180,7 +305,7 @@ import JSZip from "jszip";
       setLongMangaStep("outline");
     });
     els.longStepEpisodesTab.addEventListener("click", function () {
-      setLongMangaStep("episodes");
+      goToLongEpisodesStep();
     });
     els.longStepImagesTab.addEventListener("click", function () {
       setLongMangaStep("images");
@@ -432,6 +557,8 @@ import JSZip from "jszip";
     };
     localStorage.setItem(settingsKey, JSON.stringify(state.settings));
     setSettingsCollapsed(true);
+    document.getElementById("studioToolsDialog").close();
+    studioFeedback(studioText("模型设置已保存，可以开始生成。", "Model settings saved. You can start generating."));
     log("Settings saved locally.");
   }
 
@@ -451,6 +578,7 @@ import JSZip from "jszip";
     state.project.rawLongBatchStoryboard = els.rawLongBatchStoryboard.value;
     state.project.updatedAt = new Date().toISOString();
     renderProjectStatus();
+    autoSaveProject();
   }
 
   function updateRawStoryboardFromInput() {
@@ -483,10 +611,11 @@ import JSZip from "jszip";
   }
 
   function autoSaveProject() {
-    if (!state.projectSaved) {
-      return;
+    try {
+      persistProject();
+    } catch (err) {
+      studioFeedback(studioText("浏览器保存失败，请导出项目备份：", "Browser storage failed. Export a backup: ") + readableError(err));
     }
-    persistProject();
   }
 
   function persistProject() {
@@ -502,6 +631,12 @@ import JSZip from "jszip";
   }
 
   function newProject() {
+    if (workspaceActionsBusy || aiAbortController) return;
+    if (!window.confirm(studioText("开始新项目？当前草稿会保留在项目历史中。", "Start a new project? Your draft will remain in project history."))) return;
+    saveCurrentProject();
+    studioStep = "setup";
+    state.standardUI.step = "prompt";
+    state.longMangaUI.step = "outline";
     state.project = defaultProject();
     state.projectSaved = false;
     applyProjectToForm();
@@ -511,6 +646,7 @@ import JSZip from "jszip";
   }
 
   function clearHistory() {
+    if (!window.confirm(studioText("清空所有项目历史？此操作无法撤销，当前项目不受影响。", "Clear all project history? This cannot be undone. Your current project is kept."))) return;
     localStorage.setItem(historyKey, "[]");
     renderHistory();
     log("History cleared.");
@@ -529,6 +665,7 @@ import JSZip from "jszip";
     renderHistory();
     renderLogs();
     renderSettingsPanel();
+    renderStudio();
   }
 
   function toggleSettingsPanel() {
@@ -548,7 +685,9 @@ import JSZip from "jszip";
 
   function setStandardStep(step) {
     state.standardUI.step = step;
+    studioStep = step === "images" ? "images" : "story";
     renderStandardFlow();
+    renderStudio();
   }
 
   function renderStandardFlow() {
@@ -561,7 +700,9 @@ import JSZip from "jszip";
 
   function setLongMangaStep(step) {
     state.longMangaUI.step = step;
+    studioStep = step === "images" ? "images" : "story";
     renderLongManga();
+    renderStudio();
   }
 
   function setActiveLongEpisode(episodeNumber) {
@@ -597,7 +738,7 @@ import JSZip from "jszip";
       }
       applyLongEpisodesToPanels();
       renderPanels();
-      await buildLongImagePromptsStep();
+      if (!state.project.imagePrompts.length && !await buildLongImagePromptsStep()) return false;
     }
     setLongMangaStep("images");
     log("Moved to long manga image prompts.");
@@ -626,6 +767,7 @@ import JSZip from "jszip";
 
   function renderProjectStatus() {
     els.projectStatus.textContent = state.project.status || "draft";
+    renderStudio();
   }
 
   function updateRouteUI() {
@@ -682,6 +824,7 @@ import JSZip from "jszip";
       var button = document.createElement("button");
       button.type = "button";
       button.className = "character-chip" + (selected.has(fullID) ? " selected" : "");
+      button.setAttribute("aria-pressed", String(selected.has(fullID)));
       button.textContent = character.name + " / " + character.id;
       button.title = fullID;
       button.addEventListener("click", function () {
@@ -859,6 +1002,8 @@ import JSZip from "jszip";
     state.project.updatedAt = new Date().toISOString();
     renderCharacters();
     renderSelectedCharacters();
+    renderStudio();
+    autoSaveProject();
   }
 
   async function buildStoryboardPrompt(options) {
@@ -1665,6 +1810,7 @@ import JSZip from "jszip";
     els.longStepOutlinePanel.classList.toggle("is-hidden", step !== "outline");
     els.longStepEpisodesPanel.classList.toggle("is-hidden", step !== "episodes");
     els.longStepImagesPanel.classList.toggle("is-hidden", step !== "images");
+    renderStudio();
   }
 
   function renderLongOutlineSummary() {
@@ -1868,6 +2014,8 @@ import JSZip from "jszip";
       return;
     }
     textarea.value = value;
+    var details = textarea.closest("details");
+    if (details && value) details.open = true;
     scrollPromptToEnd(textarea);
   }
 
@@ -2216,6 +2364,9 @@ import JSZip from "jszip";
   }
 
   async function runFullAuto() {
+    if (aiAbortController || workspaceActionsBusy) return;
+    navigateStudio("story");
+    if (studioStep !== "story") return;
     setBusy(els.fullAutoBtn, true);
     setWorkspaceActionsBusy(true);
     showWorkStatus("全自动流程正在运行...");
@@ -2288,6 +2439,9 @@ import JSZip from "jszip";
   }
 
   async function continueAuto() {
+    if (aiAbortController || workspaceActionsBusy) return;
+    navigateStudio("story");
+    if (studioStep !== "story") return;
     setBusy(els.continueAutoBtn, true);
     setWorkspaceActionsBusy(true);
     showWorkStatus("继续流程...");
@@ -2527,11 +2681,15 @@ import JSZip from "jszip";
       button.type = "button";
       button.textContent = (item.plotHint || "未命名项目").slice(0, 46);
       button.addEventListener("click", function () {
+        if (workspaceActionsBusy) return;
+        saveCurrentProject();
         state.project = hydrateProject(item);
         state.projectSaved = true;
+        studioStep = "setup";
         applyProjectToForm();
         renderAll();
         autoSaveProject();
+        document.getElementById("studioToolsDialog").close();
         log("Loaded project: " + item.id);
       });
       var meta = document.createElement("span");
@@ -2553,6 +2711,7 @@ import JSZip from "jszip";
 
   function logError(prefix, err) {
     log(prefix + ": " + readableError(err));
+    studioFeedback(prefix + ": " + readableError(err));
   }
 
   function parseJSONBlock(text) {
@@ -3182,6 +3341,7 @@ import JSZip from "jszip";
     var message = "请先在设置中补全：" + missing.join("、") + "。";
     log(message);
     setSettingsCollapsed(false);
+    openStudioTool("settings");
     showAPIConfigDialog(title, message);
     return false;
   }
