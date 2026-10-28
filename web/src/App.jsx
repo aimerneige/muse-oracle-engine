@@ -25,7 +25,7 @@ applyThemeMode(getInitialThemeMode());
 const workspaceMarkup = String.raw`
 <main class="layout">
   <nav class="studio-nav" aria-label="创作流程">
-    <div class="studio-wordmark">MUSE <span>STUDIO</span></div>
+    <div class="studio-wordmark">LoveLive <span>4-koma Engine</span></div>
     <p class="nav-caption">你的漫画工作台</p>
     <button type="button" data-studio-step="setup"><span class="step-number">01</span><span>创意设定<small>角色、画风与故事灵感</small></span></button>
     <button type="button" data-studio-step="story"><span class="step-number">02</span><span>剧情分镜<small>把灵感变成画面脚本</small></span></button>
@@ -241,7 +241,7 @@ export default function App() {
     <>
       <header className="app-header">
         <div>
-          <h1>Muse Oracle <span className="header-studio">/ Studio</span></h1>
+          <h1>{t.app.title}</h1>
           <p>{locale === "zh-CN" ? "让故事，发生。" : "Make your story happen."}</p>
         </div>
         <div className="header-actions">

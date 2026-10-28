@@ -19,7 +19,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 button.primary { padding-inline: 20px; }
 .app-header { padding: 16px 32px; min-height: 86px; gap: 24px; }
 .app-header h1 { font-size: 19px; letter-spacing: -.6px; white-space: nowrap; }
-.header-studio { color: var(--muted); font-weight: 400; }
 .app-header p { font-size: 12px; }
 .header-actions { align-items: center; justify-content: flex-end; gap: 8px; }
 .header-actions .button-link { width: 42px; overflow: hidden; font-size: 0; }
@@ -29,7 +28,7 @@ button.primary { padding-inline: 20px; }
 .layout { max-width: 1600px; margin: auto; grid-template-columns: 230px minmax(0, 1fr); padding: 0; gap: 0; }
 .studio-nav { position: sticky; top: 0; align-self: start; height: calc(100dvh - 86px); padding: 36px 22px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
 .studio-wordmark { font-size: 22px; letter-spacing: 3px; font-weight: 800; padding: 0 10px; }
-.studio-wordmark span { font-size: 10px; letter-spacing: 2px; color: var(--muted); }
+.studio-wordmark span { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 2px; color: var(--muted); }
 .nav-caption { color: var(--muted); padding: 0 10px; margin: 0 0 26px; font-size: 12px; }
 .studio-nav > button { display: flex; align-items: center; gap: 13px; text-align: left; padding: 15px 10px; background: transparent; border-color: transparent; }
 .studio-nav button small { display: block; color: var(--muted); font-size: 11px; margin-top: 6px; font-weight: 400; }

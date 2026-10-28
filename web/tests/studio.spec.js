@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 
 async function setupStory(page, mode = "standard") {
   await page.goto("/");
+  await expect(page).toHaveTitle("LoveLive 4-koma Engine");
+  await expect(page.locator(".app-header h1")).toHaveText("LoveLive 4-koma Engine");
   await page.locator("#plotHint").fill("放学后，两个人一起去寻找遗失的礼物。");
   await page.locator(".character-chip").first().click();
   await page.locator("#storyMode").selectOption(mode);
