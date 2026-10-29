@@ -1,276 +1,398 @@
-import { memo, useEffect, useState } from "react";
-import { getInitialLocale, locales, setDocumentLocale } from "./i18n";
+import AppHeader from "./components/AppHeader.jsx";
+import Stepper from "./components/Stepper.jsx";
+import ActionBar from "./components/ActionBar.jsx";
+import { useEffect, useState } from "react";
+import { ProjectProvider, useProject } from "./store/ProjectStore.jsx";
+import { LocaleProvider, useLocale } from "./i18n/LocaleProvider.jsx";
+import {
+  stepsFor,
+  canEnter,
+  setupReady,
+  storyboardReady,
+  configured,
+  recoveredStep,
+} from "./store/selectors.js";
+import { runPipeline } from "./store/pipeline.js";
+import { buildImages } from "./store/actions.js";
+import {
+  keys,
+  readJSON,
+  writeJSON,
+  hydrateProject,
+} from "./engine/storage.js";
+import {
+  normalizeCharacterSetting,
+  upsertCharacterSettings,
+} from "./engine/characters.js";
+import { downloadJSON } from "./engine/exporters.js";
+import SetupStep from "./steps/SetupStep.jsx";
+import OutlineStep from "./steps/OutlineStep.jsx";
+import StoryboardStep from "./steps/StoryboardStep.jsx";
+import ArtworkStep from "./steps/ArtworkStep.jsx";
+import SettingsDialog from "./components/SettingsDialog.jsx";
+import CharacterEditorDialog from "./components/CharacterEditorDialog.jsx";
+import Dialog from "./components/Dialog.jsx";
 
-const locale = getInitialLocale();
-setDocumentLocale(locale);
-const t = locales[locale];
-const themeStorageKey = "lovelive-engine-web-theme";
-const themeModes = ["system", "light", "dark"];
-
-function getInitialThemeMode() {
-  var saved = localStorage.getItem(themeStorageKey);
-  return themeModes.indexOf(saved) === -1 ? "system" : saved;
-}
-
-function applyThemeMode(mode) {
-  if (mode === "system") {
-    document.documentElement.removeAttribute("data-theme");
-    return;
-  }
-  document.documentElement.dataset.theme = mode;
-}
-
-applyThemeMode(getInitialThemeMode());
-
-const workspaceMarkup = String.raw`
-<main class="layout">
-  <nav class="studio-nav" aria-label="创作流程">
-    <div class="studio-wordmark">LoveLive <span>4-koma Engine</span></div>
-    <p class="nav-caption">你的漫画工作台</p>
-    <button type="button" data-studio-step="setup"><span class="step-number">01</span><span>创意设定<small>角色、画风与故事灵感</small></span></button>
-    <button type="button" data-studio-step="story"><span class="step-number">02</span><span>剧情分镜<small>把灵感变成画面脚本</small></span></button>
-    <button type="button" data-studio-step="images"><span class="step-number">03</span><span>图片成稿<small>生成、检查与导出</small></span></button>
-    <div class="nav-tools">
-      <button type="button" data-studio-tool="settings">模型设置 <span>↗</span></button>
-      <button type="button" data-studio-tool="history">项目历史 <span>↗</span></button>
-      <button type="button" data-studio-tool="logs">运行日志 <span>↗</span></button>
-    </div>
-    <p class="local-note">创作保存在此浏览器<br>请及时导出重要作品</p>
-  </nav>
-  <dialog id="studioToolsDialog" class="studio-tools-dialog">
-    <div class="panel-title"><h2 id="studioToolTitle">模型设置</h2><button id="closeStudioToolsBtn" type="button" aria-label="关闭">×</button></div>
-    <div class="sidebar">
-    <section id="settingsPanel" class="panel collapsed">
-      <div class="panel-title">
-        <h2>设置</h2>
-        <div class="panel-actions">
-          <button id="settingsToggleBtn" type="button" aria-expanded="false">展开</button>
-          <button id="saveSettingsBtn" type="button">保存</button>
-        </div>
-      </div>
-      <div id="settingsBody" class="settings-body">
-        <label>文本模型提供商<select id="llmProvider"></select></label>
-        <label id="llmOfficialApiWrap" class="inline-check"><input id="llmUseOfficialApi" type="checkbox">使用官方 API</label>
-        <label id="llmEndpointWrap">文本 Base URL<input id="llmEndpoint" type="url" autocomplete="off" placeholder="例如：https://api.302.ai/"></label>
-        <label>文本 API Key<input id="llmApiKey" type="password" autocomplete="off"></label>
-        <label>文本模型<select id="llmModel"></select></label>
-        <div class="divider"></div>
-        <label>图片模型提供商<select id="imageProvider"></select></label>
-        <label id="imageOfficialApiWrap" class="inline-check"><input id="imageUseOfficialApi" type="checkbox">使用官方 API</label>
-        <label id="imageEndpointWrap">图片 Base URL<input id="imageEndpoint" type="url" autocomplete="off" placeholder="例如：https://api.302.ai/"></label>
-        <label>图片 API Key<input id="imageApiKey" type="password" autocomplete="off"></label>
-        <label>图片模型<select id="imageModel"></select></label>
-        <label id="geminiImageSizeWrap">Gemini 图片尺寸<select id="geminiImageSize"></select></label>
-      </div>
-    </section>
-    <section class="panel log-panel" data-tool-panel="logs">
-      <div class="panel-title"><h2>日志</h2><button id="clearLogBtn" type="button">清空</button></div>
-      <pre id="logOutput" class="log-output"></pre>
-    </section>
-    <section class="panel" data-tool-panel="history">
-      <div class="panel-title"><h2>历史</h2><button id="clearHistoryBtn" type="button">清空</button></div>
-      <div id="historyList" class="history-list"></div>
-    </section>
-    </div>
-  </dialog>
-
-  <section class="workspace">
-    <header class="studio-heading"><div><p class="eyebrow" id="studioEyebrow">从一个灵感开始</p><h2 id="studioTitle">今天，想画一个怎样的故事？</h2><p id="studioDescription">选择主角，写下灵感。接下来，我们一起把它变成漫画。</p></div><span class="studio-mark" aria-hidden="true">✳</span></header>
-    <div id="studioFeedback" class="studio-feedback" role="status" aria-live="polite" hidden></div>
-
-    <section class="panel project-panel">
-      <div class="panel-title"><h2>故事设定</h2><span id="projectStatus" class="status-pill">草稿</span></div>
-      <label class="plot-field">你的故事灵感<textarea id="plotHint" rows="4" placeholder="谁，在什么地方，发生了什么？例如：放学后的雨天，两个人共撑一把伞，却都悄悄把伞偏向对方。"></textarea></label>
-      <div class="inspiration-actions"><span>试试这些灵感</span><button type="button" data-inspiration="雨天共伞">雨天共伞</button><button type="button" data-inspiration="意外的礼物">意外的礼物</button><button type="button" data-inspiration="冒险的开端">冒险的开端</button></div>
-      <div class="character-settings-head">
-        <div>
-          <h3>角色设定</h3>
-          <p>角色设定仅保存在当前浏览器中。网页数据可能因清理缓存、无痕模式或更换设备而丢失，请导出设定文档并妥善保存。</p>
-        </div>
-        <div class="inline-actions">
-          <button id="addCharacterBtn" type="button">添加角色</button>
-          <button id="importCharactersBtn" type="button">导入设定</button>
-          <button id="exportCharactersBtn" type="button">导出设定</button>
-          <input id="characterFileInput" type="file" accept="application/json,.json" hidden>
-        </div>
-      </div>
-      <div class="form-grid">
-        <label>作品<select id="seriesFilter"></select></label>
-        <label>角色搜索<input id="characterSearch" type="search" placeholder="角色名 / ID"></label>
-        <label>画风<select id="styleSelect"></select></label>
-        <label>流程<select id="storyMode"><option value="standard">标准漫画</option><option value="long">长漫画</option><option value="four">四格漫画</option></select></label>
-        <label>对白语言<input id="languageInput" type="text" value="中文"></label>
-        <label id="storyLengthWrap" class="is-hidden"><span class="inline-check"><input id="storyLengthEnabledInput" type="checkbox">使用剧情长度</span><input id="storyLengthInput" type="number" min="2" step="1" value="4" disabled></label>
-      </div>
-      <div class="character-list-head"><h3>可选角色</h3><span id="characterListSummary"></span></div>
-      <div id="characterList" class="character-list"></div>
-      <div class="character-list-head"><h3>已选角色</h3></div>
-      <div id="selectedCharacters" class="selected-list"></div>
-    </section>
-
-    <section id="workStatus" class="work-status is-hidden" role="status" aria-live="polite">
-      <span class="work-spinner" aria-hidden="true"></span><span id="workStatusMessage">AI 正在工作</span>
-      <button id="stopAIBtn" type="button" class="stop-ai-btn">停止</button>
-    </section>
-
-    <section id="storyPrompt" class="tab-panel active" data-route="standard">
-      <div class="panel-title"><h2>标准漫画</h2></div>
-      <div class="sub-tabs flow-tabs">
-        <button id="standardStepPromptTab" class="active" type="button">分镜</button>
-        <button id="standardStepImagesTab" type="button">图片</button>
-      </div>
-      <div id="standardStepPromptPanel" class="flow-section">
-        <div class="card-head"><h3>分镜</h3></div>
-        <div class="stage-actions"><button id="buildStoryboardPromptBtn" type="button">生成分镜 Prompt</button><button id="callLLMBtn" type="button">调用 LLM 生成分镜</button></div>
-        <div class="prompt-field"><textarea id="storyboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成分镜 Prompt”生成给 LLM 使用的完整提示词。"></textarea><button id="copyStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div>
-        <label>LLM 原始输出<textarea id="rawStoryboard" class="code-area small" spellcheck="false" placeholder="将分镜 Prompt 交给 LLM 后，把返回的 JSON 分镜结果粘贴到这里；API 可用时也可以由按钮自动填入。"></textarea></label>
-        <div class="stage-actions result-actions"><button id="parseStoryboardBtn" type="button">解析 LLM 输出</button></div>
-      </div>
-      <div id="standardStepImagesPanel" class="flow-section">
-        <div class="card-head"><h3>图片</h3></div>
-        <div id="panelList" class="panel-list compact"></div>
-        <div class="stage-actions"><button id="buildImagePromptsBtn" type="button">生成图片 Prompt</button></div>
-        <div id="imagePromptTabs" class="sub-tabs"></div>
-        <div id="imagePromptList" class="prompt-list"></div>
-        <div class="stage-actions"><button id="callImageBtn" type="button" class="primary" disabled>调用图片 API</button></div>
-        <div id="imageList" class="image-list"></div>
-        <div class="stage-actions result-actions"><button id="exportImagePromptsBtn" type="button">导出图片 Prompt</button><button id="downloadProjectBtn" type="button">导出 JSON</button></div>
-      </div>
-    </section>
-
-    <section id="longManga" class="tab-panel" data-route="long four">
-      <div class="panel-title"><h2 id="multiRoundTitle">长漫画</h2></div>
-      <div class="sub-tabs flow-tabs">
-        <button id="longStepOutlineTab" class="active" type="button">梗概</button>
-        <button id="longStepEpisodesTab" type="button">批量分镜</button>
-        <button id="longStepImagesTab" type="button">图片</button>
-      </div>
-      <div id="longStepOutlinePanel" class="flow-section">
-        <div class="card-head"><h3 id="multiRoundOutlineTitle">梗概</h3><div class="inline-actions"><button id="buildLongOutlinePromptBtn" type="button">生成梗概 Prompt</button><button id="callLongOutlineBtn" type="button">调用 LLM 生成梗概</button></div></div>
-        <label><span id="multiRoundOutlinePromptLabel">长漫画梗概 Prompt</span><div class="prompt-field"><textarea id="longOutlinePrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="选择角色、填写剧情要求后，点击“生成梗概 Prompt”生成用于规划长漫画结构的提示词。"></textarea><button id="copyLongOutlinePromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div></label>
-        <label><span id="multiRoundOutlineResultLabel">长漫画梗概结果</span><textarea id="rawLongOutline" class="code-area small" spellcheck="false" placeholder="将梗概 Prompt 交给 LLM 后，把返回的长漫画梗概粘贴到这里，再解析并进入批量分镜。"></textarea></label>
-        <div class="stage-actions result-actions"><button id="selectAllFourPanelStoriesBtn" class="is-hidden" type="button">全选</button><button id="parseLongOutlineBtn" type="button">解析梗概</button></div>
-        <div id="longOutlineSummary" class="summary-list"></div>
-        <div class="stage-actions navigation-actions"><button id="nextLongOutlineBtn" class="primary" type="button">下一步</button></div>
-      </div>
-      <div id="longStepEpisodesPanel" class="flow-section">
-        <div class="card-head"><h3 id="multiRoundStoryboardTitle">批量分镜</h3><div class="inline-actions"><button id="buildLongEpisodePromptsBtn" type="button">生成批量分镜 Prompt</button><button id="callLongEpisodesBtn" type="button">调用 LLM 批量生成分镜</button></div></div>
-        <div id="longBatchStoryboardPanel" class="flow-section is-hidden">
-          <label>批量分镜 Prompt<div class="prompt-field"><textarea id="longBatchStoryboardPrompt" class="code-area small generated-prompt" spellcheck="false" readonly placeholder="点击“生成批量分镜 Prompt”得到一次性生成全部话分镜的提示词。"></textarea><button id="copyLongBatchStoryboardPromptBtn" type="button" class="copy-prompt-btn">复制 Prompt</button></div></label>
-          <label>批量分镜结果<textarea id="rawLongBatchStoryboard" class="code-area small" spellcheck="false" placeholder="将批量分镜 Prompt 交给 LLM 后，把返回的 JSON 结果粘贴到这里，再一次性解析全部分镜。"></textarea></label>
-          <div class="stage-actions result-actions"><button id="parseLongBatchStoryboardBtn" type="button">解析批量分镜</button></div>
-        </div>
-        <div id="longEpisodeOutlineSummary" class="story-card is-hidden"></div>
-        <div id="longEpisodeTabs" class="sub-tabs"></div>
-        <div id="longEpisodeList" class="panel-list compact"></div>
-        <div class="stage-actions navigation-actions"><button id="nextLongEpisodesBtn" class="primary" type="button">下一步</button></div>
-      </div>
-      <div id="longStepImagesPanel" class="flow-section">
-        <div class="card-head"><h3>图片</h3></div>
-        <div id="longImageOutlineSummary" class="story-card is-hidden"></div>
-        <div id="longImageTabs" class="sub-tabs"></div>
-        <div class="stage-actions"><button id="buildLongImagePromptsBtn" type="button">生成图片 Prompt</button></div>
-        <div id="longImagePromptList" class="prompt-list"></div>
-        <div class="stage-actions"><button id="callLongImageBtn" class="primary" type="button" disabled>调用图片 API</button></div>
-        <div id="longImageList" class="image-list"></div>
-        <div class="stage-actions result-actions"><button id="exportLongImagePromptsBtn" type="button">导出图片 Prompt</button></div>
-      </div>
-    </section>
-    <footer class="studio-footer"><div><strong id="studioProgress">先完成故事设定</strong><p id="studioProgressHint">选好角色后，进入分镜创作。</p></div><div class="inline-actions"><button id="studioBackBtn" type="button">上一步</button><button id="studioNextBtn" class="primary" type="button">开始分镜 →</button></div></footer>
-  </section>
-</main>
-
-<dialog id="overwritePromptDialog" class="confirm-dialog"><form method="dialog"><h2>覆盖已有内容？</h2><p id="overwritePromptMessage">已有 Prompt 内容会被覆盖。</p><div class="dialog-actions"><button id="cancelOverwritePromptBtn" type="submit" value="cancel">取消</button><button id="confirmOverwritePromptBtn" class="primary" type="submit" value="confirm">覆盖</button></div></form></dialog>
-<dialog id="fourPanelSelectionDialog" class="confirm-dialog"><form method="dialog"><h2>请选择剧情梗概</h2><p>请至少选择一个喜欢的独立四格剧情，再进入四格分镜。</p><div class="dialog-actions"><button class="primary" type="submit" value="confirm">知道了</button></div></form></dialog>
-<dialog id="longEpisodeSequenceDialog" class="confirm-dialog"><form method="dialog"><h2>请先解析前一话</h2><p id="longEpisodeSequenceMessage">请先完成前一话解析，再生成下一话 Prompt。</p><div class="dialog-actions"><button class="primary" type="submit" value="confirm">知道了</button></div></form></dialog>
-<dialog id="apiConfigDialog" class="confirm-dialog"><form method="dialog"><h2 id="apiConfigDialogTitle">API 配置需要处理</h2><p id="apiConfigDialogMessage">请检查设置中的 API 配置。</p><div class="dialog-actions"><button class="primary" type="submit" value="confirm">知道了</button></div></form></dialog>
-<dialog id="characterDialog" class="character-dialog">
-  <form id="characterForm">
-    <div class="panel-title"><h2 id="characterDialogTitle">添加角色</h2><button id="closeCharacterDialogBtn" type="button">关闭</button></div>
-    <div class="character-form-grid">
-      <label>作品 ID<input id="characterSeriesInput" type="text" required placeholder="例如：lovelive"></label>
-      <label>角色 ID<input id="characterIDInput" type="text" required placeholder="例如：honoka"></label>
-      <label>中文名<input id="characterNameInput" type="text" required></label>
-      <label>英文名<input id="characterNameEnInput" type="text"></label>
-      <label>发型<input id="characterHairStyleInput" type="text" required></label>
-      <label>发色<input id="characterHairColorInput" type="text" required></label>
-      <label>眼型<input id="characterEyeShapeInput" type="text" required></label>
-      <label>瞳色<input id="characterEyeColorInput" type="text" required></label>
-      <label>身高<input id="characterHeightInput" type="text" required></label>
-      <label>体型<input id="characterBodyTypeInput" type="text" required></label>
-    </div>
-    <label>其他外观特征<textarea id="characterOtherInput" rows="3" required></textarea></label>
-    <label>性格<textarea id="characterPersonalityInput" rows="4" required></textarea></label>
-    <label>标签（使用英文逗号分隔）<input id="characterTagsInput" type="text"></label>
-    <p id="characterFormError" class="form-error" role="alert"></p>
-    <div class="dialog-actions"><button id="cancelCharacterBtn" type="button">取消</button><button class="primary" type="submit">保存角色</button></div>
-  </form>
-</dialog>`;
-
-// The generation engine owns this DOM subtree. Theme changes must not replace it.
-const Workspace = memo(function Workspace() {
-  return <div dangerouslySetInnerHTML={{ __html: workspaceMarkup }} />;
-});
-
-function GithubIcon() {
-  return (
-    <svg className="button-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M8 0C3.58 0 0 3.64 0 8.13c0 3.59 2.29 6.64 5.47 7.71.4.08.55-.18.55-.39 0-.19-.01-.83-.01-1.5-2.01.38-2.53-.5-2.69-.96-.09-.23-.48-.96-.82-1.15-.28-.15-.68-.53-.01-.54.63-.01 1.08.59 1.23.83.72 1.23 1.87.88 2.33.67.07-.53.28-.88.51-1.08-1.78-.21-3.64-.91-3.64-4.02 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.5 7.5 0 0 1 8 3.92a7.5 7.5 0 0 1 2 .27c1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.12-1.87 3.81-3.65 4.02.29.25.54.74.54 1.5 0 1.08-.01 1.95-.01 2.22 0 .21.15.47.55.39A8.14 8.14 0 0 0 16 8.13C16 3.64 12.42 0 8 0Z" />
-    </svg>
+function Workspace() {
+  const data = window.LLE_DATA;
+  const store = useProject();
+  const { project, settings, ui, job, update, patchProject, get } = store;
+  const { t } = useLocale();
+  const [dialog, setDialog] = useState(null);
+  const [toast, setToast] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("lovelive-engine-web-theme") || "system",
   );
-}
-
-export default function App() {
-  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
-
-  useEffect(function () {
-    applyThemeMode(themeMode);
-    localStorage.setItem(themeStorageKey, themeMode);
-  }, [themeMode]);
-
-  function changeLocale(event) {
-    setDocumentLocale(event.target.value);
-    window.location.reload();
-  }
-
-  function changeTheme(event) {
-    setThemeMode(event.target.value);
-  }
-
+  const [auto, setAuto] = useState(false);
+  const steps = stepsFor(project);
+  const step = ui.step;
+  const index = steps.indexOf(step);
+  useEffect(() => {
+    if (theme === "system")
+      document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.dataset.theme = theme;
+    localStorage.setItem("lovelive-engine-web-theme", theme);
+  }, [theme]);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(""), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+  const error = (e) => {
+    setToast(e.message);
+    update({
+      ui: { ...get().ui, error: e.message },
+      logs: [...get().logs, "Error: " + e.message],
+    });
+  };
+  const confirm = (message, action) => setConfirmation({ message, action });
+  const navigate = (next) => {
+    if (!get().job && canEnter(get().project, next))
+      update({ ui: { ...get().ui, step: next, error: "" } });
+  };
+  const copy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast(t("copied"));
+    } catch {
+      setToast(t("clipboardError"));
+    }
+  };
+  const generate = async (from, episode, onlyImage, approved = false) => {
+    if (get().job) return;
+    const hasResult =
+      from === "outline"
+        ? !!get().project.longOutline
+        : from === "storyboard" &&
+          (episode
+            ? get().project.longEpisodes.some((e) => e.episode === episode)
+            : !!get().project.panels.length);
+    if (hasResult && !auto && !approved) {
+      update({
+        ui: { ...get().ui, overwriteRequest: from + ":" + (episode || "") },
+      });
+      return;
+    }
+    const controller = new AbortController();
+    update({
+      job: { controller, stage: from, completed: 0, total: 1 },
+      ui: { ...get().ui, error: "", overwriteRequest: "" },
+    });
+    try {
+      await runPipeline({
+        from,
+        to: auto ? "artwork" : from,
+        get,
+        update,
+        data,
+        signal: controller.signal,
+        onlyImage,
+        force: !auto || !!episode,
+        episode,
+        onProgress: (progress) =>
+          update({
+            job: { controller, ...progress },
+            logs: [
+              ...get().logs,
+              `${progress.stage}: ${progress.completed}/${progress.total}`,
+            ],
+          }),
+        onRaw: (stage, n, raw) =>
+          update({
+            ui: {
+              ...get().ui,
+              streams: { ...get().ui.streams, [stage + ":" + (n || "")]: raw },
+            },
+          }),
+      });
+      setToast(t("done"));
+      update({ ui: { ...get().ui, error: "", parseErrors: {} } });
+      if (auto && get().project.panels.length)
+        update({ ui: { ...get().ui, step: "artwork" } });
+    } catch (e) {
+      if (controller.signal.aborted) setToast(t("stopped"));
+      else error(e);
+    } finally {
+      update({ job: null });
+    }
+  };
+  const next = () => {
+    if (step === "artwork") {
+      if (!project.imagePrompts.length)
+        update({ project: buildImages(data, project, store.characterSettings) });
+      else if (configured(settings, "image")) generate("artwork");
+      return;
+    }
+    const target = steps[index + 1];
+    navigate(target);
+  };
+  const stageErrors = Object.entries(ui.parseErrors || {}).some(
+    ([key, value]) => value && key.startsWith(step + ":"),
+  );
+  const nextReady =
+    !job &&
+    !stageErrors &&
+    (step === "setup"
+      ? setupReady(project)
+      : step === "outline"
+        ? !!project.longOutline &&
+          (project.storyMode !== "four" ||
+            !!project.selectedFourPanelStories.length)
+        : step === "storyboard"
+          ? storyboardReady(project)
+          : true);
+  const targetEpisode =
+    step === "storyboard" && project.storyMode === "four"
+      ? project.selectedFourPanelStories.find(
+          (n) => !project.longEpisodes.some((e) => e.episode === n),
+        )
+      : undefined;
+  const canGenerate =
+    !job &&
+    !nextReady &&
+    ["outline", "storyboard"].includes(step) &&
+    configured(settings, "llm") &&
+    ui.generationModes?.[step + ":" + (targetEpisode || "")] === "ai";
+  const hint = job
+    ? t("running")
+    : step === "setup"
+      ? !project.characterIds.length
+        ? t("missingCharacters")
+        : !project.plotHint.trim()
+          ? t("missingIdea")
+          : !setupReady(project)
+            ? t("invalidLength")
+            : t("localNote")
+      : step === "outline" && project.storyMode === "four"
+        ? `${project.selectedFourPanelStories.length} · ${t("selected")} ${!nextReady ? t("selectCandidate") : ""}`
+        : !nextReady
+          ? t("finishParse")
+          : t("localNote");
+  const common = {
+    data,
+    onSettings: () => setDialog({ type: "settings" }),
+    onCopy: copy,
+    onGenerate: generate,
+  };
+  const importCharacters = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const list = Array.isArray(parsed) ? parsed : parsed.characters;
+      if (
+        !Array.isArray(list) ||
+        list.some((c) => !normalizeCharacterSetting(c))
+      )
+        throw new Error(t("invalidCharacter"));
+      const next = upsertCharacterSettings(
+        store.characterSettings,
+        list.map(normalizeCharacterSetting),
+      );
+      writeJSON(keys.characters, next);
+      update({ characterSettings: next });
+      setToast(t("saved"));
+    } catch (e) {
+      error(e);
+    }
+  };
+  const restore = (p) => {
+    store.snapshot();
+    const project = hydrateProject(p);
+    update({ project, ui: { step: recoveredStep(project) } });
+    setDialog(null);
+  };
   return (
     <>
-      <header className="app-header">
-        <div>
-          <h1>{t.app.title}</h1>
-          <p>{locale === "zh-CN" ? "让故事，发生。" : "Make your story happen."}</p>
+      <AppHeader
+        {...{
+          store,
+          confirm,
+          setDialog,
+          error,
+          restore,
+          theme,
+          setTheme,
+          setToast,
+        }}
+      />
+      <Stepper {...{ steps, project, job, step, ui, navigate }} />
+      <main className="workspace" data-step={step}>
+        {ui.error && (
+          <p className="error" role="alert">
+            {ui.error}
+          </p>
+        )}
+        {store.saveError && (
+          <p className="error" role="alert">
+            {t("saveFailed")}: {store.saveError}
+          </p>
+        )}
+        {step === "setup" && (
+          <SetupStep
+            data={data}
+            onEdit={(character) => setDialog({ type: "character", character })}
+            onImport={importCharacters}
+            onExport={() =>
+              downloadJSON(
+                { version: 1, characters: store.characterSettings },
+                "lovelive-engine-character-settings.json",
+              )
+            }
+            onConfirm={confirm}
+          />
+        )}
+        {step === "outline" && <OutlineStep {...common} />}{" "}
+        {step === "storyboard" && <StoryboardStep {...common} />}{" "}
+        {step === "artwork" && (
+          <ArtworkStep
+            {...common}
+            onLightbox={(image) => setDialog({ type: "lightbox", image })}
+            onError={error}
+          />
+        )}
+      </main>
+      <ActionBar
+        {...{
+          job,
+          index,
+          steps,
+          navigate,
+          hint,
+          step,
+          auto,
+          setAuto,
+          nextReady,
+          next,
+          settings,
+          canGenerate,
+          generate,
+          targetEpisode,
+          onError: error,
+        }}
+      />
+      {toast && (
+        <div className="toast" role="status">
+          {toast}
         </div>
-        <div className="header-actions">
-          <label className="locale-control">
-            <span>{t.app.language}</span>
-            <select defaultValue={locale} onChange={changeLocale}>
-              <option value="zh-CN">中文</option>
-              <option value="en-US">English</option>
-            </select>
-          </label>
-          <label className="theme-control">
-            <span>{t.app.theme}</span>
-            <select value={themeMode} onChange={changeTheme}>
-              <option value="system">{t.app.themeSystem}</option>
-              <option value="light">{t.app.themeLight}</option>
-              <option value="dark">{t.app.themeDark}</option>
-            </select>
-          </label>
-          <a className="button-link" href="https://github.com/aimerneige/muse-oracle-engine" target="_blank" rel="noopener noreferrer">
-            <GithubIcon />
-            {t.app.repository}
-          </a>
-          <button id="fullAutoBtn" type="button">{t.app.fullAuto}</button>
-          <button id="continueAutoBtn" type="button">继续</button>
-          <button id="saveProjectBtn" type="button">{t.app.saveProject}</button>
-          <button id="newProjectBtn" type="button">{t.app.newProject}</button>
-        </div>
-      </header>
-      <Workspace />
+      )}
+      {confirmation && (
+        <Dialog title={t("confirm")} onClose={() => setConfirmation(null)}>
+          <p>{confirmation.message}</p>
+          <div className="dialog-actions">
+            <button onClick={() => setConfirmation(null)}>{t("cancel")}</button>
+            <button
+              className="primary"
+              onClick={() => {
+                try {
+                  confirmation.action();
+                  setConfirmation(null);
+                } catch (e) {
+                  error(e);
+                }
+              }}
+            >
+              {t("confirm")}
+            </button>
+          </div>
+        </Dialog>
+      )}
+      {dialog?.type === "settings" && (
+        <SettingsDialog
+          data={data}
+          onClose={() => setDialog(null)}
+          onError={error}
+        />
+      )}{" "}
+      {dialog?.type === "character" && (
+        <CharacterEditorDialog
+          character={dialog.character}
+          data={data}
+          onClose={() => setDialog(null)}
+        />
+      )}{" "}
+      {dialog?.type === "lightbox" && (
+        <Dialog
+          title={t("panel", { n: dialog.image.index })}
+          onClose={() => setDialog(null)}
+        >
+          <img
+            className="lightbox"
+            src={dialog.image.dataUrl}
+            alt={t("panel", { n: dialog.image.index })}
+          />
+        </Dialog>
+      )}
+      {["history", "logs"].includes(dialog?.type) && (
+        <Dialog title={t(dialog.type)} onClose={() => setDialog(null)}>
+          {dialog.type === "history" ? (
+            <>
+              <button
+                onClick={() =>
+                  confirm(t("clearConfirm"), () => {
+                    writeJSON(keys.history, []);
+                    setDialog(null);
+                  })
+                }
+              >
+                {t("clear")}
+              </button>
+              <div className="history-list">
+                {readJSON(keys.history, []).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      try {
+                        restore(p);
+                      } catch (e) {
+                        error(e);
+                      }
+                    }}
+                  >
+                    {p.name || p.plotHint || t("untitled")}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <button onClick={() => update({ logs: [] })}>{t("clear")}</button>
+              <pre>{store.logs.join("\n") || t("empty")}</pre>
+            </>
+          )}
+        </Dialog>
+      )}
     </>
+  );
+}
+export default function App() {
+  return (
+    <LocaleProvider>
+      <ProjectProvider>
+        <Workspace />
+      </ProjectProvider>
+    </LocaleProvider>
   );
 }
