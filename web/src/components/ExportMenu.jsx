@@ -4,12 +4,12 @@ import { useLocale } from "../i18n/LocaleProvider.jsx";
 import { exportImagePromptsZip, downloadJSON, imageDownloadFilename } from "../engine/exporters.js";
 import { persistableProject } from "../engine/storage.js";
 
-export default function ExportMenu({ primary = false, onError }) {
+export default function ExportMenu({ primary = true, onError }) {
   const { project } = useProject();
   const { t } = useLocale();
   const id = useId();
   return <div className="export-menu">
-    <button className={primary ? "primary" : ""} popoverTarget={id}>{t(primary ? "exportWork" : "export")} ▾</button>
+    <button className={primary ? "primary" : ""} popoverTarget={id}>{t("exportWork")} ▾</button>
     <div id={id} popover="auto" className="export-options">
       <button disabled={!project.imagePrompts.length} onClick={() => exportImagePromptsZip(project).catch(onError)}>{t("zip")}</button>
       <button disabled={!project.images.some(i => i.dataUrl)} onClick={() => project.images.filter(i => i.dataUrl).forEach(i => {

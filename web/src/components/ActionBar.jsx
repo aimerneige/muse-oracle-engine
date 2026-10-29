@@ -49,6 +49,7 @@ export default function ActionBar({
         <button onClick={() => job.controller.abort()}>{t("stop")}</button>
       ) : (
         <div className="primary-actions">
+          {step === "artwork" && project.imagePrompts.length > 0 && needsImages && <ExportMenu primary={false} onError={onError} />}
           {step !== "setup" && step !== "artwork" && (
             <label className="check">
               <input
@@ -60,7 +61,7 @@ export default function ActionBar({
               <span className="auto-label">{t("auto")}</span><span className="auto-short" aria-hidden="true">⚡</span>
             </label>
           )}
-          {step === "artwork" && project.imagePrompts.length > 0 && !needsImages ? <ExportMenu primary onError={onError} /> : <button
+          {step === "artwork" && project.imagePrompts.length > 0 && !needsImages ? <ExportMenu onError={onError} /> : <button
             className="primary"
             disabled={!nextReady && !canGenerate}
             onClick={() =>

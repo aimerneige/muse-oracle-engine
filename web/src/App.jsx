@@ -270,7 +270,6 @@ function Workspace() {
           <ArtworkStep
             {...common}
             onLightbox={(image) => setDialog({ type: "lightbox", image })}
-            onError={error}
           />
         )}
       </main>

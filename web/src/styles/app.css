@@ -489,9 +489,13 @@ details > details {
 .toolbar button {
   font-size: 12px;
 }
+.export-menu > button {
+  anchor-name: --export-trigger;
+}
 .export-options {
+  position-anchor: --export-trigger;
   inset: auto;
-  top: anchor(bottom);
+  bottom: anchor(top);
   right: anchor(right);
   margin: 8px 0;
   color: var(--ink);
@@ -501,9 +505,9 @@ details > details {
   border-radius: 9px;
   box-shadow: var(--shadow);
 }
-.action-bar .export-options {
-  top: auto;
-  bottom: anchor(top);
+.panel-excerpt,
+.panel-excerpt:hover {
+  color: var(--ink);
 }
 .export-options button {
   display: block;

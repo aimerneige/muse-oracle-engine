@@ -3,7 +3,6 @@ import { useLocale } from "../i18n/LocaleProvider.jsx";
 import { buildImages } from "../store/actions.js";
 import { configured } from "../store/selectors.js";
 import { imageDownloadFilename } from "../engine/exporters.js";
-import ExportMenu from "../components/ExportMenu.jsx";
 import { AutoTextarea } from "../components/StoryboardView.jsx";
 function excerpt(content) {
   const text = content
@@ -20,7 +19,6 @@ export default function ArtworkStep({
   onCopy,
   onGenerate,
   onLightbox,
-  onError,
 }) {
   const { project, settings, characterSettings, update, patchProject, job } =
     useProject();
@@ -38,7 +36,6 @@ export default function ArtworkStep({
         >
           {t("buildImages")}
         </button>
-        <ExportMenu onError={onError} />
       </div>
       <div className="image-grid">
         {project.panels.map((panel, i) => {

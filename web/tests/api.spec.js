@@ -116,6 +116,13 @@ for (const variant of ["gemini", "gemini-sse", "openai"]) {
     await page.locator(".action-bar .primary").click();
     await page.locator(".action-bar .primary").click();
     await expect(page.locator(".action-bar .primary")).toHaveText("生成全部图片（0/1）");
+    await expect(page.locator(".export-menu")).toHaveCount(1);
+    await page.locator(".export-menu > button").click();
+    await expect(page.getByRole("button", { name: "图片 Prompt ZIP", exact: true })).toBeEnabled();
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "图片 Prompt ZIP", exact: true }).click();
+    expect((await download).suggestedFilename()).toMatch(/\.zip$/);
+    await page.keyboard.press("Escape");
     await page.locator(".action-bar .primary").click();
     await expect(page.locator(".image-area img")).toHaveCount(1);
     await expect(page.locator(".action-bar .primary")).toContainText("导出作品");

@@ -68,7 +68,8 @@ test("first visit validates setup, standard manual workflow and ZIP export", asy
   await expect(page.locator(".export-options:popover-open > button")).toHaveText(["图片 Prompt ZIP", "下载全部图片", "项目 JSON"]);
   await page.keyboard.press("Escape");
   await expect(page.locator(".export-options:popover-open")).toHaveCount(0);
-  await page.locator(".toolbar .export-menu > button").click();
+  await expect(page.locator(".export-menu")).toHaveCount(1);
+  await page.locator(".action-bar .primary").click();
   const download = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "图片 Prompt ZIP", exact: true })
