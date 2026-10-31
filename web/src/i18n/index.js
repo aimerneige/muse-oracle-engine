@@ -3,7 +3,7 @@ import zhCN from "./zh-CN";
 
 export const locales = {
   "zh-CN": zhCN,
-  "en-US": enUS
+  "en-US": enUS,
 };
 
 export function getInitialLocale() {
@@ -11,7 +11,10 @@ export function getInitialLocale() {
   if (saved && locales[saved]) {
     return saved;
   }
-  return navigator.language && navigator.language.toLowerCase().indexOf("zh") === 0 ? "zh-CN" : "en-US";
+  return navigator.language &&
+    navigator.language.toLowerCase().indexOf("zh") === 0
+    ? "zh-CN"
+    : "en-US";
 }
 
 export function setDocumentLocale(locale) {
