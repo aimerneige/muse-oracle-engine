@@ -76,6 +76,50 @@ export default function SetupStep({
           {t("inspiration")}
         </button>
       </section>
+      {project.storyMode === "long" && (
+        <section>
+          <label className="check">
+            <input
+              type="radio"
+              name="lengthMode"
+              checked={!project.storyLengthEnabled}
+              onChange={() => patchProject({ storyLengthEnabled: false })}
+            />
+            {t("autoLength")}
+          </label>
+          <label className="check">
+            <input
+              type="radio"
+              name="lengthMode"
+              checked={project.storyLengthEnabled}
+              onChange={() =>
+                patchProject({
+                  storyLengthEnabled: true,
+                  storyLength: project.storyLength || 4,
+                })
+              }
+            />
+            {t("fixedLength")}
+          </label>
+          {project.storyLengthEnabled && (
+            <label>
+              {t("episodes")}
+              <input
+                type="number"
+                min={2}
+                step={1}
+                value={project.storyLength}
+                onChange={(e) =>
+                  patchProject({ storyLength: Number(e.target.value) })
+                }
+              />
+              <span>
+                {project.storyLength * 4} {t("totalPanels")}
+              </span>
+            </label>
+          )}
+        </section>
+      )}
       <CharacterPicker data={data} onEdit={onEdit} />
       <details>
         <summary>{t("manageCharacters")}</summary>
@@ -115,50 +159,6 @@ export default function SetupStep({
             onChange={(e) => patchProject({ language: e.target.value })}
           />
         </label>
-        {project.storyMode === "long" && (
-          <>
-            <label className="check">
-              <input
-                type="radio"
-                name="lengthMode"
-                checked={!project.storyLengthEnabled}
-                onChange={() => patchProject({ storyLengthEnabled: false })}
-              />
-              {t("autoLength")}
-            </label>
-            <label className="check">
-              <input
-                type="radio"
-                name="lengthMode"
-                checked={project.storyLengthEnabled}
-                onChange={() =>
-                  patchProject({
-                    storyLengthEnabled: true,
-                    storyLength: project.storyLength || 4,
-                  })
-                }
-              />
-              {t("fixedLength")}
-            </label>
-            {project.storyLengthEnabled && (
-              <label>
-                {t("episodes")}
-                <input
-                  type="number"
-                  min={2}
-                  step={1}
-                  value={project.storyLength}
-                  onChange={(e) =>
-                    patchProject({ storyLength: Number(e.target.value) })
-                  }
-                />
-                <span>
-                  {project.storyLength * 4} {t("totalPanels")}
-                </span>
-              </label>
-            )}
-          </>
-        )}
       </details>
     </div>
   );
